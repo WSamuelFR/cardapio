@@ -1,0 +1,122 @@
+[
+  {
+    "id": "adicionais_01",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Carne Tradicional",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_02",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Carne Artesanal 100g",
+    "categoria_aplicavel": "Sanduíches",
+    "preco": 8,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_03",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Carne Artesanal 150g",
+    "categoria_aplicavel": "Sanduíches",
+    "preco": 12,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_04",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Bacon",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_05",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Calabresa",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_06",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Frango",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_07",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Carne de Sol",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_08",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Presunto",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 4,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_09",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Muçarela",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_10",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Queijo Manteiga",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 4,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_11",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Queijo Coalho",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 5,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_12",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Catupiry",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 4,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_13",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Cheddar",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 4,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_14",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Ovo",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 3,
+    "disponivel": true
+  },
+  {
+    "id": "adicionais_15",
+    "categoria": "ADICIONAIS",
+    "nome": "Adicional de Salada",
+    "categoria_aplicavel": "Sanduíches, Tapiocas e Cuscuz",
+    "preco": 3,
+    "disponivel": true
+  }
+]

@@ -1,0 +1,188 @@
+﻿ID;Categoria;Nome;Preco;Descricao
+petiscos_01;PETISCOS;Batatinha Frita;25,00;Porção de batatas fritas crocantes e sequinhas
+petiscos_02;PETISCOS;Batatinha Frita com Calabresa;32,00;Batata frita crocante acompanhada de calabresa fatiada acebolada
+petiscos_03;PETISCOS;Batatinha Frita Especial;35,00;Batata frita coberta com fatias crocantes de bacon e generoso cheddar cremoso
+petiscos_04;PETISCOS;Calabresa Acebolada;25,00;Porção de calabresa fatiada frita com cebolas douradas
+petiscos_05;PETISCOS;Carne de Sol com Macaxeira;52,00;Carne de sol da terra refogada com macaxeira cozida e frita na manteiga
+petiscos_06;PETISCOS;Carne de Sol na Nata;52,00;Carne de sol desfiada cozida no molho de nata sertaneja
+petiscos_07;PETISCOS;Costelinha de Porco;35,00;Porção de costelinha suína frita crocante e temperada
+petiscos_08;PETISCOS;Filé Bovino com Batatinha Frita;52,00;Tiras de filé bovino acebolado acompanhado de batatas fritas
+petiscos_09;PETISCOS;Frango à Passarinho com Batatinha Frita;48,00;Frango em pedaços crocante frito à passarinho com batata frita
+petiscos_10;PETISCOS;Peixe Frito;70,00;Postas de peixe temperadas e fritas douradas
+petiscos_11;PETISCOS;Mistão;55,00;Tiras de carne bovina, calabresa acebolada e batatinha frita
+petiscos_12;PETISCOS;Queijo Coalho Assado;22,00;Porção de queijo coalho assado na chapa
+petiscos_13;PETISCOS;Queijo Coalho com Azeitona;29,00;Queijo coalho em cubos assado acompanhado de azeitonas verdes
+a_la_carte_01;A LA CARTE;Carne de Sol Completa;150,00;Acompanha arroz, feijão, macarrão, cuscuz, purê de batata, batatinha frita, farofa, salada e vinagrete
+a_la_carte_02;A LA CARTE;Carne de Sol na Nata;150,00;Acompanha arroz, feijão, macarrão, cuscuz, purê de batata, batatinha frita, farofa, salada e vinagrete
+a_la_carte_03;A LA CARTE;Filé à Parmegiana;120,00;Acompanha arroz branco, talharim e purê de batata
+a_la_carte_04;A LA CARTE;Macarronada à Bolonhesa (Meia Porção);60,00;Massa tradicional com molho bolonhesa artesanal de carne e queijo
+a_la_carte_05;A LA CARTE;Macarronada à Bolonhesa (Porção Inteira);100,00;Massa tradicional com molho bolonhesa artesanal de carne e queijo
+a_la_carte_06;A LA CARTE;Macarronada de Frango (Meia Porção);60,00;Massa tradicional com molho de frango desfiado cremoso e queijo
+a_la_carte_07;A LA CARTE;Macarronada de Frango (Porção Inteira);100,00;Massa tradicional com molho de frango desfiado cremoso e queijo
+pasteloes_01;PASTELOES;Pastelão Americano;20,00;Presunto, catupiry e muçarela
+pasteloes_02;PASTELOES;Pastelão Atum;22,00;Atum, catupiry e muçarela
+pasteloes_03;PASTELOES;Pastelão Bacon;26,00;Bacon crocante e muçarela
+pasteloes_04;PASTELOES;Pastelão Bacon com Palmito;23,00;Bacon, palmito e muçarela
+pasteloes_05;PASTELOES;Pastelão Baiano;20,00;Calabresa, milho, pimentão, cebola e muçarela
+pasteloes_06;PASTELOES;Pastelão Calabresa;20,00;Calabresa e muçarela
+pasteloes_07;PASTELOES;Pastelão Carne;20,00;Carne moída temperada e muçarela
+pasteloes_08;PASTELOES;Pastelão Carne com Azeitona;21,00;Carne moída, azeitona e muçarela
+pasteloes_09;PASTELOES;Pastelão Carne Seca;21,00;Carne seca desfiada e muçarela
+pasteloes_10;PASTELOES;Pastelão Especial;23,00;Frango, milho, ovo, parmesão, catupiry, cebola, tomate e muçarela
+pasteloes_11;PASTELOES;Pastelão Frango;21,00;Frango desfiado e muçarela
+pasteloes_12;PASTELOES;Pastelão Frango com Catupiry;22,00;Frango desfiado, catupiry e muçarela
+pasteloes_13;PASTELOES;Pastelão Frango com Milho;22,00;Frango desfiado, milho e muçarela
+pasteloes_14;PASTELOES;Pastelão Frango com Bacon;28,00;Frango desfiado, bacon e muçarela
+pasteloes_15;PASTELOES;Pastelão Frango com Cheddar;22,00;Frango desfiado, cheddar e muçarela
+pasteloes_16;PASTELOES;Pastelão Frango Especial;28,00;Frango desfiado, cheddar, bacon e muçarela
+pasteloes_17;PASTELOES;Pastelão Frango com Calabresa;22,00;Frango desfiado, calabresa e muçarela
+pasteloes_18;PASTELOES;Pastelão Queijo;19,00;Queijo manteiga, coalho ou muçarela
+pasteloes_19;PASTELOES;Pastelão Misto;20,00;Presunto e muçarela
+pasteloes_20;PASTELOES;Pastelão Português;20,00;Presunto, milho, ovo, tomate, cebola, pimentão e muçarela
+pasteloes_21;PASTELOES;Pastelão Pizza;22,00;Presunto, muçarela, molho de tomate e orégano
+pasteloes_22;PASTELOES;Pastelão Turbinado;27,00;Calabresa, frango, bacon e muçarela
+pasteloes_23;PASTELOES;Pastelão 4 Queijos;22,00;Cheddar, catupiry, parmesão e muçarela
+pasteloes_24;PASTELOES;Pastelão Doce Banana com Chocolate;20,00;Banana fatiada com chocolate cremoso
+pasteloes_25;PASTELOES;Pastelão Doce Banana com Doce de Leite;20,00;Banana fatiada com doce de leite cremoso
+pasteloes_26;PASTELOES;Pastelão Doce Chocolate ao Leite;20,00;Recheio generoso de chocolate ao leite
+pasteloes_27;PASTELOES;Pastelão Doce Chocolate Branco;20,00;Recheio generoso de chocolate branco
+pasteloes_28;PASTELOES;Pastelão Doce Romeu e Julieta;20,00;Queijo com goiabada cremosa
+pasteloes_29;PASTELOES;Monte Seu Pastel (Até 4 Ingredientes);15,00;Escolha até 4 ingredientes: bacon, calabresa, carne moída, carne seca, frango, catupiry, cheddar, queijo coalho, queijo manteiga, muçarela, parmesão, presunto, azeitona, dueto, milho, ovo, tomate, cebola, banana, canela, chocolate ao leite, chocolate branco, doce de leite, goiabada ou leite condensado
+mini_cuscuz_01;MINI CUSCUZ;Mini Cuscuz Carne de Sol;18,00;Cuscuz tradicional, carne de sol desfiada, muçarela e vinagrete
+mini_cuscuz_02;MINI CUSCUZ;Mini Cuscuz Carne de Sol na Nata;18,00;Cuscuz tradicional, carne de sol desfiada na nata, muçarela e vinagrete
+mini_cuscuz_03;MINI CUSCUZ;Mini Cuscuz Frango;18,00;Cuscuz tradicional, frango desfiado, muçarela e vinagrete
+mini_cuscuz_04;MINI CUSCUZ;Mini Cuscuz Calabresa;18,00;Cuscuz tradicional, calabresa fatiada, muçarela e vinagrete
+mini_cuscuz_05;MINI CUSCUZ;Mini Cuscuz Bacon;18,00;Cuscuz tradicional, bacon em cubos, muçarela e vinagrete
+mini_cuscuz_06;MINI CUSCUZ;Mini Cuscuz Queijo;18,00;Cuscuz tradicional, queijo coalho ou manteiga, muçarela e vinagrete
+mini_cuscuz_07;MINI CUSCUZ;Mini Cuscuz Ovo;18,00;Cuscuz tradicional, ovo, muçarela e vinagrete
+tapiocas_01;TAPIOCAS;Tapioca de Bacon;12,00;Goma de tapioca hidratada recheada com bacon crocante
+tapiocas_02;TAPIOCAS;Tapioca de Bacon com Queijo;15,00;Goma de tapioca recheada com bacon e queijo derretido
+tapiocas_03;TAPIOCAS;Tapioca de Calabresa;12,00;Goma de tapioca recheada com calabresa fatiada
+tapiocas_04;TAPIOCAS;Tapioca de Calabresa com Queijo;15,00;Goma de tapioca recheada com calabresa e queijo derretido
+tapiocas_05;TAPIOCAS;Tapioca de Carne Moída;12,00;Goma de tapioca recheada com carne moída temperada
+tapiocas_06;TAPIOCAS;Tapioca de Carne Moída com Queijo;15,00;Goma de tapioca recheada com carne moída e queijo
+tapiocas_07;TAPIOCAS;Tapioca de Carne Seca;12,00;Goma de tapioca recheada com carne seca desfiada
+tapiocas_08;TAPIOCAS;Tapioca de Carne Seca com Queijo;15,00;Goma de tapioca recheada com carne seca e queijo
+tapiocas_09;TAPIOCAS;Tapioca de Frango;12,00;Goma de tapioca recheada com frango desfiado
+tapiocas_10;TAPIOCAS;Tapioca de Frango com Queijo;15,00;Goma de tapioca recheada com frango desfiado e queijo
+tapiocas_11;TAPIOCAS;Tapioca de Queijo com Presunto;10,00;Goma de tapioca recheada com queijo e presunto
+tapiocas_12;TAPIOCAS;Tapioca de Ovo;8,00;Goma de tapioca recheada com ovo frito/mexido
+tapiocas_13;TAPIOCAS;Tapioca de Queijo;8,00;Goma de tapioca recheada com queijo derretido
+tapiocas_14;TAPIOCAS;Tapioca Simples com Manteiga;6,00;Goma de tapioca tradicional passada na manteiga da terra
+tapiocas_15;TAPIOCAS;Adicional de Salada para Tapioca;3,00;Porção de salada fresca para acompanhar
+sanduiches_classicos_01;SANDUICHES CLASSICOS;Americano;15,00;Pão bola, ovo, queijo, presunto, molho especial e salada
+sanduiches_classicos_02;SANDUICHES CLASSICOS;Bauru;9,00;Pão de forma, queijo, presunto, molho especial e salada
+sanduiches_classicos_03;SANDUICHES CLASSICOS;Cheddar Bacon;16,00;Pão bola, carne, bacon, cheddar, molho especial e cebola ao shoyu
+sanduiches_classicos_04;SANDUICHES CLASSICOS;Duplo Cheddar Bacon;21,00;Pão bola, dobro de carne, dobro de bacon, dobro de cheddar, molho especial e cebola ao shoyu
+sanduiches_classicos_05;SANDUICHES CLASSICOS;Especial;21,00;Pão bola, carne, queijo, bacon, presunto, ovo, salsicha, molho especial e salada
+sanduiches_classicos_06;SANDUICHES CLASSICOS;Hambúrguer;11,00;Pão bola, carne bovina, molho especial e salada
+sanduiches_classicos_07;SANDUICHES CLASSICOS;Misto Quente;7,50;Pão de forma tostado com queijo e presunto
+sanduiches_classicos_08;SANDUICHES CLASSICOS;Sanduíche de Queijo;7,00;Pão bola ou de forma com queijo manteiga, coalho ou muçarela
+sanduiches_classicos_09;SANDUICHES CLASSICOS;Super Tudo AKY Lanches;26,00;Pão bola, dobro de carne, queijo, bacon, calabresa, ovo, presunto, salsicha, cheddar, milho, ervilha, molho especial e salada
+sanduiches_classicos_10;SANDUICHES CLASSICOS;X-Bacon;15,00;Pão bola, bacon crocante, queijo, molho especial e salada
+sanduiches_classicos_11;SANDUICHES CLASSICOS;X-Burguer;13,00;Pão bola, carne, queijo, molho especial e salada
+sanduiches_classicos_12;SANDUICHES CLASSICOS;X-Burguer Bacon;17,00;Pão bola, carne, bacon, queijo, molho especial e salada
+sanduiches_classicos_13;SANDUICHES CLASSICOS;X-Burguer Calabresa;17,00;Pão bola, carne, calabresa, queijo, molho especial e salada
+sanduiches_classicos_14;SANDUICHES CLASSICOS;X-Burguer Egg;16,00;Pão bola, carne, queijo, ovo, molho especial e salada
+sanduiches_classicos_15;SANDUICHES CLASSICOS;X-Calabresa;15,00;Pão bola, calabresa fatiada, queijo, molho especial e salada
+sanduiches_classicos_16;SANDUICHES CLASSICOS;X-Frango Burguer;17,00;Pão bola, carne, frango, queijo, molho especial e salada
+sanduiches_classicos_17;SANDUICHES CLASSICOS;X-Frango Bacon;19,00;Pão bola, frango desfiado, bacon, queijo, molho especial e salada
+sanduiches_classicos_18;SANDUICHES CLASSICOS;X-Frango;15,00;Pão bola, frango desfiado, queijo, molho especial e salada
+sanduiches_classicos_19;SANDUICHES CLASSICOS;X-Salada;16,00;Pão bola, presunto, carne, queijo, molho especial e salada fresca
+sanduiches_classicos_20;SANDUICHES CLASSICOS;O Quarteirão;24,00;Pão bola, 4 carnes suculentas, 4 fatias de queijo cheddar e molho especial da casa
+sanduiches_artesanais_01;SANDUICHES ARTESANAIS;Supremo Burguer;20,00;Pão brioche, blend bovino artesanal de 150g, queijo cheddar, cebola caramelizada, molho e salada
+sanduiches_artesanais_02;SANDUICHES ARTESANAIS;Supremo Bacon;23,00;Pão brioche, blend bovino de 150g, muçarela, bacon crocante, cebola caramelizada, molho e salada
+sanduiches_artesanais_03;SANDUICHES ARTESANAIS;Supremo Calabresa;23,00;Pão brioche, blend bovino de 150g, muçarela, calabresa, cebola caramelizada, molho e salada
+sanduiches_artesanais_04;SANDUICHES ARTESANAIS;Supremo Cheddar Bacon;23,00;Pão brioche, blend bovino de 150g, queijo cheddar, bacon, cebola caramelizada, molho e salada
+sanduiches_artesanais_05;SANDUICHES ARTESANAIS;Supremo Egg;23,00;Pão brioche, blend bovino de 150g, muçarela, ovo, cebola caramelizada, molho e salada
+sanduiches_artesanais_06;SANDUICHES ARTESANAIS;Supremo Abacaxi;28,00;Pão brioche, blend bovino de 150g, muçarela, bacon, abacaxi grelhado, cebola caramelizada, molho e salada
+sanduiches_artesanais_07;SANDUICHES ARTESANAIS;X-Filé de Frango;17,00;Pão brioche, filé de frango grelhado, queijo coalho, molho especial e salada
+sanduiches_artesanais_08;SANDUICHES ARTESANAIS;X-Filé-Mignon;20,00;Pão brioche, filé-mignon em tiras macias, queijo derretido, molho especial e salada
+sanduiches_artesanais_09;SANDUICHES ARTESANAIS;Big Mek AKY;25,00;Pão brioche, 2 blends bovinos de 100g cada, queijo, picles crocante, cebola caramelizada, molho especial e salada
+combos_especiais_01;COMBOS ESPECIAIS;Combo do Dia;23,99;Batata frita crocante + Sanduíche do dia + Refrigerante pitxulinha
+combos_especiais_02;COMBOS ESPECIAIS;Combo Kids;25,99;Batata frita P + X-Burguer + Refrigerante pitxulinha
+combos_especiais_03;COMBOS ESPECIAIS;Combo do Seu Jeito;28,99;Batata frita P + Sanduíche à sua escolha + Refrigerante pitxulinha ou Milkshake (Opções de sanduíches: x-bacon, americano, x-frango, x-burguer egg, x-burguer, x-calabresa, x-salada, burguer egg, cheddar bacon, x-egg, hambúrguer ou bauru)
+combos_especiais_04;COMBOS ESPECIAIS;Combo Nuggets;32,99;Porção de nuggets crocantes + Sanduíche + Refrigerante pitxulinha ou Milkshake
+combos_especiais_05;COMBOS ESPECIAIS;Combo Especial;31,99;Batata frita P + Sanduíche especial + Refrigerante pitxulinha ou Milkshake (Opções: especial, duplo cheddar bacon, x-burguer bacon, x-burguer calabresa, x-franburguer ou x-franbacon)
+combos_especiais_06;COMBOS ESPECIAIS;Combo Família;53,99;3 X-Burguer Egg + Batata Frita Grande + Coca-Cola de 1 Litro
+combos_especiais_07;COMBOS ESPECIAIS;Combo Pastelão;36,99;Pastelão à escolha + Batata frita P + Refrigerante pitxulinha ou Milkshake
+pizzas_tradicionais_01;PIZZAS TRADICIONAIS;Pizza À Moda da Casa;P:36/M:43/G:52;Molho de tomate, muçarela, frango desfiado, milho, ovo, tomate e orégano
+pizzas_tradicionais_02;PIZZAS TRADICIONAIS;Pizza Amorzinho;P:36/M:43/G:52;Molho de tomate, muçarela, peito de peru, frango, catupiry, cebola, tomate e orégano
+pizzas_tradicionais_03;PIZZAS TRADICIONAIS;Pizza Atum;P:36/M:43/G:52;Molho de tomate, muçarela, atum sólido, cebola, tomate e orégano
+pizzas_tradicionais_04;PIZZAS TRADICIONAIS;Pizza Baconpiry;P:36/M:43/G:52;Molho de tomate, muçarela, bacon em fatias, catupiry, cebola, tomate e orégano
+pizzas_tradicionais_05;PIZZAS TRADICIONAIS;Pizza Bauru;P:36/M:43/G:52;Molho de tomate, muçarela, presunto fatiado, tomate e orégano
+pizzas_tradicionais_06;PIZZAS TRADICIONAIS;Pizza Cachorro Quente;P:36/M:43/G:52;Molho de tomate, muçarela, carne moída ao molho, salsicha, parmesão, batata palha, cebola, tomate e orégano
+pizzas_tradicionais_07;PIZZAS TRADICIONAIS;Pizza Calabrapiry;P:36/M:43/G:52;Molho de tomate, muçarela, calabresa fatiada, catupiry, cebola, tomate e orégano
+pizzas_tradicionais_08;PIZZAS TRADICIONAIS;Pizza Calabresa;P:36/M:43/G:52;Molho de tomate, muçarela, calabresa fatiada, cebola em rodelas, tomate e orégano
+pizzas_tradicionais_09;PIZZAS TRADICIONAIS;Pizza Calabresa Mineira;P:36/M:43/G:52;Molho de tomate, muçarela, calabresa, bacon crocante, milho verde, tomate e orégano
+pizzas_tradicionais_10;PIZZAS TRADICIONAIS;Pizza Crocante;P:36/M:43/G:52;Molho de tomate, muçarela, presunto, bacon, milho verde, batata palha, tomate e orégano
+pizzas_tradicionais_11;PIZZAS TRADICIONAIS;Pizza Frango;P:36/M:43/G:52;Molho de tomate, muçarela, frango desfiado temperado, tomate e orégano
+pizzas_tradicionais_12;PIZZAS TRADICIONAIS;Pizza Frango com Catupiry;P:36/M:43/G:52;Molho de tomate, muçarela, frango desfiado, catupiry cremoso, tomate e orégano
+pizzas_tradicionais_13;PIZZAS TRADICIONAIS;Pizza Frango Xadrez;P:36/M:43/G:52;Molho de tomate, muçarela, frango desfiado, cheddar, catupiry, tomate e orégano
+pizzas_tradicionais_14;PIZZAS TRADICIONAIS;Pizza Frango com Bacon;P:36/M:43/G:52;Molho de tomate, muçarela, frango desfiado, bacon crocante, catupiry, cebola, tomate e orégano
+pizzas_tradicionais_15;PIZZAS TRADICIONAIS;Pizza Frango com Cheddar;P:36/M:43/G:52;Molho de tomate, muçarela, frango desfiado, cheddar cremoso, tomate e orégano
+pizzas_tradicionais_16;PIZZAS TRADICIONAIS;Pizza Havaiana;P:36/M:43/G:52;Molho de tomate, muçarela, lombo canadense, abacaxi em cubos e orégano
+pizzas_tradicionais_17;PIZZAS TRADICIONAIS;Pizza Lombo com Catupiry;P:36/M:43/G:52;Molho de tomate, muçarela, lombo canadense, catupiry, cebola, tomate e orégano
+pizzas_tradicionais_18;PIZZAS TRADICIONAIS;Pizza 4 Queijos;P:36/M:43/G:52;Molho de tomate, muçarela, cheddar, catupiry, parmesão ralado, tomate e orégano
+pizzas_tradicionais_19;PIZZAS TRADICIONAIS;Pizza Mafiosa;P:36/M:43/G:52;Molho de tomate, muçarela, calabresa, milho, bacon, catupiry, cheddar, cebola, tomate e orégano
+pizzas_tradicionais_20;PIZZAS TRADICIONAIS;Pizza Muçarela;P:36/M:43/G:52;Molho de tomate, farta camada de muçarela, rodelas de tomate e orégano
+pizzas_tradicionais_21;PIZZAS TRADICIONAIS;Pizza Palmito;P:36/M:43/G:52;Molho de tomate, muçarela, palmito em rodelas, tomate e orégano
+pizzas_tradicionais_22;PIZZAS TRADICIONAIS;Pizza Portuguesa;P:36/M:43/G:52;Molho de tomate, muçarela, presunto, ovo cozido, milho, pimentão, cebola, tomate e orégano
+pizzas_tradicionais_23;PIZZAS TRADICIONAIS;Pizza Sertaneja;P:36/M:43/G:52;Molho de tomate, muçarela, carne de sol desfiada, queijo coalho fatiado, cebola, tomate e orégano
+pizzas_tradicionais_24;PIZZAS TRADICIONAIS;Pizza Teixeirense;P:36/M:43/G:52;Molho de tomate, muçarela, carne de sol da terra, cebola refogada, tomate e orégano
+pizzas_doces_01;PIZZAS DOCES;Pizza Doce de Abacaxi;P:36/M:43/G:52;Muçarela, abacaxi em pedaços, leite condensado e canela em pó
+pizzas_doces_02;PIZZAS DOCES;Pizza Doce de Banana;P:36/M:43/G:52;Muçarela, banana fatiada, leite condensado e canela em pó
+pizzas_doces_03;PIZZAS DOCES;Pizza Doce de Chocolate;P:36/M:43/G:52;Muçarela, chocolate cremoso e confetes coloridos
+pizzas_doces_04;PIZZAS DOCES;Pizza Doce Prestígio;P:36/M:43/G:52;Muçarela, chocolate ao leite e flocos de coco ralado
+pizzas_doces_05;PIZZAS DOCES;Pizza Doce Romeu e Julieta;P:36/M:43/G:52;Muçarela, goiabada cremosa e queijo coalho fatiado
+pizzas_doces_06;PIZZAS DOCES;Pizza Doce Chocolate ao Leite;P:36/M:43/G:52;Muçarela e farta cobertura de chocolate ao leite
+pizzas_doces_07;PIZZAS DOCES;Pizza Doce Chocolate Branco;P:36/M:43/G:52;Muçarela e farta cobertura de chocolate branco nobre
+pizzas_doces_08;PIZZAS DOCES;Pizza Doce Dois Amores;P:36/M:43/G:52;Muçarela, mesclado especial de chocolate ao leite e chocolate branco
+bebidas_01;BEBIDAS;Água Mineral sem Gás;3,00;Garrafa de água mineral 500ml
+bebidas_02;BEBIDAS;Água Mineral com Gás;4,00;Garrafa de água mineral gaseificada 500ml
+bebidas_03;BEBIDAS;Água Tônica;6,00;Lata de água tônica
+bebidas_04;BEBIDAS;H2OH!;8,00;Garrafa H2OH! Citrus / Limão
+bebidas_05;BEBIDAS;Refrigerante Pitxulinha;5,00;Garrafinha de refrigerante caçulinha / pitxula
+bebidas_06;BEBIDAS;Refrigerante Lata;7,00;Refrigerante em lata 350ml (Coca-Cola, Guaraná, Fanta)
+bebidas_07;BEBIDAS;Coca-Cola NS;5,00;Garrafa de Coca-Cola Não Retornável
+bebidas_08;BEBIDAS;Coca-Cola KS;6,00;Garrafa de vidro tradicional 290ml
+bebidas_09;BEBIDAS;Refrigerante 500/600 ml;8,00;Garrafa de refrigerante 500ml a 600ml
+bebidas_10;BEBIDAS;Refrigerante 1 Litro;12,00;Garrafa de refrigerante 1L
+bebidas_11;BEBIDAS;Refrigerante 2 Litros;20,00;Garrafa de refrigerante 2L para família
+sucos_01;SUCOS;Suco Natural de Abacaxi;10,00;Suco natural feito na hora (Polpa ou fruta)
+sucos_02;SUCOS;Suco Natural de Abacaxi com Hortelã;10,00;Suco refrescante de abacaxi com folhas frescas de hortelã
+sucos_03;SUCOS;Suco Natural de Acerola;10,00;Suco rico em vitamina C feito na hora
+sucos_04;SUCOS;Suco Natural de Açaí;10,00;Suco cremoso e energético de açaí puro
+sucos_05;SUCOS;Suco Natural de Ameixa;10,00;Suco natural de ameixa selecionada
+sucos_06;SUCOS;Suco Natural de Banana;10,00;Vitamina/suco cremoso de banana
+sucos_07;SUCOS;Suco Natural de Cajá;10,00;Sabor típico do Nordeste, refrescante e cítrico
+sucos_08;SUCOS;Suco Natural de Caju;10,00;Suco natural de caju selecionado
+sucos_09;SUCOS;Suco Natural de Cupuaçu;10,00;Sabor marcante e aroma tropical do cupuaçu
+sucos_10;SUCOS;Suco Natural de Goiaba;10,00;Suco cremoso de goiaba fresca
+sucos_11;SUCOS;Suco Natural de Graviola;10,00;Suco suave e aveludado de graviola
+sucos_12;SUCOS;Suco Guarabom com Açaí;10,00;Misto energético de guaraná com açaí
+sucos_13;SUCOS;Suco Guarabom com Morango;10,00;Misto refrescante de guaraná com morango
+sucos_14;SUCOS;Suco Guarabom com Mel;10,00;Misto revigorante de guaraná com mel puro
+sucos_15;SUCOS;Suco Natural de Laranja;10,00;Suco da fruta espremido na hora
+sucos_16;SUCOS;Limonada Suíça;10,00;Limonada fresca e refrescante
+sucos_17;SUCOS;Suco Natural de Manga;10,00;Suco encorpado e doce de manga
+sucos_18;SUCOS;Suco Natural de Mangaba;10,00;Sabor nativo e aromático de mangaba
+sucos_19;SUCOS;Suco Natural de Maracujá;10,00;Suco calmante e refrescante de maracujá puro
+sucos_20;SUCOS;Suco Natural de Morango;10,00;Suco feito com morangos frescos selecionados
+sucos_21;SUCOS;Suco Natural de Uva;10,00;Suco natural integral de uva
+sucos_22;SUCOS;Suco Misto (Duas Frutas);12,00;Combinação especial de até dois sabores de frutas da sua escolha
+adicionais_01;ADICIONAIS;Adicional de Carne Tradicional;5,00;
+adicionais_02;ADICIONAIS;Adicional de Carne Artesanal 100g;8,00;
+adicionais_03;ADICIONAIS;Adicional de Carne Artesanal 150g;12,00;
+adicionais_04;ADICIONAIS;Adicional de Bacon;5,00;
+adicionais_05;ADICIONAIS;Adicional de Calabresa;5,00;
+adicionais_06;ADICIONAIS;Adicional de Frango;5,00;
+adicionais_07;ADICIONAIS;Adicional de Carne de Sol;5,00;
+adicionais_08;ADICIONAIS;Adicional de Presunto;4,00;
+adicionais_09;ADICIONAIS;Adicional de Muçarela;5,00;
+adicionais_10;ADICIONAIS;Adicional de Queijo Manteiga;4,00;
+adicionais_11;ADICIONAIS;Adicional de Queijo Coalho;5,00;
+adicionais_12;ADICIONAIS;Adicional de Catupiry;4,00;
+adicionais_13;ADICIONAIS;Adicional de Cheddar;4,00;
+adicionais_14;ADICIONAIS;Adicional de Ovo;3,00;
+adicionais_15;ADICIONAIS;Adicional de Salada;3,00;

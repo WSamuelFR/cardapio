@@ -1,0 +1,60 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+:root {
+    --aky-primary: #d62828;
+    --aky-primary-hover: #b71c1c;
+    --aky-secondary: #f77f00;
+    --aky-accent: #fcbf49;
+    --aky-dark: #1f1f1f;
+    --aky-light: #fdfbf7;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #212529;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.bg-aky-primary {
+    background-color: var(--aky-primary) !important;
+}
+
+.text-aky-primary {
+    color: var(--aky-primary) !important;
+}
+
+.btn-aky-primary {
+    background-color: var(--aky-primary);
+    border-color: var(--aky-primary);
+    color: #ffffff;
+}
+
+.btn-aky-primary:hover, .btn-aky-primary:focus {
+    background-color: var(--aky-primary-hover);
+    border-color: var(--aky-primary-hover);
+    color: #ffffff;
+}
+
+.badge-aky-accent {
+    background-color: var(--aky-accent);
+    color: #000000;
+}
+
+.aky-logo {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+}
+
+.aky-card {
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.aky-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}

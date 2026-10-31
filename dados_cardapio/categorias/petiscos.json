@@ -1,0 +1,106 @@
+[
+  {
+    "id": "petiscos_01",
+    "categoria": "PETISCOS",
+    "nome": "Batatinha Frita",
+    "descricao": "Porção de batatas fritas crocantes e sequinhas",
+    "preco": 25,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_02",
+    "categoria": "PETISCOS",
+    "nome": "Batatinha Frita com Calabresa",
+    "descricao": "Batata frita crocante acompanhada de calabresa fatiada acebolada",
+    "preco": 32,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_03",
+    "categoria": "PETISCOS",
+    "nome": "Batatinha Frita Especial",
+    "descricao": "Batata frita coberta com fatias crocantes de bacon e generoso cheddar cremoso",
+    "preco": 35,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_04",
+    "categoria": "PETISCOS",
+    "nome": "Calabresa Acebolada",
+    "descricao": "Porção de calabresa fatiada frita com cebolas douradas",
+    "preco": 25,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_05",
+    "categoria": "PETISCOS",
+    "nome": "Carne de Sol com Macaxeira",
+    "descricao": "Carne de sol da terra refogada com macaxeira cozida e frita na manteiga",
+    "preco": 52,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_06",
+    "categoria": "PETISCOS",
+    "nome": "Carne de Sol na Nata",
+    "descricao": "Carne de sol desfiada cozida no molho de nata sertaneja",
+    "preco": 52,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_07",
+    "categoria": "PETISCOS",
+    "nome": "Costelinha de Porco",
+    "descricao": "Porção de costelinha suína frita crocante e temperada",
+    "preco": 35,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_08",
+    "categoria": "PETISCOS",
+    "nome": "Filé Bovino com Batatinha Frita",
+    "descricao": "Tiras de filé bovino acebolado acompanhado de batatas fritas",
+    "preco": 52,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_09",
+    "categoria": "PETISCOS",
+    "nome": "Frango à Passarinho com Batatinha Frita",
+    "descricao": "Frango em pedaços crocante frito à passarinho com batata frita",
+    "preco": 48,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_10",
+    "categoria": "PETISCOS",
+    "nome": "Peixe Frito",
+    "descricao": "Postas de peixe temperadas e fritas douradas",
+    "preco": 70,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_11",
+    "categoria": "PETISCOS",
+    "nome": "Mistão",
+    "descricao": "Tiras de carne bovina, calabresa acebolada e batatinha frita",
+    "preco": 55,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_12",
+    "categoria": "PETISCOS",
+    "nome": "Queijo Coalho Assado",
+    "descricao": "Porção de queijo coalho assado na chapa",
+    "preco": 22,
+    "disponivel": true
+  },
+  {
+    "id": "petiscos_13",
+    "categoria": "PETISCOS",
+    "nome": "Queijo Coalho com Azeitona",
+    "descricao": "Queijo coalho em cubos assado acompanhado de azeitonas verdes",
+    "preco": 29,
+    "disponivel": true
+  }
+]

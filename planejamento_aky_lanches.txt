@@ -1,0 +1,492 @@
+PLANEJAMENTO DE DESENVOLVIMENTO WEB PROJETO: AKY LANCHES Sistema:
+Cardápio digital e gerenciamento de pedidos
+
+============================================================ 1. VISÃO
+GERAL DO PROJETO
+============================================================
+
+O AKY LANCHES será um site de cardápio digital no qual os clientes
+poderão consultar produtos disponíveis, montar seus pedidos e informar
+os dados necessários para entrega, sem precisar criar uma conta ou
+cadastrar uma senha.
+
+O sistema terá uma área administrativa protegida por login e senha, com
+níveis de acesso diferentes para administrador e atendente. O
+administrador será responsável pelos produtos, usuários e gerenciamento
+geral dos pedidos. O atendente poderá consultar e atualizar os pedidos,
+sem acesso à administração de produtos e usuários.
+
+OBJETIVOS PRINCIPAIS - Oferecer uma experiência rápida, simples e leve
+para o cliente. - Permitir pedidos sem cadastro obrigatório. - Solicitar
+nome, telefone e endereço somente no momento de finalizar o pedido,
+quando esses dados ainda não estiverem disponíveis na sessão atual. -
+Encaminhar os pedidos confirmados para o painel interno. - Facilitar a
+atualização de produtos, disponibilidade e preços. - Proteger as áreas
+administrativas por autenticação e controle de permissões.
+
+============================================================ 2.
+TECNOLOGIAS ============================================================
+
+Backend: - Laravel: regras de negócio, autenticação, validação, acesso
+ao banco e processamento dos pedidos.
+
+Frontend: - Vue.js: componentes interativos do cardápio, carrinho,
+formulários e painéis internos. - Bootstrap 5: layout responsivo,
+componentes visuais e adaptação para celular, tablet e computador. -
+JavaScript: interações complementares quando necessário.
+
+Banco de dados: - MySQL ou MariaDB.
+
+Ferramentas recomendadas: - Composer para dependências PHP. - Node.js e
+npm para dependências do frontend. - Vite para compilar e servir os
+recursos do frontend. - Git para versionamento do código.
+
+A versão do Laravel e do Vue.js deverá ser escolhida no início do
+projeto, priorizando versões estáveis e compatíveis entre si.
+
+============================================================ 3. PERFIS E
+NÍVEIS DE ACESSO
+============================================================
+
+3.1. Administrador - Entrar no painel por login e senha. - Cadastrar,
+editar e desativar atendentes. - Gerenciar produtos. - Cadastrar e
+editar nome, foto, descrição opcional, preço, categoria e
+disponibilidade dos produtos. - Consultar todos os pedidos. - Atualizar
+o status dos pedidos. - Acessar indicadores básicos, como pedidos
+recentes e produtos mais pedidos, caso essa funcionalidade seja
+implementada. - Não permitir que um usuário sem permissão acesse as
+funções administrativas.
+
+3.2. Atendente - Entrar no painel por login e senha. - Visualizar os
+pedidos recebidos. - Consultar os itens, quantidades, valores e dados de
+entrega. - Atualizar o status dos pedidos conforme o fluxo operacional
+definido. - Não cadastrar, editar ou excluir produtos. - Não cadastrar
+usuários nem alterar permissões. - Não acessar funções exclusivas do
+administrador.
+
+3.3. Cliente - Acessar o cardápio sem login. - Visualizar produtos
+disponíveis, categorias, promoções e itens populares. - Pesquisar
+produtos. - Adicionar, remover e alterar quantidades no carrinho. -
+Informar nome, telefone e endereço ao finalizar o primeiro pedido da
+sessão, se ainda não tiver informado esses dados. - Fazer novos pedidos
+durante a sessão sem precisar digitar novamente os dados, enquanto eles
+permanecerem disponíveis no navegador. - Não acessar páginas
+administrativas.
+
+IMPORTANTE SOBRE PERMISSÕES: A autorização deve ser validada no backend,
+em cada rota e ação protegida. Ocultar botões no frontend não é
+suficiente. O sistema deve negar operações não permitidas mesmo que
+alguém tente acessar uma URL diretamente.
+
+============================================================ 4. CRIAÇÃO
+INICIAL DO ADMINISTRADOR
+============================================================
+
+Será criado um seeder para cadastrar o primeiro administrador do
+sistema.
+
+Requisitos: - O seeder deverá criar o administrador inicial de maneira
+controlada. - A senha deverá ser armazenada com hash seguro, nunca em
+texto puro. - O processo deverá evitar criar administradores duplicados
+quando for executado novamente. - Credenciais iniciais não deverão ficar
+expostas no repositório ou no código público. - Recomenda-se utilizar
+variáveis de ambiente ou um procedimento seguro de configuração
+inicial. - Após a configuração, o administrador poderá entrar no painel
+e cadastrar os atendentes.
+
+O cadastro de atendentes deverá ser feito exclusivamente por um
+administrador autenticado.
+
+============================================================ 5.
+FUNCIONALIDADES DO CARDÁPIO PÚBLICO
+============================================================
+
+5.1. Página inicial A página inicial deverá apresentar: - Identidade
+visual e nome AKY LANCHES. - Barra de busca de produtos. - Categorias do
+cardápio. - Seção de produtos mais pedidos. - Seção de promoções
+ativas. - Acesso fácil ao carrinho. - Preço dos produtos em destaque. -
+Indicação clara de produtos indisponíveis, preferencialmente sem
+permitir que sejam adicionados ao carrinho. - Layout responsivo,
+priorizando o uso em celulares.
+
+Os produtos mais pedidos deverão ser calculados a partir dos pedidos
+registrados no sistema. Se ainda não houver histórico suficiente, a
+seção poderá exibir uma mensagem apropriada ou ser ocultada até que
+existam dados.
+
+5.2. Categorias O administrador poderá organizar os produtos por
+categoria. Exemplos iniciais: - Pastéis. - Sucos. - Salgados.
+
+A lista de categorias deverá seguir uma ordem definida no sistema. A
+ordem poderá ser configurada pelo administrador em uma etapa posterior,
+se isso fizer parte do escopo aprovado.
+
+5.3. Produtos Cada produto deverá conter, no mínimo: - Nome. - Foto. -
+Preço. - Disponibilidade. - Categoria.
+
+Campo opcional recomendado: - Descrição curta.
+
+Regras: - Produtos indisponíveis não poderão ser adicionados a novos
+pedidos. - O preço deverá ser validado no servidor. - O sistema deverá
+utilizar o preço registrado no banco no momento de confirmar o pedido, e
+não confiar no valor enviado pelo navegador. - A foto deverá ser
+validada por tipo e tamanho e armazenada em local apropriado. - Produtos
+já associados a pedidos anteriores não deverão perder seu histórico se
+forem desativados.
+
+5.4. Promoções A página inicial terá uma área para promoções. A regra de
+funcionamento deverá ser definida antes da implementação.
+
+Escopo mínimo sugerido: - Permitir marcar produtos como promocionais. -
+Exibir o preço promocional quando houver uma promoção ativa. - Registrar
+no pedido o preço efetivamente aplicado.
+
+Se forem necessárias datas de início e término, cupons ou regras
+promocionais mais complexas, isso deverá ser tratado como funcionalidade
+adicional.
+
+============================================================ 6. CARRINHO
+DE COMPRAS ============================================================
+
+O cliente deverá poder: - Adicionar produtos ao carrinho. - Aumentar ou
+diminuir a quantidade de cada item. - Remover itens. - Continuar
+comprando e retornar ao carrinho. - Visualizar subtotal por item e total
+do pedido. - Verificar os produtos escolhidos antes de finalizar.
+
+Regras: - Não permitir quantidade inválida ou igual a zero. - Não
+permitir concluir um pedido com o carrinho vazio. - Revalidar
+disponibilidade e preço no backend durante a finalização. - Se um
+produto ficar indisponível ou mudar de preço antes da confirmação,
+informar o cliente e solicitar que revise o pedido. - O carrinho poderá
+ser mantido no navegador durante a sessão ou por armazenamento local,
+conforme a decisão técnica. Dados pessoais não devem ser gravados em
+armazenamento persistente sem uma necessidade clara e uma política de
+privacidade adequada.
+
+============================================================ 7.
+IDENTIFICAÇÃO E DADOS DE ENTREGA DO CLIENTE
+============================================================
+
+O cliente não terá que criar conta nem definir senha.
+
+Fluxo esperado: 1. O cliente abre o cardápio. 2. Escolhe os produtos e
+monta o carrinho. 3. Clica em “Finalizar pedido”. 4. O sistema verifica
+se nome, telefone e endereço já foram informados na sessão atual. 5. Se
+os dados não estiverem disponíveis, exibe um formulário solicitando: -
+Nome. - Telefone. - Endereço completo para entrega. 6. O endereço deverá
+permitir informações suficientes para localizar o destino. Campos
+complementares, como número, bairro, complemento e ponto de referência,
+podem ser incluídos para reduzir erros de entrega. 7. O sistema valida
+os dados e mostra um resumo final do pedido. 8. O cliente confirma a
+finalização. 9. O backend valida os itens, preços, quantidades e
+disponibilidade. 10. O pedido é gravado no banco de dados. 11. O cliente
+recebe uma confirmação com o número ou código do pedido. 12. O pedido
+aparece no painel de gerenciamento para administrador e atendentes
+autorizados.
+
+DADOS REUTILIZADOS: Nome, telefone e endereço poderão ser mantidos
+temporariamente durante a sessão para facilitar pedidos seguintes. O
+sistema deverá definir claramente quando esses dados expiram e como
+serão apagados.
+
+A sessão não equivale a uma conta de cliente. Se o cliente fechar o
+navegador, trocar de dispositivo ou perder a sessão, poderá ser
+necessário informar novamente os dados.
+
+PRIVACIDADE: Coletar somente os dados necessários para processar e
+entregar o pedido. Informar ao cliente como os dados serão utilizados e
+protegidos. Definir regras de retenção e acesso aos dados conforme a
+legislação aplicável, incluindo a LGPD.
+
+============================================================ 8. REGISTRO
+E ESTRUTURA DO PEDIDO
+============================================================
+
+Cada pedido deverá registrar: - Código ou número único do pedido. - Data
+e hora de criação. - Nome do cliente. - Telefone do cliente. - Endereço
+de entrega. - Itens solicitados. - Quantidade de cada item. - Preço
+unitário aplicado no momento da compra. - Subtotal de cada item. - Valor
+total do pedido. - Status atual. - Observação opcional, se aprovada no
+escopo.
+
+É importante guardar uma cópia do nome do produto e do preço aplicado em
+cada item do pedido. Dessa forma, alterações futuras no cadastro de
+produtos não modificarão pedidos antigos.
+
+Status iniciais sugeridos: - Recebido. - Em preparação. - Saiu para
+entrega. - Concluído. - Cancelado.
+
+Os status finais e as transições permitidas deverão ser alinhados com a
+operação real do AKY LANCHES. Por exemplo, um pedido concluído não
+deverá voltar para “Recebido” sem uma regra específica.
+
+O sistema deverá impedir que uma falha ou clique repetido gere pedidos
+duplicados. A gravação do pedido e de seus itens deverá ocorrer em uma
+transação de banco de dados, garantindo consistência.
+
+============================================================ 9. PAINEL
+DE GERENCIAMENTO DE PEDIDOS
+============================================================
+
+O painel deverá permitir visualizar os pedidos em uma lista organizada.
+
+Informações resumidas: - Número do pedido. - Data e hora. - Nome do
+cliente. - Total. - Status.
+
+Ao abrir um pedido, o usuário autorizado poderá consultar: - Todos os
+produtos e quantidades. - Preços e total. - Telefone. - Endereço de
+entrega. - Histórico ou status atual.
+
+Ações: - Alterar o status conforme as permissões. - Filtrar pedidos por
+status. - Consultar pedidos recentes. - Abrir os detalhes de um pedido.
+
+A tela deverá ser simples e adequada para uso durante o atendimento, com
+destaque visual para pedidos recém-recebidos.
+
+ATUALIZAÇÃO DOS PEDIDOS: Na primeira versão, o painel poderá consultar
+novos pedidos periodicamente ou permitir atualização manual. Atualização
+em tempo real com WebSockets poderá ser adicionada posteriormente, se
+for necessária e compatível com a hospedagem escolhida.
+
+============================================================ 10. ÁREA
+ADMINISTRATIVA
+============================================================
+
+10.1. Login - Formulário com usuário ou e-mail e senha, conforme a
+decisão de implementação. - Validação de credenciais. - Mensagens de
+erro sem revelar informações sensíveis. - Proteção contra tentativas
+excessivas de login. - Encerramento de sessão. - Proteção de rotas
+privadas.
+
+10.2. Gestão de atendentes - Cadastrar atendente. - Definir nome,
+identificador de login e senha inicial. - Editar dados permitidos. -
+Desativar o acesso quando necessário. - Permitir redefinição segura de
+senha.
+
+10.3. Gestão de produtos - Cadastrar produto. - Editar produto. - Enviar
+ou substituir foto. - Definir categoria e preço. - Marcar como
+disponível ou indisponível. - Definir se aparece em promoção, caso essa
+funcionalidade seja aprovada.
+
+10.4. Gestão de pedidos - Consultar pedidos. - Ver detalhes. - Atualizar
+status conforme o perfil. - Pesquisar ou filtrar pedidos.
+
+============================================================ 11.
+MODELAGEM INICIAL DO BANCO DE DADOS
+============================================================
+
+A estrutura abaixo é uma proposta inicial. Os nomes definitivos deverão
+seguir as convenções do projeto Laravel.
+
+11.1. users Para administradores e atendentes: - id. - name. - email ou
+username, conforme o login escolhido. - password. - role (admin ou
+attendant). - is_active. - timestamps.
+
+A senha deverá ser armazenada com hash. A aplicação deverá validar o
+perfil e o estado ativo do usuário.
+
+11.2. categories - id. - name. - slug, se necessário. - sort_order. -
+is_active. - timestamps.
+
+11.3. products - id. - category_id. - name. - description, opcional. -
+photo_path. - price. - is_available. - is_featured ou is_promotion,
+conforme o escopo. - timestamps.
+
+11.4. orders - id. - order_number ou código público único. -
+customer_name. - customer_phone. - delivery_address. -
+delivery_complement, opcional. - delivery_reference, opcional. -
+status. - total. - notes, opcional. - timestamps.
+
+11.5. order_items - id. - order_id. - product_id, podendo ser nulo se a
+política de exclusão permitir. - product_name_snapshot. - quantity. -
+unit_price. - subtotal. - timestamps.
+
+As colunas de snapshot preservam o nome e o preço do produto no momento
+do pedido.
+
+OBSERVAÇÕES SOBRE O BANCO: - Utilizar chaves estrangeiras e índices
+adequados. - Definir política de exclusão: preferir desativar produtos e
+usuários em vez de apagar registros que precisem ser preservados. - Usar
+tipos decimais apropriados para valores monetários. - Criar migrations
+para versionar a estrutura do banco. - Criar factories e seeders para
+dados de desenvolvimento e testes. - O seeder do administrador inicial
+deverá ser seguro para execução repetida.
+
+============================================================ 12.
+ARQUITETURA E ORGANIZAÇÃO DO CÓDIGO
+============================================================
+
+Backend Laravel: - Models para usuários, categorias, produtos, pedidos e
+itens do pedido. - Migrations para tabelas e relacionamentos. - Seeders
+para configuração inicial. - Controllers separados por
+responsabilidade. - Form Requests ou mecanismo equivalente para
+validação. - Policies, Gates ou middleware para controle de
+permissões. - Rotas públicas para o cardápio e criação de pedidos. -
+Rotas protegidas para painel, produtos, usuários e gerenciamento de
+pedidos. - Serviços ou classes de domínio para centralizar regras
+importantes, como finalização de pedidos e cálculo de valores.
+
+Frontend Vue.js: - Componentes reutilizáveis. - Páginas públicas
+separadas do painel interno. - Estado do carrinho centralizado de forma
+simples. - Formulários com validação e mensagens claras. - Interface
+responsiva usando Bootstrap 5. - Estados de carregamento, erro, vazio e
+sucesso.
+
+A API ou camada de comunicação deverá retornar respostas consistentes e
+não expor dados internos desnecessários. O backend será sempre a fonte
+confiável para preços, permissões e confirmação dos pedidos.
+
+============================================================ 13.
+SEGURANÇA E CONFIABILIDADE
+============================================================
+
+-   Utilizar HTTPS em produção.
+-   Nunca armazenar senhas em texto puro.
+-   Validar todos os dados recebidos no backend.
+-   Aplicar autenticação e autorização em rotas protegidas.
+-   Proteger operações contra CSRF quando aplicável à arquitetura
+    escolhida.
+-   Aplicar limitação de tentativas de login e, se necessário, de envio
+    de pedidos.
+-   Validar formato e tamanho de imagens enviadas.
+-   Evitar exposição pública de arquivos e dados internos.
+-   Não confiar em preços, totais, permissões ou status enviados pelo
+    navegador.
+-   Registrar erros no log sem expor informações sensíveis ao cliente.
+-   Fazer backup do banco de dados e testar a recuperação.
+-   Proteger informações pessoais de clientes e limitar o acesso aos
+    funcionários autorizados.
+-   Manter dependências e framework atualizados.
+
+============================================================ 14.
+DESEMPENHO E EXPERIÊNCIA DO CLIENTE
+============================================================
+
+Como o diferencial é ser rápido e leve: - Priorizar um layout
+mobile-first. - Comprimir e redimensionar imagens dos produtos. -
+Utilizar formatos modernos de imagem quando possível. - Carregar imagens
+de maneira otimizada. - Evitar bibliotecas desnecessárias. - Paginar ou
+limitar listas extensas. - Utilizar consultas eficientes e índices no
+banco. - Evitar recarregamentos completos desnecessários. - Exibir
+mensagens objetivas e botões claros. - Manter o fluxo de compra curto,
+com o mínimo de campos necessários. - Garantir que o cardápio continue
+utilizável em telas pequenas e conexões lentas.
+
+============================================================ 15. ETAPAS
+DE DESENVOLVIMENTO
+============================================================
+
+ETAPA 1 — Definição do escopo - Confirmar categorias iniciais. - Definir
+se haverá descrição dos produtos. - Definir regras de promoções. -
+Definir status dos pedidos. - Definir quais campos compõem o endereço. -
+Definir como o cliente receberá a confirmação do pedido. - Definir se o
+pagamento será somente na entrega/retirada ou se haverá integração de
+pagamento. Integrações financeiras não estão incluídas automaticamente
+neste escopo. - Definir hospedagem e domínio.
+
+ETAPA 2 — Preparação do projeto - Criar o repositório Git. - Configurar
+Laravel. - Configurar Vue.js e Vite. - Instalar e configurar Bootstrap
+5. - Configurar conexão com o banco de dados. - Preparar ambientes de
+desenvolvimento e produção.
+
+ETAPA 3 — Banco de dados e autenticação - Criar migrations. - Criar
+Models e relacionamentos. - Implementar login e logout. - Implementar
+perfis e permissões. - Criar seeder seguro para o administrador
+inicial. - Testar acessos permitidos e negados.
+
+ETAPA 4 — Administração de produtos e categorias - Criar CRUD de
+categorias. - Criar CRUD de produtos. - Implementar envio e validação de
+fotos. - Implementar preço e disponibilidade. - Testar produtos
+disponíveis e indisponíveis.
+
+ETAPA 5 — Cardápio público - Criar página inicial. - Criar busca. -
+Criar listagem por categoria. - Criar seção de mais pedidos. - Criar
+seção de promoções. - Implementar layout responsivo e otimização das
+imagens.
+
+ETAPA 6 — Carrinho e finalização - Implementar inclusão, remoção e
+alteração de quantidades. - Calcular e exibir os valores. - Criar
+formulário de dados de entrega. - Manter os dados temporariamente
+durante a sessão. - Implementar revisão final do pedido. - Validar
+preços e disponibilidade novamente no backend. - Gravar pedido e itens
+em transação. - Exibir confirmação ao cliente.
+
+ETAPA 7 — Painel de pedidos - Criar listagem de pedidos. - Criar
+visualização detalhada. - Implementar filtros por status. - Implementar
+atualização de status. - Restringir as ações conforme o perfil. -
+Implementar atualização manual ou periódica da lista.
+
+ETAPA 8 — Gestão de atendentes - Implementar cadastro pelo
+administrador. - Implementar edição e desativação. - Garantir que
+atendentes não tenham acesso às funções administrativas.
+
+ETAPA 9 — Testes - Testar o fluxo completo em celular e computador. -
+Testar carrinho vazio e quantidades inválidas. - Testar produto
+indisponível. - Testar alteração de preço antes da confirmação. - Testar
+dados de entrega inválidos. - Testar tentativas de acesso sem login. -
+Testar permissões de administrador e atendente. - Testar cliques
+repetidos e prevenção de pedidos duplicados. - Testar falhas de rede e
+mensagens de erro. - Testar persistência e expiração dos dados de
+sessão.
+
+ETAPA 10 — Publicação - Configurar ambiente de produção. - Configurar
+variáveis de ambiente e credenciais seguras. - Executar migrations. -
+Configurar armazenamento de imagens. - Configurar HTTPS. - Configurar
+backups. - Realizar testes finais com pedidos reais controlados. -
+Orientar administrador e atendentes sobre o uso do painel.
+
+============================================================ 16.
+CRITÉRIOS DE ACEITAÇÃO
+============================================================
+
+O projeto poderá ser considerado pronto para a primeira versão quando: -
+O cliente conseguir consultar o cardápio sem criar conta. - A busca e as
+categorias exibirem os produtos corretamente. - Produtos indisponíveis
+não puderem ser pedidos. - O cliente conseguir adicionar, remover e
+alterar itens no carrinho. - O sistema solicitar nome, telefone e
+endereço quando necessário. - Os dados de entrega puderem ser
+reutilizados durante a sessão atual. - O pedido confirmado for salvo com
+itens, quantidades, preços e total corretos. - O pedido aparecer no
+painel interno. - Administradores puderem gerenciar produtos e
+atendentes. - Atendentes puderem gerenciar pedidos, sem acesso à gestão
+de produtos e usuários. - O sistema bloquear acessos não autorizados no
+backend. - A interface funcionar em celular e computador. - Os
+principais erros de validação forem tratados com mensagens claras.
+
+============================================================ 17.
+FUNCIONALIDADES FORA DO ESCOPO INICIAL
+============================================================
+
+Para manter a primeira versão simples e leve, os itens abaixo devem ser
+tratados como melhorias futuras, salvo aprovação explícita: - Cadastro e
+login de clientes. - Aplicativo móvel nativo. - Pagamento online. -
+Integração com WhatsApp ou envio automático de mensagens. - Rastreamento
+de entregador em mapa. - Programa de fidelidade e cupons complexos. -
+Impressão automática de comandas. - Integração com impressoras
+térmicas. - Relatórios financeiros avançados. - Notificações em tempo
+real por WebSockets. - Múltiplas lojas ou franquias.
+
+============================================================ 18. RESUMO
+DO FLUXO PRINCIPAL
+============================================================
+
+CLIENTE: Acessa o AKY LANCHES -> Pesquisa ou navega pelas categorias ->
+Escolhe produtos -> Ajusta o carrinho -> Clica em finalizar -> Informa
+nome, telefone e endereço se necessário -> Confere e confirma o pedido
+-> Recebe confirmação do pedido
+
+SISTEMA: Valida dados e produtos -> Confere disponibilidade e preços no
+banco -> Calcula os valores no servidor -> Salva pedido e itens em uma
+transação -> Gera código do pedido -> Disponibiliza o pedido no painel
+interno
+
+ATENDENTE: Entra com login e senha -> Visualiza pedidos -> Abre os
+detalhes -> Atualiza o status conforme o andamento
+
+ADMINISTRADOR: Entra com login e senha -> Gerencia produtos e categorias
+-> Cadastra e desativa atendentes -> Consulta e gerencia pedidos ->
+Mantém o funcionamento do sistema
+
+============================================================ FIM DO
+PLANEJAMENTO PROJETO: AKY LANCHES
+============================================================

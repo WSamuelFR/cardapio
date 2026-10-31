@@ -1,0 +1,162 @@
+[
+  {
+    "id": "sanduiches_classicos_01",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Americano",
+    "descricao": "Pão bola, ovo, queijo, presunto, molho especial e salada",
+    "preco": 15,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_02",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Bauru",
+    "descricao": "Pão de forma, queijo, presunto, molho especial e salada",
+    "preco": 9,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_03",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Cheddar Bacon",
+    "descricao": "Pão bola, carne, bacon, cheddar, molho especial e cebola ao shoyu",
+    "preco": 16,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_04",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Duplo Cheddar Bacon",
+    "descricao": "Pão bola, dobro de carne, dobro de bacon, dobro de cheddar, molho especial e cebola ao shoyu",
+    "preco": 21,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_05",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Especial",
+    "descricao": "Pão bola, carne, queijo, bacon, presunto, ovo, salsicha, molho especial e salada",
+    "preco": 21,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_06",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Hambúrguer",
+    "descricao": "Pão bola, carne bovina, molho especial e salada",
+    "preco": 11,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_07",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Misto Quente",
+    "descricao": "Pão de forma tostado com queijo e presunto",
+    "preco": 7.5,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_08",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Sanduíche de Queijo",
+    "descricao": "Pão bola ou de forma com queijo manteiga, coalho ou muçarela",
+    "preco": 7,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_09",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "Super Tudo AKY Lanches",
+    "descricao": "Pão bola, dobro de carne, queijo, bacon, calabresa, ovo, presunto, salsicha, cheddar, milho, ervilha, molho especial e salada",
+    "preco": 26,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_10",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Bacon",
+    "descricao": "Pão bola, bacon crocante, queijo, molho especial e salada",
+    "preco": 15,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_11",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Burguer",
+    "descricao": "Pão bola, carne, queijo, molho especial e salada",
+    "preco": 13,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_12",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Burguer Bacon",
+    "descricao": "Pão bola, carne, bacon, queijo, molho especial e salada",
+    "preco": 17,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_13",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Burguer Calabresa",
+    "descricao": "Pão bola, carne, calabresa, queijo, molho especial e salada",
+    "preco": 17,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_14",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Burguer Egg",
+    "descricao": "Pão bola, carne, queijo, ovo, molho especial e salada",
+    "preco": 16,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_15",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Calabresa",
+    "descricao": "Pão bola, calabresa fatiada, queijo, molho especial e salada",
+    "preco": 15,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_16",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Frango Burguer",
+    "descricao": "Pão bola, carne, frango, queijo, molho especial e salada",
+    "preco": 17,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_17",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Frango Bacon",
+    "descricao": "Pão bola, frango desfiado, bacon, queijo, molho especial e salada",
+    "preco": 19,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_18",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Frango",
+    "descricao": "Pão bola, frango desfiado, queijo, molho especial e salada",
+    "preco": 15,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_19",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "X-Salada",
+    "descricao": "Pão bola, presunto, carne, queijo, molho especial e salada fresca",
+    "preco": 16,
+    "disponivel": true
+  },
+  {
+    "id": "sanduiches_classicos_20",
+    "categoria": "SANDUICHES CLASSICOS",
+    "nome": "O Quarteirão",
+    "descricao": "Pão bola, 4 carnes suculentas, 4 fatias de queijo cheddar e molho especial da casa",
+    "preco": 24,
+    "disponivel": true
+  }
+]

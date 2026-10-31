@@ -1,0 +1,82 @@
+[
+  {
+    "id": "pizzas_doces_01",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce de Abacaxi",
+    "descricao": "Muçarela, abacaxi em pedaços, leite condensado e canela em pó",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_02",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce de Banana",
+    "descricao": "Muçarela, banana fatiada, leite condensado e canela em pó",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_03",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce de Chocolate",
+    "descricao": "Muçarela, chocolate cremoso e confetes coloridos",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_04",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce Prestígio",
+    "descricao": "Muçarela, chocolate ao leite e flocos de coco ralado",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_05",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce Romeu e Julieta",
+    "descricao": "Muçarela, goiabada cremosa e queijo coalho fatiado",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_06",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce Chocolate ao Leite",
+    "descricao": "Muçarela e farta cobertura de chocolate ao leite",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_07",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce Chocolate Branco",
+    "descricao": "Muçarela e farta cobertura de chocolate branco nobre",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  },
+  {
+    "id": "pizzas_doces_08",
+    "categoria": "PIZZAS DOCES",
+    "nome": "Pizza Doce Dois Amores",
+    "descricao": "Muçarela, mesclado especial de chocolate ao leite e chocolate branco",
+    "preco_pequena": 36,
+    "preco_media": 43,
+    "preco_grande": 52,
+    "disponivel": true
+  }
+]
