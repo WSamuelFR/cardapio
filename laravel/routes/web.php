@@ -35,10 +35,21 @@ Route::prefix('api')->group(function () {
         Route::get('/products/{id}/pending-orders-check', [AdminController::class, 'checkProductPendingOrders']);
         Route::patch('/products/{id}/toggle-availability', [AdminController::class, 'toggleProductAvailability']);
         Route::patch('/products/{id}/toggle-promotion', [AdminController::class, 'toggleProductPromotion']);
+        Route::patch('/products/{id}/quick-price', [AdminController::class, 'quickUpdateProductPrice']);
 
+        // Gestão de Configurações Dinâmicas dos Montadores e Preços do Sistema
+        Route::get('/menu-settings', [AdminController::class, 'getMenuSettings']);
+        Route::post('/menu-settings', [AdminController::class, 'saveMenuSettings']);
+        Route::post('/sync-pizza-prices', [AdminController::class, 'syncPizzaPrices']);
+
+        // Gestão de Atendentes e Administradores
         Route::get('/attendants', [AdminController::class, 'getAttendants']);
         Route::post('/attendants', [AdminController::class, 'createAttendant']);
         Route::patch('/attendants/{id}/toggle', [AdminController::class, 'toggleAttendantActive']);
+        Route::get('/admins', [AdminController::class, 'getAdmins']);
+        Route::post('/admins', [AdminController::class, 'createAdmin']);
+        Route::get('/store-info', [AdminController::class, 'getStoreInfo']);
+        Route::post('/store-info', [AdminController::class, 'saveStoreInfo']);
         Route::put('/users/{id}', [AdminController::class, 'updateUser']);
 
         // Gestão e Atribuição de Motoboys

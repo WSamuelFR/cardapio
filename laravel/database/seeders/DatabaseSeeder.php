@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             BebidasSeeder::class,
             SucosSeeder::class,
             AdicionaisSeeder::class,
+            SystemSettingsSeeder::class,
         ]);
     }
 }

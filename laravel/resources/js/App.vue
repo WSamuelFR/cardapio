@@ -63,7 +63,7 @@
               <span>Minhas Entregas</span>
             </button>
 
-            <!-- Exclusivo Admin: Produtos e Equipe -->
+            <!-- Exclusivo Admin: Produtos, Equipe e Configurações -->
             <button
               v-if="currentUser.role === 'admin'"
               :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'admin-products' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
@@ -79,6 +79,14 @@
             >
               <i class="bi bi-people-fill fs-6" :class="currentView === 'admin-attendants' ? 'text-white' : 'text-success'"></i>
               <span>Equipe</span>
+            </button>
+            <button
+              v-if="currentUser.role === 'admin'"
+              :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'admin-settings' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
+              @click="currentView = 'admin-settings'"
+            >
+              <i class="bi bi-gear-fill fs-6" :class="currentView === 'admin-settings' ? 'text-white' : 'text-primary'"></i>
+              <span>Configurações</span>
             </button>
           </template>
         </nav>
@@ -191,6 +199,15 @@
               <i class="bi bi-people-fill d-block fs-6" :class="currentView === 'admin-attendants' ? 'text-white' : 'text-success'"></i>
               <span style="font-size: 0.72rem;">Equipe</span>
             </button>
+
+            <button
+              v-if="currentUser.role === 'admin'"
+              :class="['btn btn-sm rounded-pill px-2 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'admin-settings' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
+              @click="currentView = 'admin-settings'"
+            >
+              <i class="bi bi-gear-fill d-block fs-6" :class="currentView === 'admin-settings' ? 'text-white' : 'text-primary'"></i>
+              <span style="font-size: 0.72rem;">Config</span>
+            </button>
           </template>
         </div>
       </div>
@@ -240,6 +257,7 @@
         v-else-if="currentView === 'product-detail' && selectedProduct"
         :product="selectedProduct"
         :all-products="allProductsList"
+        :menu-settings="menuData.menu_settings || null"
         @back="closeProductDetail"
         @add-to-cart="onDetailAddToCart"
         @select-product="(p) => openProductDetail(p, productBackView)"
@@ -264,11 +282,19 @@
       <!-- TELA GESTÃO DE PRODUTOS E CATEGORIAS (Admin) -->
       <AdminProducts
         v-else-if="currentView === 'admin-products'"
+        @menu-updated="loadMenu"
       />
 
       <!-- TELA GESTÃO DA EQUIPE (Admin) -->
       <AdminAttendants
         v-else-if="currentView === 'admin-attendants'"
+      />
+
+      <!-- TELA CONFIGURAÇÕES DO SISTEMA (Exclusivo Admin) -->
+      <AdminSettings
+        v-else-if="currentView === 'admin-settings' && currentUser && currentUser.role === 'admin'"
+        :current-user="currentUser"
+        @menu-updated="loadMenu"
       />
 
     </main>
@@ -294,6 +320,7 @@
 
     <OrderSuccessModal
       :order="createdOrder"
+      :store-whatsapp="menuData.menu_settings ? menuData.menu_settings.store_whatsapp : ''"
       @close="createdOrder = null"
       @track="trackNewOrder"
     />
@@ -320,6 +347,7 @@ import LoginModal from './components/LoginModal.vue';
 import AdminOrders from './components/AdminOrders.vue';
 import AdminProducts from './components/AdminProducts.vue';
 import AdminAttendants from './components/AdminAttendants.vue';
+import AdminSettings from './components/AdminSettings.vue';
 import MotoboyOrders from './components/MotoboyOrders.vue';
 
 export default {
@@ -335,6 +363,7 @@ export default {
     AdminOrders,
     AdminProducts,
     AdminAttendants,
+    AdminSettings,
     MotoboyOrders,
   },
   data() {
@@ -464,12 +493,14 @@ export default {
             this.cart = parsed
               .filter(item => item && item.id && !isNaN(Number(item.id)))
               .map(item => ({
+                cart_item_id: item.cart_item_id || (Date.now() + '_' + Math.random().toString(36).substring(2, 7)),
                 id: Number(item.id),
                 name: String(item.name || ''),
                 photo_path: item.photo_path || null,
                 effective_price: parseFloat(item.effective_price || item.price) || 0,
                 is_promotion: Boolean(item.is_promotion),
                 quantity: parseInt(item.quantity) > 0 ? parseInt(item.quantity) : 1,
+                notes: item.notes ? String(item.notes) : '',
               }));
           } else {
             this.cart = [];
@@ -493,21 +524,25 @@ export default {
         : (product.is_promotion && product.promotional_price ? product.promotional_price : product.price);
       
       const unitPrice = parseFloat(rawPrice) || 0;
+      const itemName = product.name ? String(product.name).trim() : '';
+      const itemNotes = notes ? String(notes).trim() : (product.notes ? String(product.notes).trim() : '');
 
-      const existing = this.cart.find(i => Number(i.id) === productId && (i.notes || '') === (notes || ''));
+      // Localiza item idêntico no carrinho (mesmo ID, mesmo nome personalizado e mesmas notas)
+      const existing = this.cart.find(i => Number(i.id) === productId && (i.name || '') === itemName && (i.notes || '') === itemNotes);
 
       if (existing) {
         existing.quantity = Number(existing.quantity || 1) + addQty;
         existing.effective_price = unitPrice;
       } else {
         this.cart.push({
+          cart_item_id: Date.now() + '_' + Math.random().toString(36).substring(2, 7),
           id: productId,
-          name: product.name,
+          name: itemName,
           photo_path: product.photo_path || null,
           effective_price: unitPrice,
           is_promotion: Boolean(product.is_promotion),
           quantity: addQty,
-          notes: notes ? String(notes).trim() : '',
+          notes: itemNotes,
         });
       }
 
@@ -527,17 +562,29 @@ export default {
       this.currentView = this.productBackView || 'home';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
-    updateCartQty({ id, qty }) {
-      const targetId = Number(id);
-      const item = this.cart.find(i => Number(i.id) === targetId);
+    updateCartQty({ cart_item_id, id, qty }) {
+      let item = null;
+      if (cart_item_id) {
+        item = this.cart.find(i => i.cart_item_id === cart_item_id);
+      }
+      if (!item && id) {
+        const targetId = Number(id);
+        item = this.cart.find(i => Number(i.id) === targetId);
+      }
       if (item) {
         item.quantity = Number(qty);
         this.saveCartToStorage();
       }
     },
-    removeFromCart(id) {
-      const targetId = Number(id);
-      this.cart = this.cart.filter(i => Number(i.id) !== targetId);
+    removeFromCart(target) {
+      if (typeof target === 'string' && target.includes('_')) {
+        this.cart = this.cart.filter(i => i.cart_item_id !== target);
+      } else if (typeof target === 'object' && target && target.cart_item_id) {
+        this.cart = this.cart.filter(i => i.cart_item_id !== target.cart_item_id);
+      } else {
+        const targetId = Number(target && target.id ? target.id : target);
+        this.cart = this.cart.filter(i => Number(i.id) !== targetId);
+      }
       this.saveCartToStorage();
     },
     onOrderCreated(order) {

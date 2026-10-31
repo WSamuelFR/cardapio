@@ -39,7 +39,7 @@
             <div class="d-flex flex-column gap-2 mb-3">
               <div
                 v-for="item in cart"
-                :key="'cart-item-' + item.id"
+                :key="'cart-item-' + (item.cart_item_id || item.id)"
                 class="card border-0 shadow-sm rounded-3 p-3 bg-white"
               >
                 <div class="d-flex align-items-center gap-3">
@@ -54,7 +54,7 @@
                   <div class="flex-grow-1 min-w-0">
                     <div class="d-flex justify-content-between align-items-start">
                       <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 180px;">{{ item.name }}</h6>
-                      <button class="btn btn-link text-danger p-0 ms-2" title="Remover" @click="removeItem(item.id)">
+                      <button class="btn btn-link text-danger p-0 ms-2" title="Remover" @click="removeItem(item)">
                         <i class="bi bi-trash fs-5"></i>
                       </button>
                     </div>
@@ -588,18 +588,18 @@ export default {
       }));
     },
     increaseQty(item) {
-      this.$emit('update-qty', { id: Number(item.id), qty: Number(item.quantity || 1) + 1 });
+      this.$emit('update-qty', { cart_item_id: item.cart_item_id, id: Number(item.id), qty: Number(item.quantity || 1) + 1 });
     },
     decreaseQty(item) {
       const currentQty = Number(item.quantity || 1);
       if (currentQty > 1) {
-        this.$emit('update-qty', { id: Number(item.id), qty: currentQty - 1 });
+        this.$emit('update-qty', { cart_item_id: item.cart_item_id, id: Number(item.id), qty: currentQty - 1 });
       } else {
-        this.removeItem(Number(item.id));
+        this.removeItem(item);
       }
     },
-    removeItem(id) {
-      this.$emit('remove-item', Number(id));
+    removeItem(item) {
+      this.$emit('remove-item', (item && item.cart_item_id) ? item.cart_item_id : Number(item && item.id ? item.id : item));
     },
     async submitOrder() {
       this.errorMessage = null;
@@ -672,6 +672,9 @@ export default {
           items: this.cart.map(i => ({
             product_id: Number(i.id),
             quantity: Number(i.quantity || 1),
+            custom_name: i.name,
+            unit_price: Number(i.effective_price),
+            notes: i.notes || '',
           })),
         };
 

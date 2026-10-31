@@ -35,6 +35,16 @@
         >
           <i class="bi bi-gift-fill me-1"></i> Novo Combo
         </button>
+
+        <button
+          v-if="currentTab === 'settings'"
+          class="btn btn-dark rounded-pill btn-sm px-3 fw-bold shadow-sm"
+          @click="saveSettings"
+          :disabled="savingSettings"
+        >
+          <span v-if="savingSettings" class="spinner-border spinner-border-sm me-1"></span>
+          <i v-else class="bi bi-floppy-fill me-1"></i> Salvar Valores
+        </button>
       </div>
     </div>
 
@@ -61,34 +71,49 @@
       </div>
     </div>
 
-    <!-- SELETOR DE ABAS MODERNO & ALINHADO (Segmented Control) -->
-    <div class="bg-white p-1 rounded-4 shadow-sm border mb-4 d-flex gap-1 w-100" style="max-width: 560px;">
-      <button
-        :class="['btn flex-fill rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'products' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
-        @click="currentTab = 'products'"
-      >
-        <i class="bi bi-tag-fill me-1"></i> Produtos ({{ normalProducts.length }})
-      </button>
-
-      <button
-        :class="['btn flex-fill rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'categories' ? 'btn-warning text-dark shadow-sm' : 'btn-light text-dark']"
-        @click="currentTab = 'categories'"
-      >
-        <i class="bi bi-folder-fill me-1"></i> Categorias ({{ categories.length }})
-      </button>
-
-      <button
-        :class="['btn flex-fill rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'combos' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark']"
-        @click="currentTab = 'combos'"
-      >
-        <i class="bi bi-gift-fill me-1"></i> Combos ({{ comboProducts.length }})
-      </button>
+    <!-- SELETOR DE ABAS MODERNO & RESPONSIVO (2x2 no Celular, 4 Lado a Lado no PC) -->
+    <div class="bg-white p-2 rounded-4 shadow-sm border mb-4" style="max-width: 760px;">
+      <div class="row g-2">
+        <div class="col-6 col-md-3">
+          <button
+            :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'products' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
+            @click="currentTab = 'products'"
+          >
+            <i class="bi bi-tag-fill me-1"></i> Produtos ({{ normalProducts.length }})
+          </button>
+        </div>
+        <div class="col-6 col-md-3">
+          <button
+            :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'categories' ? 'btn-warning text-dark shadow-sm' : 'btn-light text-dark']"
+            @click="currentTab = 'categories'"
+          >
+            <i class="bi bi-folder-fill me-1"></i> Categorias ({{ categories.length }})
+          </button>
+        </div>
+        <div class="col-6 col-md-3">
+          <button
+            :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'combos' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark']"
+            @click="currentTab = 'combos'"
+          >
+            <i class="bi bi-gift-fill me-1"></i> Combos ({{ comboProducts.length }})
+          </button>
+        </div>
+        <div class="col-6 col-md-3">
+          <button
+            :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'settings' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
+            @click="currentTab = 'settings'"
+          >
+            <i class="bi bi-sliders me-1"></i> Montadores & Preços
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ========================================== -->
     <!-- ABA 1: PRODUTOS EM CARDS COMPACTOS -->
     <!-- ========================================== -->
     <div v-if="currentTab === 'products'">
+      <div id="products-top-anchor"></div>
       
       <!-- Filtro Rápido de Categoria nos Produtos -->
       <div class="d-flex gap-2 overflow-auto pb-2 mb-3 no-scrollbar">
@@ -96,7 +121,7 @@
           :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold flex-shrink-0', filterCategory === null ? 'btn-dark' : 'btn-outline-secondary']"
           @click="filterCategory = null"
         >
-          Todos
+          Todos ({{ normalProducts.length }})
         </button>
         <button
           v-for="cat in categories"
@@ -113,106 +138,183 @@
         <h6 class="text-muted fw-semibold">Nenhum produto encontrado</h6>
       </div>
 
-      <!-- Grade de Cards Compactos de Produtos -->
-      <div v-else class="row g-3">
-        <div
-          v-for="product in filteredProducts"
-          :key="'admin-prod-' + product.id"
-          class="col-12 col-md-6 col-lg-4"
-        >
-          <div :class="['card border-0 border-start border-3 border-danger shadow-sm rounded-4 h-100 bg-white overflow-hidden', !product.is_available ? 'opacity-75' : '']">
-            <div class="card-body p-2 p-sm-3 d-flex flex-column justify-content-between">
-              
-              <!-- Topo: Foto + Detalhes Compactos -->
-              <div class="d-flex gap-2 mb-2">
-                <!-- Foto Compacta -->
-                <div class="rounded-3 overflow-hidden bg-light border flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 58px; height: 58px;">
-                  <img
-                    v-if="product.photo_path"
-                    :src="product.photo_path"
-                    :alt="product.name"
-                    class="w-100 h-100 object-fit-cover"
-                  >
-                  <i v-else class="bi bi-image text-muted fs-4"></i>
+      <!-- Grade de Cards Compactos de Produtos com Paginação -->
+      <div v-else>
+        <div class="row g-3">
+          <div
+            v-for="(product, idx) in paginatedProducts"
+            :key="'admin-prod-' + product.id"
+            class="col-12 col-md-6 col-lg-4"
+          >
+            <div :class="['card border-0 border-start border-4 shadow-sm rounded-4 h-100 bg-white overflow-hidden', idx % 3 === 0 ? 'border-danger' : (idx % 3 === 1 ? 'border-warning' : 'border-success'), !product.is_available ? 'opacity-75' : '']">
+              <div class="card-body p-2 p-sm-3 d-flex flex-column justify-content-between">
+                
+                <!-- Topo: Foto + Detalhes Compactos -->
+                <div class="d-flex gap-2 mb-2">
+                  <!-- Foto Compacta -->
+                  <div class="rounded-3 overflow-hidden bg-light border flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 58px; height: 58px;">
+                    <img
+                      v-if="product.photo_path"
+                      :src="product.photo_path"
+                      :alt="product.name"
+                      class="w-100 h-100 object-fit-cover"
+                    >
+                    <i v-else class="bi bi-image text-muted fs-4"></i>
+                  </div>
+
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex justify-content-between align-items-start gap-1">
+                      <h6 class="fw-bold text-dark mb-0 text-truncate" :title="product.name" style="font-size: 0.88rem; max-width: 155px;">
+                        {{ product.name }}
+                      </h6>
+                      <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <button class="btn btn-sm btn-light rounded-circle shadow-none p-1 text-muted" title="Editar" @click="openProductModal(product)">
+                          <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light text-danger rounded-circle shadow-none p-1" title="Apagar Produto" @click="requestDeleteProduct(product)">
+                          <i class="bi bi-trash3-fill" style="font-size: 0.75rem;"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-1 my-1">
+                      <span class="badge bg-light text-dark border small" style="font-size: 0.65rem;">
+                        {{ product.category ? product.category.name : 'Geral' }}
+                      </span>
+                      <span v-if="product.is_promotion" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">
+                        Promo
+                      </span>
+                    </div>
+
+                    <p class="text-muted small mb-0 text-truncate" style="font-size: 0.72rem; max-width: 200px;">
+                      {{ product.description || 'Sem descrição cadastrada' }}
+                    </p>
+                  </div>
                 </div>
 
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex justify-content-between align-items-start gap-1">
-                    <h6 class="fw-bold text-dark mb-0 text-truncate" :title="product.name" style="font-size: 0.88rem; max-width: 155px;">
-                      {{ product.name }}
-                    </h6>
-                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                      <button class="btn btn-sm btn-light rounded-circle shadow-none p-1 text-muted" title="Editar" @click="openProductModal(product)">
-                        <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
-                      </button>
-                      <button class="btn btn-sm btn-light text-danger rounded-circle shadow-none p-1" title="Apagar Produto" @click="requestDeleteProduct(product)">
-                        <i class="bi bi-trash3-fill" style="font-size: 0.75rem;"></i>
-                      </button>
+                <!-- Preços Compactos com Edição Rápida ("1 Toque") -->
+                <div class="bg-light rounded-3 p-2 d-flex justify-content-between align-items-center mb-2">
+                  <div v-if="editingPriceProductId === product.id" class="d-flex align-items-center gap-1 w-100" @click.stop>
+                    <span class="small fw-bold text-muted">R$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      class="form-control form-control-sm py-0 px-1 fw-bold text-dark border-primary"
+                      style="width: 82px;"
+                      v-model="quickPriceValue"
+                      @keyup.enter="saveQuickPrice(product)"
+                      @keyup.esc="cancelQuickPrice"
+                      ref="quickPriceInput"
+                    >
+                    <button
+                      class="btn btn-sm btn-success p-1 rounded-circle d-flex align-items-center justify-content-center"
+                      style="width: 26px; height: 26px;"
+                      @click="saveQuickPrice(product)"
+                      :disabled="savingQuickPrice"
+                      title="Salvar preço"
+                    >
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-light p-1 rounded-circle d-flex align-items-center justify-content-center border"
+                      style="width: 26px; height: 26px;"
+                      @click="cancelQuickPrice"
+                      title="Cancelar"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div v-else class="d-flex justify-content-between align-items-center w-100 cursor-pointer" @click="startQuickPrice(product)" title="Toque para editar o preço rapidamente">
+                    <div>
+                      <small class="text-muted d-flex align-items-center gap-1" style="font-size: 0.68rem;">
+                        <span>Preço</span>
+                        <i class="bi bi-pencil-fill text-primary" style="font-size: 0.62rem;"></i>
+                      </small>
+                      <span :class="['fw-bold', product.is_promotion ? 'text-decoration-line-through text-muted small' : 'text-dark fs-6']">
+                        R$ {{ formatPrice(product.price) }}
+                      </span>
+                    </div>
+
+                    <div v-if="product.is_promotion" class="text-end">
+                      <small class="text-danger d-block fw-semibold" style="font-size: 0.68rem;">Promoção Ativa</small>
+                      <div class="fw-bold text-danger fs-6">R$ {{ formatPrice(product.promotional_price) }}</div>
                     </div>
                   </div>
+                </div>
 
-                  <div class="d-flex align-items-center gap-1 my-1">
-                    <span class="badge bg-light text-dark border small" style="font-size: 0.65rem;">
-                      {{ product.category ? product.category.name : 'Geral' }}
-                    </span>
-                    <span v-if="product.is_promotion" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">
-                      Promo
-                    </span>
+                <!-- Switches Compactos em Linha -->
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <div class="form-check form-switch mb-0">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      :id="'avail-' + product.id"
+                      :checked="product.is_available"
+                      @change="toggleAvailability(product)"
+                    >
+                    <label class="form-check-label small fw-semibold text-dark" style="font-size: 0.75rem;" :for="'avail-' + product.id">
+                      {{ product.is_available ? 'Disponível' : 'Esgotado' }}
+                    </label>
                   </div>
 
-                  <p class="text-muted small mb-0 text-truncate" style="font-size: 0.72rem; max-width: 200px;">
-                    {{ product.description || 'Sem descrição cadastrada' }}
-                  </p>
+                  <div class="form-check form-switch mb-0">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      :id="'promo-' + product.id"
+                      :checked="product.is_promotion"
+                      @change="togglePromotion(product)"
+                    >
+                    <label class="form-check-label small fw-semibold text-dark" style="font-size: 0.75rem;" :for="'promo-' + product.id">
+                      Promoção
+                    </label>
+                  </div>
                 </div>
+
               </div>
-
-              <!-- Preços Compactos -->
-              <div class="bg-light rounded-3 p-2 d-flex justify-content-between align-items-center mb-2">
-                <div>
-                  <small class="text-muted d-block" style="font-size: 0.68rem;">Preço</small>
-                  <span :class="['fw-bold', product.is_promotion ? 'text-decoration-line-through text-muted small' : 'text-dark fs-6']">
-                    R$ {{ formatPrice(product.price) }}
-                  </span>
-                </div>
-
-                <div v-if="product.is_promotion" class="text-end">
-                  <small class="text-danger d-block fw-semibold" style="font-size: 0.68rem;">Promoção Ativa</small>
-                  <div class="fw-bold text-danger fs-6">R$ {{ formatPrice(product.promotional_price) }}</div>
-                </div>
-              </div>
-
-              <!-- Switches Compactos em Linha -->
-              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                <div class="form-check form-switch mb-0">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="'avail-' + product.id"
-                    :checked="product.is_available"
-                    @change="toggleAvailability(product)"
-                  >
-                  <label class="form-check-label small fw-semibold text-dark" style="font-size: 0.75rem;" :for="'avail-' + product.id">
-                    {{ product.is_available ? 'Disponível' : 'Esgotado' }}
-                  </label>
-                </div>
-
-                <div class="form-check form-switch mb-0">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="'promo-' + product.id"
-                    :checked="product.is_promotion"
-                    @change="togglePromotion(product)"
-                  >
-                  <label class="form-check-label small fw-semibold text-dark" style="font-size: 0.75rem;" :for="'promo-' + product.id">
-                    Promoção
-                  </label>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
+
+        <!-- BARRA DE PAGINAÇÃO MOBILE-FIRST OTIMIZADA -->
+        <div v-if="filteredProducts.length > itemsPerPage" class="card border-0 shadow-sm rounded-4 p-3 bg-white mt-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+            
+            <!-- Informações de Contagem -->
+            <div class="text-muted small fw-semibold text-center text-sm-start">
+              Mostrando <span class="text-dark fw-bold">{{ paginationStart }}</span> a <span class="text-dark fw-bold">{{ paginationEnd }}</span> de <span class="text-dark fw-bold">{{ filteredProducts.length }}</span> produtos
+            </div>
+
+            <!-- Controles de Navegação (Confortáveis para toque no celular) -->
+            <div class="d-flex align-items-center gap-2">
+              <button
+                class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-none"
+                :disabled="currentPage <= 1"
+                @click="goToPage(currentPage - 1)"
+              >
+                <i class="bi bi-chevron-left"></i>
+                <span>Anterior</span>
+              </button>
+
+              <div class="d-flex align-items-center gap-1 px-1">
+                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold" style="font-size: 0.82rem;">
+                  {{ currentPage }} de {{ totalPages }}
+                </span>
+              </div>
+
+              <button
+                class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-none"
+                :disabled="currentPage >= totalPages"
+                @click="goToPage(currentPage + 1)"
+              >
+                <span>Próxima</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -371,6 +473,366 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 4: MONTADORES & PREÇOS DO SISTEMA (DINÂMICOS MYSQL)  -->
+    <!-- ======================================================== -->
+    <div v-else-if="currentTab === 'settings'" class="settings-tab">
+      
+      <!-- Barra Superior de Salvar Rápido (Responsiva) -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-primary"></i>
+            <span>Configurações dos Montadores & Preços Globais</span>
+          </h5>
+        </div>
+
+        <button
+          class="btn btn-dark rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto flex-shrink-0"
+          @click="saveSettings"
+          :disabled="savingSettings"
+        >
+          <span v-if="savingSettings" class="spinner-border spinner-border-sm"></span>
+          <i v-else class="bi bi-floppy-fill"></i>
+          <span>Salvar Todas as Alterações</span>
+        </button>
+      </div>
+
+      <!-- 1. BLOCO DE CONFIGURAÇÃO DAS PIZZAS -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-pie-chart-fill text-danger fs-4"></i>
+              <span>1. Tamanhos e Preços das Pizzas</span>
+            </h5>
+            <small class="text-muted">Defina o nome dos tamanhos, quantidade de fatias e preço oficial de cada um</small>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 w-100 w-sm-auto">
+            <button
+              class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-sm flex-fill flex-sm-grow-0"
+              @click="openSyncPizzaModal"
+              :disabled="syncingPizzas"
+              title="Ajusta o preço base de todas as pizzas cadastradas para o valor da Pequena"
+            >
+              <span v-if="syncingPizzas" class="spinner-border spinner-border-sm me-1"></span>
+              <i v-else class="bi bi-arrow-repeat me-1"></i>
+              Sincronizar Preço Base
+            </button>
+            <button
+              class="btn btn-sm btn-danger rounded-pill px-3 py-1.5 fw-bold shadow-sm flex-fill flex-sm-grow-0"
+              @click="addPizzaSize"
+            >
+              <i class="bi bi-plus-lg me-1"></i> Novo Tamanho
+            </button>
+          </div>
+        </div>
+
+        <!-- Grade de Tamanhos Editáveis -->
+        <div class="row g-3 mb-4">
+          <div
+            v-for="(sz, idx) in menuSettings.pizza_sizes"
+            :key="'size-edit-' + idx"
+            class="col-12 col-md-4"
+          >
+            <div class="card p-3 rounded-4 border bg-light h-100 shadow-sm">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge bg-danger rounded-pill px-2.5 py-1 small fw-semibold">Tamanho #{{ idx + 1 }}</span>
+                <button
+                  v-if="menuSettings.pizza_sizes && menuSettings.pizza_sizes.length > 1"
+                  class="btn btn-link text-danger p-0"
+                  @click="removePizzaSize(idx)"
+                  title="Remover tamanho"
+                >
+                  <i class="bi bi-trash3-fill"></i>
+                </button>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label small fw-bold text-dark mb-1">Nome do Tamanho</label>
+                <input type="text" class="form-control form-control-sm bg-white" v-model="sz.name" placeholder="Ex: Média (Mais Pedida)">
+              </div>
+
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-dark mb-1">Fatias</label>
+                  <input type="text" class="form-control form-control-sm bg-white" v-model="sz.slices" placeholder="Ex: 8 Fatias">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-dark mb-1">Preço (R$)</label>
+                  <input type="number" step="0.01" class="form-control form-control-sm bg-white fw-bold text-danger" v-model="sz.price" placeholder="0,00">
+                </div>
+              </div>
+
+              <div class="form-check form-switch pt-1 border-top mt-auto">
+                <input class="form-check-input" type="checkbox" :id="'sz-avail-' + idx" v-model="sz.is_available">
+                <label class="form-check-label small fw-semibold" :for="'sz-avail-' + idx">
+                  {{ sz.is_available ? 'Disponível no Cardápio' : 'Pausado Temporariamente' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BORDAS RECHEADAS -->
+        <div class="pt-3 border-top">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+            <div>
+              <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5">
+                <i class="bi bi-record-circle text-warning fs-5"></i>
+                <span>Bordas Recheadas (Opcional)</span>
+              </h6>
+              <small class="text-muted">Gerencie as opções de borda e valor adicional cobrado</small>
+            </div>
+            <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold w-100 w-sm-auto" @click="addPizzaBorder">
+              <i class="bi bi-plus-lg me-1"></i> Nova Opção de Borda
+            </button>
+          </div>
+
+          <div class="row g-2">
+            <div
+              v-for="(borda, bIdx) in menuSettings.pizza_borders"
+              :key="'borda-edit-' + bIdx"
+              class="col-12 col-sm-6 col-md-3"
+            >
+              <div class="card p-2.5 rounded-3 border bg-light h-100">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <span class="small fw-bold text-dark">Opção #{{ bIdx + 1 }}</span>
+                  <button
+                    v-if="borda.id !== 'nenhuma'"
+                    class="btn btn-link text-danger p-0"
+                    @click="removePizzaBorder(bIdx)"
+                    title="Remover borda"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+                <div class="mb-1">
+                  <input type="text" class="form-control form-control-sm bg-white mb-1" v-model="borda.name" placeholder="Nome da borda">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white text-muted fw-bold">R$</span>
+                    <input type="number" step="0.01" class="form-control bg-white text-success fw-bold" v-model="borda.price" placeholder="0,00">
+                  </div>
+                </div>
+                <div class="form-check form-switch mt-1">
+                  <input class="form-check-input" type="checkbox" :id="'borda-avail-' + bIdx" v-model="borda.is_available">
+                  <label class="form-check-label small" style="font-size: 0.72rem;" :for="'borda-avail-' + bIdx">
+                    {{ borda.is_available ? 'Ativa' : 'Pausada' }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 2. BLOCO DE CONFIGURAÇÃO DO MONTE SEU PASTEL -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="mb-3">
+          <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-layers-fill text-warning fs-4"></i>
+            <span>2. Regras e Ingredientes do "Monte Seu Pastel"</span>
+          </h5>
+          <small class="text-muted">Ajuste o valor base, cobrança por ingrediente extra e ative ou pause opções</small>
+        </div>
+
+        <!-- Parâmetros Gerais e Regra de Cobrança do Pastel -->
+        <div class="row g-3 p-3 bg-light rounded-4 mb-4 border">
+          <!-- 1. Preço Base -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label small fw-bold text-dark mb-1">Preço Base do Pastel</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white fw-bold text-warning">R$</span>
+              <input type="number" step="0.01" class="form-control bg-white fw-bold text-dark" v-model="menuSettings.monte_pastel.base_price" placeholder="15,00">
+            </div>
+            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Valor inicial do pastel no cardápio</small>
+          </div>
+
+          <!-- 2. A partir de qual ingrediente cobrar -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label small fw-bold text-dark mb-1">Cobrar adicional a partir de qual?</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted small fw-semibold">A partir do</span>
+              <input
+                type="number"
+                class="form-control bg-white fw-bold text-primary text-center"
+                v-model.number="menuSettings.monte_pastel.charge_from_ingredient"
+                @input="syncPastelFreeIngredients"
+                min="2"
+                max="15"
+                placeholder="5"
+              >
+              <span class="input-group-text bg-white text-muted small fw-semibold">º ingrediente</span>
+            </div>
+            <small class="text-primary fw-semibold d-block mt-1" style="font-size: 0.72rem;">
+              <i class="bi bi-check2-circle me-1"></i> Até {{ Math.max(1, (menuSettings.monte_pastel.charge_from_ingredient || 5) - 1) }} ingredientes são grátis/inclusos
+            </small>
+          </div>
+
+          <!-- 3. Valor por Ingrediente Adicional -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label small fw-bold text-dark mb-1">Valor por Ingrediente Extra</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white fw-bold text-success">R$</span>
+              <input type="number" step="0.01" class="form-control bg-white fw-bold text-success" v-model="menuSettings.monte_pastel.extra_ingredient_price" placeholder="3,00">
+            </div>
+            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Cobrado a cada ingrediente além do limite</small>
+          </div>
+
+          <!-- 4. Limite Máximo de Ingredientes -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label small fw-bold text-dark mb-1">Limite Máximo de Ingredientes</label>
+            <div class="input-group">
+              <input type="number" class="form-control bg-white fw-bold text-dark text-center" v-model.number="menuSettings.monte_pastel.max_total_ingredients" min="4" max="25" placeholder="10">
+              <span class="input-group-text bg-white text-muted small">ingredientes</span>
+            </div>
+            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Máximo total por pastel (inclusos + extras)</small>
+          </div>
+        </div>
+
+        <!-- GESTÃO DOS INGREDIENTES SALGADOS (RESPONSIVO E SEM SOBREPOSIÇÃO) -->
+        <div class="mb-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5">
+              <span>🧀 Ingredientes Salgados ({{ menuSettings.monte_pastel.ingredients_salgados ? menuSettings.monte_pastel.ingredients_salgados.length : 0 }})</span>
+            </h6>
+
+            <!-- Adicionar Novo Salgado -->
+            <div class="input-group input-group-sm w-100 w-sm-auto" style="max-width: 360px;">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Novo salgado..."
+                v-model="newSalgadoName"
+                @keyup.enter="addSalgadoIngredient"
+              >
+              <button class="btn btn-warning text-dark fw-bold px-3 text-nowrap" @click="addSalgadoIngredient">
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Grade Responsiva de Salgados (1 Coluna no celular para nunca bater botões no texto) -->
+          <div class="row g-2">
+            <div
+              v-for="(ing, idx) in menuSettings.monte_pastel.ingredients_salgados"
+              :key="'salgado-' + idx"
+              class="col-12 col-sm-6 col-md-4 col-lg-3"
+            >
+              <div :class="['card p-2.5 rounded-3 border transition d-flex flex-row justify-content-between align-items-center shadow-none', ing.is_available ? 'bg-white' : 'bg-light opacity-50']">
+                <div class="min-w-0 me-2">
+                  <span class="small fw-semibold text-truncate d-block text-dark" style="font-size: 0.85rem;" :title="ing.name || ing">{{ ing.name || ing }}</span>
+                  <small :class="ing.is_available ? 'text-success fw-bold' : 'text-danger fw-bold'" style="font-size: 0.7rem;">
+                    {{ ing.is_available ? '● Disponível' : '○ Pausado' }}
+                  </small>
+                </div>
+
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                  <!-- Toggle Disponível -->
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 rounded-circle border-0"
+                    :class="ing.is_available ? 'text-success' : 'text-muted'"
+                    @click="ing.is_available = !ing.is_available"
+                    :title="ing.is_available ? 'Pausar ingrediente' : 'Ativar ingrediente'"
+                  >
+                    <i :class="ing.is_available ? 'bi-toggle-on fs-4' : 'bi-toggle-off fs-4'"></i>
+                  </button>
+                  <!-- Excluir -->
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-danger border-0"
+                    @click="removeSalgadoIngredient(idx)"
+                    title="Remover ingrediente"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GESTÃO DOS INGREDIENTES DOCES (RESPONSIVO E SEM SOBREPOSIÇÃO) -->
+        <div>
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5">
+              <span>🍫 Ingredientes Doces ({{ menuSettings.monte_pastel.ingredients_doces ? menuSettings.monte_pastel.ingredients_doces.length : 0 }})</span>
+            </h6>
+
+            <!-- Adicionar Novo Doce -->
+            <div class="input-group input-group-sm w-100 w-sm-auto" style="max-width: 360px;">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Novo doce..."
+                v-model="newDoceName"
+                @keyup.enter="addDoceIngredient"
+              >
+              <button class="btn btn-warning text-dark fw-bold px-3 text-nowrap" @click="addDoceIngredient">
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Grade Responsiva de Doces (1 Coluna no celular para nunca bater botões no texto) -->
+          <div class="row g-2">
+            <div
+              v-for="(ing, idx) in menuSettings.monte_pastel.ingredients_doces"
+              :key="'doce-' + idx"
+              class="col-12 col-sm-6 col-md-4 col-lg-3"
+            >
+              <div :class="['card p-2.5 rounded-3 border transition d-flex flex-row justify-content-between align-items-center shadow-none', ing.is_available ? 'bg-white' : 'bg-light opacity-50']">
+                <div class="min-w-0 me-2">
+                  <span class="small fw-semibold text-truncate d-block text-dark" style="font-size: 0.85rem;" :title="ing.name || ing">{{ ing.name || ing }}</span>
+                  <small :class="ing.is_available ? 'text-success fw-bold' : 'text-danger fw-bold'" style="font-size: 0.7rem;">
+                    {{ ing.is_available ? '● Disponível' : '○ Pausado' }}
+                  </small>
+                </div>
+
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 rounded-circle border-0"
+                    :class="ing.is_available ? 'text-success' : 'text-muted'"
+                    @click="ing.is_available = !ing.is_available"
+                    :title="ing.is_available ? 'Pausar ingrediente' : 'Ativar ingrediente'"
+                  >
+                    <i :class="ing.is_available ? 'bi-toggle-on fs-4' : 'bi-toggle-off fs-4'"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-danger border-0"
+                    @click="removeDoceIngredient(idx)"
+                    title="Remover ingrediente"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTÃO INFERIOR DE SALVAR (RESPONSIVO) -->
+      <div class="text-center text-md-end mb-5">
+        <button
+          class="btn btn-dark rounded-pill px-5 py-3 fw-bold shadow d-inline-flex align-items-center justify-content-center gap-2 w-100 w-md-auto"
+          @click="saveSettings"
+          :disabled="savingSettings"
+        >
+          <span v-if="savingSettings" class="spinner-border spinner-border-sm"></span>
+          <i v-else class="bi bi-floppy-fill fs-5"></i>
+          <span>Salvar Todas as Configurações</span>
+        </button>
+      </div>
+
     </div>
 
     <!-- MODAL DE CRIAR / EDITAR PRODUTO (MODERNO & MOBILE-FIRST) -->
@@ -883,6 +1345,83 @@
       </div>
     </div>
 
+    <!-- MODAL DE CONFIRMAÇÃO PARA SINCRONIZAR PREÇO DAS PIZZAS -->
+    <div v-if="showSyncPizzaModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1070;">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+          <div class="modal-header bg-white border-0 pt-4 px-4 pb-2 text-center d-flex flex-column align-items-center">
+            <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-3 mb-2 d-flex align-items-center justify-content-center" style="width: 58px; height: 58px;">
+              <i class="bi bi-arrow-repeat fs-1 text-danger"></i>
+            </div>
+            <h5 class="fw-bold text-dark mb-0">Sincronizar Pizzas</h5>
+          </div>
+
+          <div class="modal-body px-4 py-2 text-center">
+            <p class="text-muted small mb-2">
+              Deseja atualizar o preço base de <strong>todas as pizzas tradicionais e doces</strong> para o valor do tamanho <strong>Pequena (R$ {{ getSmallPizzaPrice() }})</strong>?
+            </p>
+            <div class="alert alert-info border-0 rounded-3 p-2 small mb-0 text-start" style="font-size: 0.75rem;">
+              <i class="bi bi-info-circle-fill me-1"></i> Isso ajustará o preço inicial de exibição das pizzas no cardápio de uma só vez.
+            </div>
+          </div>
+
+          <div class="modal-footer border-0 px-4 pb-4 pt-2 d-flex gap-2">
+            <button type="button" class="btn btn-light rounded-pill flex-grow-1 fw-bold btn-sm py-2" @click="showSyncPizzaModal = false" :disabled="syncingPizzas">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-danger rounded-pill flex-grow-1 fw-bold btn-sm py-2" @click="confirmSyncAllPizzaPrices" :disabled="syncingPizzas">
+              <span v-if="syncingPizzas" class="spinner-border spinner-border-sm me-1"></span>
+              Sim, Sincronizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL MODERNO DE FEEDBACK / AVISO (Substitui alert() nativo) -->
+    <div v-if="showFeedbackModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1080;">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+          <div class="modal-header bg-white border-0 pt-4 px-4 pb-2 text-center d-flex flex-column align-items-center">
+            <div
+              :class="[
+                'rounded-circle p-3 mb-2 d-flex align-items-center justify-content-center',
+                feedbackModalData.type === 'success' ? 'bg-success bg-opacity-10 text-success' : (feedbackModalData.type === 'warning' ? 'bg-warning bg-opacity-15 text-warning' : 'bg-danger bg-opacity-10 text-danger')
+              ]"
+              style="width: 58px; height: 58px;"
+            >
+              <i
+                :class="[
+                  'fs-1',
+                  feedbackModalData.type === 'success' ? 'bi bi-check-circle-fill text-success' : (feedbackModalData.type === 'warning' ? 'bi bi-exclamation-triangle-fill text-warning' : 'bi bi-x-circle-fill text-danger')
+                ]"
+              ></i>
+            </div>
+            <h5 class="fw-bold text-dark mb-0">{{ feedbackModalData.title }}</h5>
+          </div>
+
+          <div class="modal-body px-4 py-2 text-center">
+            <p class="text-muted small mb-0 lh-base">
+              {{ feedbackModalData.message }}
+            </p>
+          </div>
+
+          <div class="modal-footer border-0 px-4 pb-4 pt-3">
+            <button
+              type="button"
+              :class="[
+                'btn rounded-pill w-100 fw-bold btn-sm py-2 shadow-sm',
+                feedbackModalData.type === 'success' ? 'btn-success text-white' : (feedbackModalData.type === 'warning' ? 'btn-warning text-dark' : 'btn-danger text-white')
+              ]"
+              @click="showFeedbackModal = false"
+            >
+              OK, Entendido
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -892,9 +1431,45 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      currentTab: 'products', // 'products', 'categories' ou 'combos'
+      currentTab: 'products', // 'products', 'categories', 'combos' ou 'settings'
       filterCategory: null,
       adminSearchTerm: '',
+      itemsPerPage: 12,
+      currentPage: 1,
+      editingPriceProductId: null,
+      quickPriceValue: '',
+      savingQuickPrice: false,
+
+      // Configurações Dinâmicas dos Montadores
+      menuSettings: {
+        store_whatsapp: '(83) 99999-9999',
+        pizza_sizes: [],
+        pizza_borders: [],
+        monte_pastel: {
+          base_price: 15.00,
+          charge_from_ingredient: 5,
+          max_free_ingredients: 4,
+          extra_ingredient_price: 3.00,
+          max_total_ingredients: 10,
+          allow_extra_ingredients: true,
+          ingredients_salgados: [],
+          ingredients_doces: [],
+        },
+      },
+      savingSettings: false,
+      syncingPizzas: false,
+      newSalgadoName: '',
+      newDoceName: '',
+
+      // Modais Modernos
+      showSyncPizzaModal: false,
+      showFeedbackModal: false,
+      feedbackModalData: {
+        title: '',
+        message: '',
+        type: 'success',
+      },
+
       products: [],
       categories: [],
       showProductModal: false,
@@ -958,25 +1533,219 @@ export default {
       }
       return list;
     },
+    totalPages() {
+      return Math.ceil(this.filteredProducts.length / this.itemsPerPage) || 1;
+    },
+    paginatedProducts() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      return this.filteredProducts.slice(start, start + this.itemsPerPage);
+    },
+    paginationStart() {
+      if (this.filteredProducts.length === 0) return 0;
+      return (this.currentPage - 1) * this.itemsPerPage + 1;
+    },
+    paginationEnd() {
+      const end = this.currentPage * this.itemsPerPage;
+      return end > this.filteredProducts.length ? this.filteredProducts.length : end;
+    },
+  },
+  watch: {
+    filterCategory() {
+      this.currentPage = 1;
+    },
+    adminSearchTerm() {
+      this.currentPage = 1;
+    },
+    currentTab() {
+      this.currentPage = 1;
+    },
   },
   mounted() {
     this.fetchData();
   },
   methods: {
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+        this.$nextTick(() => {
+          const el = document.getElementById('products-top-anchor');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      }
+    },
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
     async fetchData() {
       try {
-        const [prodRes, catRes] = await Promise.all([
+        const [prodRes, catRes, settingsRes] = await Promise.all([
           axios.get('/api/admin/products'),
           axios.get('/api/admin/categories'),
+          axios.get('/api/admin/menu-settings'),
         ]);
         this.products = prodRes.data;
         this.categories = catRes.data;
+        if (settingsRes && settingsRes.data) {
+          const mp = settingsRes.data.monte_pastel || {};
+          const chargeFrom = mp.charge_from_ingredient || ((Number(mp.max_free_ingredients) || 4) + 1);
+          const maxFree = mp.max_free_ingredients !== undefined ? mp.max_free_ingredients : (chargeFrom - 1);
+
+          this.menuSettings = {
+            store_whatsapp: settingsRes.data.store_whatsapp || '(83) 99999-9999',
+            pizza_sizes: settingsRes.data.pizza_sizes || [],
+            pizza_borders: settingsRes.data.pizza_borders || [],
+            monte_pastel: {
+              base_price: mp.base_price !== undefined ? mp.base_price : 15.00,
+              charge_from_ingredient: chargeFrom,
+              max_free_ingredients: maxFree,
+              extra_ingredient_price: mp.extra_ingredient_price !== undefined ? mp.extra_ingredient_price : 3.00,
+              max_total_ingredients: mp.max_total_ingredients || 10,
+              allow_extra_ingredients: mp.allow_extra_ingredients !== false,
+              ingredients_salgados: mp.ingredients_salgados || [],
+              ingredients_doces: mp.ingredients_doces || [],
+            },
+          };
+        }
       } catch (err) {
         console.error(err);
       }
+    },
+    openFeedback(title, message, type = 'success') {
+      this.feedbackModalData = { title, message, type };
+      this.showFeedbackModal = true;
+    },
+    syncPastelFreeIngredients() {
+      const chargeFrom = Number(this.menuSettings.monte_pastel.charge_from_ingredient) || 5;
+      this.menuSettings.monte_pastel.max_free_ingredients = Math.max(1, chargeFrom - 1);
+    },
+    getSmallPizzaPrice() {
+      const small = (this.menuSettings.pizza_sizes || []).find(s => s.id === 'pequena');
+      return small ? this.formatPrice(small.price) : '36,00';
+    },
+    openSyncPizzaModal() {
+      this.showSyncPizzaModal = true;
+    },
+    async confirmSyncAllPizzaPrices() {
+      this.syncingPizzas = true;
+      try {
+        const res = await axios.post('/api/admin/sync-pizza-prices');
+        await this.fetchData();
+        this.$emit('menu-updated');
+        this.showSyncPizzaModal = false;
+        this.openFeedback('Preços Sincronizados!', res.data.message || 'Preço das pizzas atualizado com sucesso.', 'success');
+      } catch (err) {
+        this.showSyncPizzaModal = false;
+        this.openFeedback('Erro ao Sincronizar', err.response?.data?.message || 'Erro ao sincronizar preços.', 'danger');
+      } finally {
+        this.syncingPizzas = false;
+      }
+    },
+    startQuickPrice(product) {
+      this.editingPriceProductId = product.id;
+      this.quickPriceValue = product.price;
+      this.$nextTick(() => {
+        if (this.$refs.quickPriceInput && this.$refs.quickPriceInput[0]) {
+          this.$refs.quickPriceInput[0].focus();
+          this.$refs.quickPriceInput[0].select();
+        }
+      });
+    },
+    cancelQuickPrice() {
+      this.editingPriceProductId = null;
+      this.quickPriceValue = '';
+    },
+    async saveQuickPrice(product) {
+      const newPrice = parseFloat(this.quickPriceValue);
+      if (isNaN(newPrice) || newPrice <= 0) {
+        this.openFeedback('Valor Inválido', 'Informe um valor válido maior que zero.', 'warning');
+        return;
+      }
+      this.savingQuickPrice = true;
+      try {
+        await axios.patch(`/api/admin/products/${product.id}/quick-price`, { price: newPrice });
+        product.price = newPrice;
+        this.editingPriceProductId = null;
+        this.$emit('menu-updated');
+        this.openFeedback('Preço Atualizado!', `O preço de "${product.name}" agora é R$ ${this.formatPrice(newPrice)}.`, 'success');
+      } catch (err) {
+        this.openFeedback('Erro ao Atualizar', err.response?.data?.message || 'Erro ao atualizar preço.', 'danger');
+      } finally {
+        this.savingQuickPrice = false;
+      }
+    },
+    async saveSettings() {
+      this.savingSettings = true;
+      try {
+        this.syncPastelFreeIngredients();
+        const res = await axios.post('/api/admin/menu-settings', this.menuSettings);
+        if (res.data && res.data.settings) {
+          this.menuSettings = res.data.settings;
+        }
+        await this.fetchData();
+        this.$emit('menu-updated');
+        this.openFeedback('Tudo Pronto!', 'Configurações e valores salvos com sucesso no sistema!', 'success');
+      } catch (err) {
+        this.openFeedback('Erro ao Salvar', err.response?.data?.message || 'Erro ao salvar configurações.', 'danger');
+      } finally {
+        this.savingSettings = false;
+      }
+    },
+    addPizzaSize() {
+      const newId = 'tam_' + Date.now();
+      if (!this.menuSettings.pizza_sizes) this.menuSettings.pizza_sizes = [];
+      this.menuSettings.pizza_sizes.push({
+        id: newId,
+        name: 'Novo Tamanho',
+        slices: '8 Fatias',
+        price: 40.00,
+        is_available: true,
+      });
+    },
+    removePizzaSize(idx) {
+      this.menuSettings.pizza_sizes.splice(idx, 1);
+    },
+    addPizzaBorder() {
+      const newId = 'borda_' + Date.now();
+      if (!this.menuSettings.pizza_borders) this.menuSettings.pizza_borders = [];
+      this.menuSettings.pizza_borders.push({
+        id: newId,
+        name: 'Nova Borda',
+        price: 8.00,
+        is_available: true,
+      });
+    },
+    removePizzaBorder(idx) {
+      this.menuSettings.pizza_borders.splice(idx, 1);
+    },
+    addSalgadoIngredient() {
+      if (!this.newSalgadoName.trim()) return;
+      if (!this.menuSettings.monte_pastel.ingredients_salgados) {
+        this.menuSettings.monte_pastel.ingredients_salgados = [];
+      }
+      this.menuSettings.monte_pastel.ingredients_salgados.push({
+        name: this.newSalgadoName.trim(),
+        is_available: true,
+      });
+      this.newSalgadoName = '';
+    },
+    removeSalgadoIngredient(idx) {
+      this.menuSettings.monte_pastel.ingredients_salgados.splice(idx, 1);
+    },
+    addDoceIngredient() {
+      if (!this.newDoceName.trim()) return;
+      if (!this.menuSettings.monte_pastel.ingredients_doces) {
+        this.menuSettings.monte_pastel.ingredients_doces = [];
+      }
+      this.menuSettings.monte_pastel.ingredients_doces.push({
+        name: this.newDoceName.trim(),
+        is_available: true,
+      });
+      this.newDoceName = '';
+    },
+    removeDoceIngredient(idx) {
+      this.menuSettings.monte_pastel.ingredients_doces.splice(idx, 1);
     },
     openProductModal(product = null) {
       this.selectedFile = null;
@@ -1034,8 +1803,9 @@ export default {
 
         this.showProductModal = false;
         this.fetchData();
+        this.openFeedback('Produto Salvo!', 'O produto foi salvo com sucesso.', 'success');
       } catch (err) {
-        alert('Erro ao salvar produto. Verifique os dados.');
+        this.openFeedback('Erro ao Salvar', 'Erro ao salvar produto. Verifique os dados preenchidos.', 'danger');
       } finally {
         this.saving = false;
       }
@@ -1045,7 +1815,7 @@ export default {
         await axios.patch(`/api/admin/products/${product.id}/toggle-availability`);
         product.is_available = !product.is_available;
       } catch (err) {
-        alert('Erro ao alterar disponibilidade.');
+        this.openFeedback('Erro', 'Não foi possível alterar a disponibilidade.', 'danger');
       }
     },
     async togglePromotion(product) {
@@ -1053,7 +1823,7 @@ export default {
         await axios.patch(`/api/admin/products/${product.id}/toggle-promotion`);
         product.is_promotion = !product.is_promotion;
       } catch (err) {
-        alert('Erro ao alterar promoção.');
+        this.openFeedback('Erro', 'Não foi possível alterar a promoção.', 'danger');
       }
     },
     openCategoryModal(cat = null) {
@@ -1073,8 +1843,9 @@ export default {
         }
         this.showCategoryModal = false;
         this.fetchData();
+        this.openFeedback('Categoria Salva!', 'A categoria foi salva com sucesso.', 'success');
       } catch (err) {
-        alert('Erro ao salvar categoria.');
+        this.openFeedback('Erro ao Salvar', 'Não foi possível salvar a categoria.', 'danger');
       }
     },
     async toggleCategoryActive(cat) {
@@ -1082,7 +1853,7 @@ export default {
         await axios.patch(`/api/admin/categories/${cat.id}/toggle`);
         cat.is_active = !cat.is_active;
       } catch (err) {
-        alert('Erro ao alterar status da categoria.');
+        this.openFeedback('Erro', 'Não foi possível alterar o status da categoria.', 'danger');
       }
     },
     openComboModal(combo = null) {
@@ -1191,8 +1962,9 @@ export default {
 
         this.showComboModal = false;
         this.fetchData();
+        this.openFeedback('Combo Salvo!', 'O combo foi salvo com sucesso.', 'success');
       } catch (err) {
-        alert('Erro ao salvar combo. Verifique os dados.');
+        this.openFeedback('Erro ao Salvar', 'Erro ao salvar combo. Verifique os dados preenchidos.', 'danger');
       } finally {
         this.saving = false;
       }
@@ -1209,8 +1981,9 @@ export default {
         this.showDeleteCategoryModal = false;
         this.categoryToDelete = null;
         this.fetchData();
+        this.openFeedback('Categoria Excluída', 'A categoria foi removida com sucesso.', 'success');
       } catch (err) {
-        alert(err.response?.data?.message || 'Erro ao excluir categoria.');
+        this.openFeedback('Erro ao Excluir', err.response?.data?.message || 'Erro ao excluir categoria.', 'danger');
       } finally {
         this.isDeletingCategory = false;
       }
@@ -1237,8 +2010,9 @@ export default {
         this.showDeleteProductModal = false;
         this.productToDelete = null;
         this.fetchData();
+        this.openFeedback('Item Excluído', 'O item foi removido com sucesso.', 'success');
       } catch (err) {
-        alert(err.response?.data?.message || 'Erro ao excluir item.');
+        this.openFeedback('Erro ao Excluir', err.response?.data?.message || 'Erro ao excluir item.', 'danger');
       } finally {
         this.isDeletingProduct = false;
       }

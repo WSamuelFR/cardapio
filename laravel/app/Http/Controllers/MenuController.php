@@ -74,6 +74,19 @@ class MenuController extends Controller
             'promotions' => $promotions,
             'combos' => $combos,
             'popular' => $popular,
+            'menu_settings' => [
+                'pizza_sizes' => \App\Models\SystemSetting::getSetting('pizza_sizes', []),
+                'pizza_borders' => \App\Models\SystemSetting::getSetting('pizza_borders', []),
+                'monte_pastel' => \App\Models\SystemSetting::getSetting('monte_pastel', []),
+                'store_whatsapp' => \App\Models\SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+                'store_info' => \App\Models\SystemSetting::getSetting('store_info', [
+                    'name' => 'AKY LANCHES',
+                    'slogan' => 'Cardápio Digital & Pedidos',
+                    'address' => 'Rua Principal, Centro - Teixeira - PB',
+                    'hours' => 'Todos os dias, das 18h00 às 23h30',
+                    'document' => '',
+                ]),
+            ],
         ]);
     }
 
@@ -93,6 +106,9 @@ class MenuController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1|max:50',
+            'items.*.custom_name' => 'nullable|string|max:255',
+            'items.*.unit_price' => 'nullable|numeric|min:0',
+            'items.*.notes' => 'nullable|string|max:500',
         ]);
 
         $cleanCustomerName = trim(mb_strtoupper(preg_replace('/[^\p{L}\s]/u', '', $validated['customer_name'])));
@@ -141,13 +157,22 @@ class MenuController extends Controller
                 }
 
                 $unitPrice = (float) $product->effective_price;
+                if (!empty($item['unit_price']) && is_numeric($item['unit_price']) && (float) $item['unit_price'] >= 5.0) {
+                    $unitPrice = (float) $item['unit_price'];
+                }
+
                 $quantity = (int) $item['quantity'];
                 $subtotal = $unitPrice * $quantity;
                 $total += $subtotal;
 
+                $nameSnapshot = !empty($item['custom_name']) ? trim($item['custom_name']) : $product->name;
+                if (!empty($item['notes'])) {
+                    $nameSnapshot .= ' [' . trim($item['notes']) . ']';
+                }
+
                 $itemsData[] = [
                     'product_id' => $product->id,
-                    'product_name_snapshot' => $product->name,
+                    'product_name_snapshot' => $nameSnapshot,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
                     'subtotal' => $subtotal,

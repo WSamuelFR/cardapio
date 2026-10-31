@@ -62,15 +62,15 @@
       </button>
     </div>
 
-    <!-- Grade Completa de Cards -->
+    <!-- Grade Completa de Cards com Cores Alternadas (Vermelho, Amarelo, Verde) -->
     <div v-else class="row g-3">
       <div
-        v-for="item in filteredItems"
+        v-for="(item, idx) in filteredItems"
         :key="'sec-item-' + item.id"
         class="col-12 col-md-6 col-lg-4"
       >
         <div
-          :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition', !item.is_available ? 'opacity-75' : '', item.is_combo ? 'border-start border-3 border-success' : 'border-start border-3 border-danger']"
+          :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition border-start border-4', getCardTheme(idx).borderClass, !item.is_available ? 'opacity-75' : '']"
           @click="$emit('select-product', item, 'section')"
         >
           <div class="d-flex p-3 gap-3">
@@ -84,8 +84,8 @@
                 class="w-100 h-100 object-fit-cover"
               >
               <div v-else class="text-center text-muted">
-                <i :class="[icon || 'bi-tag-fill', 'fs-2 text-' + (themeColor || 'danger'), 'opacity-75 d-block']"></i>
-                <span style="font-size: 0.65rem;" :class="['fw-semibold text-' + (themeColor || 'danger')]">
+                <i :class="[icon || 'bi-tag-fill', 'fs-2 opacity-75 d-block', getCardTheme(idx).iconClass]"></i>
+                <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(idx).iconClass]">
                   {{ item.is_combo ? 'Combo' : (item.is_promotion ? 'Promoção' : 'AKY') }}
                 </span>
               </div>
@@ -109,25 +109,25 @@
                     <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                       R$ {{ formatPrice(item.price) }}
                     </span>
-                    <span :class="['fw-bold fs-6', item.is_combo ? 'text-success' : 'text-danger']">
+                    <span :class="['fw-bold fs-6', getCardTheme(idx).priceClass]">
                       R$ {{ formatPrice(item.promotional_price) }}
                     </span>
                   </div>
                   <div v-else>
-                    <span :class="['fw-bold fs-6', 'text-' + (themeColor || 'danger')]">
+                    <span :class="['fw-bold fs-6', getCardTheme(idx).priceClass]">
                       R$ {{ formatPrice(item.effective_price || item.price) }}
                     </span>
                   </div>
                 </div>
 
                 <button
-                  :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', item.is_combo ? 'btn-success' : 'btn-aky-primary']"
-                  style="width: 34px; height: 34px;"
+                  :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx).btnClass]"
+                  style="width: 36px; height: 36px;"
                   :disabled="!item.is_available"
-                  title="Adicionar ao pedido"
-                  @click.stop="$emit('add-to-cart', item)"
+                  :title="isCustomizable(item) ? 'Personalizar opções' : 'Adicionar ao pedido'"
+                  @click.stop="handleCardAdd(item)"
                 >
-                  <i class="bi bi-plus-lg fs-6"></i>
+                  <i :class="isCustomizable(item) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
                 </button>
               </div>
 
@@ -191,6 +191,46 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
+    getCardTheme(idx) {
+      const i = Math.abs(idx) % 3;
+      if (i === 0) {
+        return {
+          borderClass: 'border-danger',
+          btnClass: 'btn-danger text-white',
+          priceClass: 'text-danger',
+          iconClass: 'text-danger',
+        };
+      } else if (i === 1) {
+        return {
+          borderClass: 'border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          priceClass: 'text-warning-emphasis',
+          iconClass: 'text-warning',
+        };
+      } else {
+        return {
+          borderClass: 'border-success',
+          btnClass: 'btn-success text-white',
+          priceClass: 'text-success',
+          iconClass: 'text-success',
+        };
+      }
+    },
+    isCustomizable(item) {
+      if (!item) return false;
+      const name = (item.name || '').toLowerCase();
+      const catSlug = (item.category && item.category.slug) ? item.category.slug.toLowerCase() : '';
+      if (name.includes('monte seu pastel')) return true;
+      if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      return false;
+    },
+    handleCardAdd(item) {
+      if (this.isCustomizable(item)) {
+        this.$emit('select-product', item, 'section');
+      } else {
+        this.$emit('add-to-cart', item);
+      }
+    },
   },
 };
 </script>
@@ -199,5 +239,7 @@ export default {
 .transition {
   transition: all 0.2s ease-in-out;
 }
+.text-warning-emphasis {
+  color: #b45309 !important;
+}
 </style>
-

@@ -50,9 +50,9 @@
       </div>
 
       <div v-else class="row g-3">
-        <div v-for="product in searchResults" :key="'search-' + product.id" class="col-12 col-md-6 col-lg-4">
+        <div v-for="(product, idx) in searchResults" :key="'search-' + product.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-3 border-danger shadow-sm rounded-4 cursor-pointer transition"
+            :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 cursor-pointer transition', getCardTheme(idx).borderClass]"
             @click="$emit('select-product', product, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -65,7 +65,7 @@
                   class="w-100 h-100 object-fit-cover"
                 >
                 <div v-else class="text-center text-muted">
-                  <i class="bi bi-image fs-3 d-block text-black-50"></i>
+                  <i :class="['bi bi-image fs-3 d-block', getCardTheme(idx).iconClass]"></i>
                   <span style="font-size: 0.65rem;">Sem foto</span>
                 </div>
               </div>
@@ -78,17 +78,17 @@
                   </p>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                  <span class="fw-bold text-aky-primary fs-6">
+                  <span :class="['fw-bold fs-6', getCardTheme(idx).priceClass]">
                     R$ {{ formatPrice(product.effective_price) }}
                   </span>
                   <button
-                    class="btn btn-sm btn-aky-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
-                    style="width: 34px; height: 34px;"
+                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx).btnClass]"
+                    style="width: 36px; height: 36px;"
                     :disabled="!product.is_available"
-                    title="Adicionar ao pedido"
-                    @click.stop="$emit('add-to-cart', product)"
+                    :title="isCustomizable(product) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
+                    @click.stop="handleCardAdd(product)"
                   >
-                    <i class="bi bi-plus-lg fs-6"></i>
+                    <i :class="isCustomizable(product) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
                   </button>
                 </div>
               </div>
@@ -127,9 +127,9 @@
       </div>
 
       <div class="row g-3">
-        <div v-for="item in displayedPromotions" :key="'promo-' + item.id" class="col-12 col-md-6 col-lg-4">
+        <div v-for="(item, idx) in displayedPromotions" :key="'promo-' + item.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-3 border-danger shadow-sm rounded-4 cursor-pointer transition"
+            :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 cursor-pointer transition', getCardTheme(idx).borderClass]"
             @click="$emit('select-product', item, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -142,8 +142,8 @@
                   class="w-100 h-100 object-fit-cover"
                 >
                 <div v-else class="text-center text-muted">
-                  <i class="bi bi-tag-fill fs-2 text-danger opacity-75 d-block"></i>
-                  <span style="font-size: 0.65rem;" class="fw-semibold text-danger">Promoção</span>
+                  <i :class="['bi bi-tag-fill fs-2 opacity-75 d-block', getCardTheme(idx).iconClass]"></i>
+                  <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(idx).iconClass]">Promoção</span>
                 </div>
               </div>
 
@@ -162,19 +162,19 @@
                     <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                       R$ {{ formatPrice(item.price) }}
                     </span>
-                    <span class="fw-bold text-danger fs-6">
+                    <span :class="['fw-bold fs-6', getCardTheme(idx).priceClass]">
                       R$ {{ formatPrice(item.promotional_price) }}
                     </span>
                   </div>
 
                   <button
-                    class="btn btn-sm btn-aky-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
-                    style="width: 34px; height: 34px;"
+                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx).btnClass]"
+                    style="width: 36px; height: 36px;"
                     :disabled="!item.is_available"
-                    title="Adicionar ao pedido"
-                    @click.stop="$emit('add-to-cart', item)"
+                    :title="isCustomizable(item) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
+                    @click.stop="handleCardAdd(item)"
                   >
-                    <i class="bi bi-plus-lg fs-6"></i>
+                    <i :class="isCustomizable(item) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
                   </button>
                 </div>
               </div>
@@ -215,9 +215,9 @@
       </div>
 
       <div class="row g-3">
-        <div v-for="item in displayedCombos" :key="'combo-' + item.id" class="col-12 col-md-6 col-lg-4">
+        <div v-for="(item, idx) in displayedCombos" :key="'combo-' + item.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-3 border-success shadow-sm rounded-4 cursor-pointer transition"
+            :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 cursor-pointer transition', getCardTheme(idx + 1).borderClass]"
             @click="$emit('select-product', item, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -230,8 +230,8 @@
                   class="w-100 h-100 object-fit-cover"
                 >
                 <div v-else class="text-center text-muted">
-                  <i class="bi bi-gift-fill fs-2 text-success opacity-75 d-block"></i>
-                  <span style="font-size: 0.65rem;" class="fw-semibold text-success">Combo</span>
+                  <i :class="['bi bi-gift-fill fs-2 opacity-75 d-block', getCardTheme(idx + 1).iconClass]"></i>
+                  <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(idx + 1).iconClass]">Combo</span>
                 </div>
               </div>
 
@@ -251,17 +251,17 @@
                     <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                       R$ {{ formatPrice(item.price) }}
                     </span>
-                    <span class="fw-bold text-success fs-6">
+                    <span :class="['fw-bold fs-6', getCardTheme(idx + 1).priceClass]">
                       R$ {{ formatPrice(item.effective_price) }}
                     </span>
                   </div>
 
                   <button
-                    class="btn btn-sm btn-success rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
-                    style="width: 34px; height: 34px;"
+                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx + 1).btnClass]"
+                    style="width: 36px; height: 36px;"
                     :disabled="!item.is_available"
                     title="Adicionar ao pedido"
-                    @click.stop="$emit('add-to-cart', item)"
+                    @click.stop="handleCardAdd(item)"
                   >
                     <i class="bi bi-plus-lg fs-6"></i>
                   </button>
@@ -304,9 +304,9 @@
       </div>
 
       <div class="row g-3">
-        <div v-for="item in displayedPopular" :key="'pop-' + item.id" class="col-12 col-md-6 col-lg-4">
+        <div v-for="(item, idx) in displayedPopular" :key="'pop-' + item.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-3 border-warning shadow-sm rounded-4 cursor-pointer transition"
+            :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 cursor-pointer transition', getCardTheme(idx + 2).borderClass]"
             @click="$emit('select-product', item, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -319,8 +319,8 @@
                   class="w-100 h-100 object-fit-cover"
                 >
                 <div v-else class="text-center text-muted">
-                  <i class="bi bi-trophy-fill fs-2 text-warning opacity-75 d-block"></i>
-                  <span style="font-size: 0.65rem;" class="fw-semibold text-warning">Favorito</span>
+                  <i :class="['bi bi-trophy-fill fs-2 opacity-75 d-block', getCardTheme(idx + 2).iconClass]"></i>
+                  <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(idx + 2).iconClass]">Favorito</span>
                 </div>
               </div>
 
@@ -341,25 +341,25 @@
                       <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                         R$ {{ formatPrice(item.price) }}
                       </span>
-                      <span class="fw-bold text-danger fs-6">
+                      <span :class="['fw-bold fs-6', getCardTheme(idx + 2).priceClass]">
                         R$ {{ formatPrice(item.promotional_price) }}
                       </span>
                     </div>
                     <div v-else>
-                      <span class="fw-bold text-aky-primary fs-6">
+                      <span :class="['fw-bold fs-6', getCardTheme(idx + 2).priceClass]">
                         R$ {{ formatPrice(item.effective_price) }}
                       </span>
                     </div>
                   </div>
 
                   <button
-                    class="btn btn-sm btn-aky-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
-                    style="width: 34px; height: 34px;"
+                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx + 2).btnClass]"
+                    style="width: 36px; height: 36px;"
                     :disabled="!item.is_available"
-                    title="Adicionar ao pedido"
-                    @click.stop="$emit('add-to-cart', item)"
+                    :title="isCustomizable(item) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
+                    @click.stop="handleCardAdd(item)"
                   >
-                    <i class="bi bi-plus-lg fs-6"></i>
+                    <i :class="isCustomizable(item) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
                   </button>
                 </div>
               </div>
@@ -442,7 +442,56 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
+    getCardTheme(idx) {
+      const i = Math.abs(idx) % 3;
+      if (i === 0) {
+        return {
+          borderClass: 'border-danger',
+          btnClass: 'btn-danger text-white',
+          priceClass: 'text-danger',
+          iconClass: 'text-danger',
+        };
+      } else if (i === 1) {
+        return {
+          borderClass: 'border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          priceClass: 'text-warning-emphasis',
+          iconClass: 'text-warning',
+        };
+      } else {
+        return {
+          borderClass: 'border-success',
+          btnClass: 'btn-success text-white',
+          priceClass: 'text-success',
+          iconClass: 'text-success',
+        };
+      }
+    },
+    isCustomizable(product) {
+      if (!product) return false;
+      const name = (product.name || '').toLowerCase();
+      const catSlug = (product.category && product.category.slug) ? product.category.slug.toLowerCase() : '';
+      if (name.includes('monte seu pastel')) return true;
+      if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      return false;
+    },
+    handleCardAdd(product) {
+      if (this.isCustomizable(product)) {
+        this.$emit('select-product', product, 'home');
+      } else {
+        this.$emit('add-to-cart', product);
+      }
+    },
   },
 };
 </script>
+
+<style scoped>
+.text-warning-emphasis {
+  color: #b45309 !important;
+}
+.transition {
+  transition: all 0.2s ease-in-out;
+}
+</style>
 

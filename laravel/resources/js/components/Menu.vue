@@ -24,30 +24,30 @@
 
     <div v-else>
       <div
-        v-for="cat in categories"
+        v-for="(cat, catIdx) in categories"
         :key="'menu-cat-' + cat.id"
         class="category-feed-section mb-5"
       >
         <!-- Topo da Categoria: Nome, Ícone, Badge e Botão Ver Tudo -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <div class="d-flex align-items-center gap-2">
-            <div class="rounded-circle bg-danger bg-opacity-10 p-2 text-aky-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-              <i :class="getCategoryIcon(cat.slug)" class="fs-5"></i>
+            <div :class="['rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm', getCardTheme(catIdx).badgeClass]" style="width: 40px; height: 40px;">
+              <i :class="[getCategoryIcon(cat.slug), 'fs-5']"></i>
             </div>
             <div>
               <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                 <span>{{ cat.name }}</span>
-                <span class="badge bg-light text-secondary border rounded-pill small fw-normal d-none d-sm-inline">
+                <span :class="['badge rounded-pill small fw-normal d-none d-sm-inline', getCardTheme(catIdx).badgeClass]">
                   {{ cat.products ? cat.products.length : 0 }} itens
                 </span>
               </h4>
             </div>
           </div>
 
-          <!-- Botão Ver Tudo da Categoria (Abre Tela Dedicada com Barra de Pesquisa) -->
+          <!-- Botão Ver Tudo da Categoria -->
           <button
-            class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold shadow-sm transition d-flex align-items-center gap-1"
-            @click="openCategorySection(cat)"
+            :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold shadow-sm transition d-flex align-items-center gap-1', getCardTheme(catIdx).outlineBtnClass]"
+            @click="openCategorySection(cat, catIdx)"
           >
             <span>Ver tudo</span>
             <i class="bi bi-arrow-right"></i>
@@ -59,20 +59,20 @@
           <small class="text-muted">Nenhum produto cadastrado nesta categoria ainda.</small>
         </div>
 
-        <!-- TRACK COM ROLAGEM HORIZONTAL SUAVE DOS CARDS DA CATEGORIA -->
+        <!-- TRACK COM ROLAGEM HORIZONTAL SUAVE DOS CARDS DA CATEGORIA (VERMELHO, AMARELO, VERDE) -->
         <div
           v-else
           class="d-flex gap-3 overflow-x-auto pb-2 no-scrollbar horizontal-scroll-track"
           style="scroll-snap-type: x mandatory;"
         >
           <div
-            v-for="product in getCategoryPreviewItems(cat)"
+            v-for="(product, prodIdx) in getCategoryPreviewItems(cat)"
             :key="'cat-item-' + product.id"
             class="flex-shrink-0"
             style="width: 290px; min-width: 290px; scroll-snap-align: start;"
           >
             <div
-              :class="['card aky-card h-100 bg-white border-start border-3 border-danger shadow-sm rounded-4 overflow-hidden cursor-pointer transition', !product.is_available ? 'opacity-75' : '']"
+              :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 overflow-hidden cursor-pointer transition', getCardTheme(catIdx + prodIdx).borderClass, !product.is_available ? 'opacity-75' : '']"
               @click="$emit('select-product', product, 'menu')"
             >
               <div class="d-flex p-3 gap-3">
@@ -86,8 +86,8 @@
                     class="w-100 h-100 object-fit-cover"
                   >
                   <div v-else class="text-center text-muted">
-                    <i :class="getCategoryIcon(cat.slug)" class="fs-2 text-danger opacity-75 d-block"></i>
-                    <span style="font-size: 0.65rem;" class="fw-semibold text-danger">AKY</span>
+                    <i :class="[getCategoryIcon(cat.slug), getCardTheme(catIdx + prodIdx).iconClass, 'fs-2 opacity-75 d-block']"></i>
+                    <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(catIdx + prodIdx).iconClass]">AKY</span>
                   </div>
                 </div>
 
@@ -112,25 +112,25 @@
                         <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                           R$ {{ formatPrice(product.price) }}
                         </span>
-                        <span class="fw-bold text-danger fs-6">
+                        <span :class="['fw-bold fs-6', getCardTheme(catIdx + prodIdx).priceClass]">
                           R$ {{ formatPrice(product.promotional_price) }}
                         </span>
                       </div>
                       <div v-else>
-                        <span class="fw-bold text-aky-primary fs-6">
+                        <span :class="['fw-bold fs-6', getCardTheme(catIdx + prodIdx).priceClass]">
                           R$ {{ formatPrice(product.effective_price || product.price) }}
                         </span>
                       </div>
                     </div>
 
                     <button
-                      class="btn btn-sm btn-aky-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
-                      style="width: 34px; height: 34px;"
+                      :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(catIdx + prodIdx).btnClass]"
+                      style="width: 36px; height: 36px;"
                       :disabled="!product.is_available"
-                      title="Adicionar ao pedido"
-                      @click.stop="$emit('add-to-cart', product)"
+                      :title="isCustomizable(product) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
+                      @click.stop="handleCardAdd(product)"
                     >
-                      <i class="bi bi-plus-lg fs-6"></i>
+                      <i :class="isCustomizable(product) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
                     </button>
                   </div>
 
@@ -147,10 +147,10 @@
             style="width: 170px; min-width: 170px; scroll-snap-align: start;"
           >
             <div
-              class="card aky-card border-2 border-dashed border-danger bg-white p-3 rounded-4 text-center cursor-pointer h-100 w-100 d-flex flex-column align-items-center justify-content-center transition shadow-sm"
-              @click="openCategorySection(cat)"
+              :class="['card aky-card border-2 border-dashed bg-white p-3 rounded-4 text-center cursor-pointer h-100 w-100 d-flex flex-column align-items-center justify-content-center transition shadow-sm', getCardTheme(catIdx).borderClass]"
+              @click="openCategorySection(cat, catIdx)"
             >
-              <div class="rounded-circle bg-danger bg-opacity-10 text-aky-primary p-3 mb-2">
+              <div :class="['rounded-circle p-3 mb-2', getCardTheme(catIdx).badgeClass]">
                 <i class="bi bi-arrow-right fs-4"></i>
               </div>
               <span class="fw-bold text-dark small d-block">Ver todos</span>
@@ -181,6 +181,55 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
+    getCardTheme(idx) {
+      const i = Math.abs(idx) % 3;
+      if (i === 0) {
+        return {
+          themeName: 'danger',
+          borderClass: 'border-danger',
+          btnClass: 'btn-danger text-white',
+          outlineBtnClass: 'btn-outline-danger',
+          priceClass: 'text-danger',
+          iconClass: 'text-danger',
+          badgeClass: 'bg-danger bg-opacity-10 text-danger border border-danger',
+        };
+      } else if (i === 1) {
+        return {
+          themeName: 'warning',
+          borderClass: 'border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          outlineBtnClass: 'btn-outline-dark',
+          priceClass: 'text-warning-emphasis fw-bold',
+          iconClass: 'text-warning',
+          badgeClass: 'bg-warning bg-opacity-25 text-dark border border-warning',
+        };
+      } else {
+        return {
+          themeName: 'success',
+          borderClass: 'border-success',
+          btnClass: 'btn-success text-white',
+          outlineBtnClass: 'btn-outline-success',
+          priceClass: 'text-success fw-bold',
+          iconClass: 'text-success',
+          badgeClass: 'bg-success bg-opacity-10 text-success border border-success',
+        };
+      }
+    },
+    isCustomizable(product) {
+      if (!product) return false;
+      const name = (product.name || '').toLowerCase();
+      const catSlug = (product.category && product.category.slug) ? product.category.slug.toLowerCase() : '';
+      if (name.includes('monte seu pastel')) return true;
+      if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      return false;
+    },
+    handleCardAdd(product) {
+      if (this.isCustomizable(product)) {
+        this.$emit('select-product', product, 'menu');
+      } else {
+        this.$emit('add-to-cart', product);
+      }
+    },
     getCategoryPreviewItems(cat) {
       if (!cat.products) return [];
       return cat.products.slice(0, 3);
@@ -188,17 +237,20 @@ export default {
     getCategoryIcon(slug) {
       if (!slug) return 'bi-tag-fill';
       if (slug.includes('pastel') || slug.includes('pasteis')) return 'bi-circle-half';
-      if (slug.includes('salgado')) return 'bi-egg-fried';
+      if (slug.includes('pizza')) return 'bi-pie-chart-fill';
+      if (slug.includes('salgado') || slug.includes('petisco')) return 'bi-egg-fried';
       if (slug.includes('suco') || slug.includes('bebida')) return 'bi-cup-straw';
       if (slug.includes('doce') || slug.includes('sobremesa')) return 'bi-cake2';
+      if (slug.includes('sanduiche') || slug.includes('artesanal') || slug.includes('classico')) return 'bi-flower1';
       return 'bi-bag-heart-fill';
     },
-    openCategorySection(cat) {
+    openCategorySection(cat, catIdx = 0) {
+      const theme = this.getCardTheme(catIdx);
       this.$emit('open-section', {
         title: cat.name,
         subtitle: 'Confira todos os lanches e opções disponíveis em ' + cat.name,
         icon: this.getCategoryIcon(cat.slug),
-        themeColor: 'danger',
+        themeColor: theme.themeName,
         badgeText: (cat.products ? cat.products.length : 0) + ' opções',
         items: cat.products || [],
         backTo: 'menu',
@@ -217,5 +269,8 @@ export default {
 }
 .cursor-pointer {
   cursor: pointer;
+}
+.text-warning-emphasis {
+  color: #b45309 !important;
 }
 </style>

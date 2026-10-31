@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -287,6 +288,104 @@ class AdminController extends Controller
         ]);
     }
 
+    public function quickUpdateProductPrice(Request $request, int $id): JsonResponse
+    {
+        $this->checkAdmin();
+        $validated = $request->validate([
+            'price' => 'required|numeric|min:0.01',
+        ]);
+
+        $product = Product::findOrFail($id);
+        $product->price = (float) $validated['price'];
+        $product->save();
+
+        return response()->json([
+            'message' => "Preço de '{$product->name}' atualizado para R$ " . number_format($product->price, 2, ',', '.'),
+            'product' => $product->load('category'),
+        ]);
+    }
+
+    public function getMenuSettings(): JsonResponse
+    {
+        $this->checkAdmin();
+        return response()->json([
+            'pizza_sizes' => SystemSetting::getSetting('pizza_sizes', []),
+            'pizza_borders' => SystemSetting::getSetting('pizza_borders', []),
+            'monte_pastel' => SystemSetting::getSetting('monte_pastel', []),
+            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+        ]);
+    }
+
+    public function saveMenuSettings(Request $request): JsonResponse
+    {
+        $this->checkAdmin();
+
+        $validated = $request->validate([
+            'pizza_sizes' => 'nullable|array',
+            'pizza_borders' => 'nullable|array',
+            'monte_pastel' => 'nullable|array',
+            'store_whatsapp' => 'nullable|string|max:30',
+            'sync_pizzas' => 'nullable|boolean',
+        ]);
+
+        if (isset($validated['store_whatsapp'])) {
+            SystemSetting::setSetting('store_whatsapp', trim($validated['store_whatsapp']), 'WhatsApp comercial da AKY Lanches');
+        }
+
+        if (isset($validated['pizza_sizes'])) {
+            SystemSetting::setSetting('pizza_sizes', $validated['pizza_sizes'], 'Tamanhos e preços das pizzas');
+
+            if (!empty($validated['sync_pizzas'])) {
+                $small = collect($validated['pizza_sizes'])->firstWhere('id', 'pequena');
+                if ($small && isset($small['price'])) {
+                    $basePrice = (float) $small['price'];
+                    Product::whereHas('category', function ($q) {
+                        $q->whereIn('slug', ['pizzas-tradicionais', 'pizzas-doces']);
+                    })->orWhere('name', 'LIKE', 'Pizza%')->update(['price' => $basePrice]);
+                }
+            }
+        }
+
+        if (isset($validated['pizza_borders'])) {
+            SystemSetting::setSetting('pizza_borders', $validated['pizza_borders'], 'Bordas recheadas de pizza');
+        }
+
+        if (isset($validated['monte_pastel'])) {
+            SystemSetting::setSetting('monte_pastel', $validated['monte_pastel'], 'Regras do Monte Seu Pastel');
+
+            if (isset($validated['monte_pastel']['base_price'])) {
+                $basePrice = (float) $validated['monte_pastel']['base_price'];
+                Product::where('name', 'LIKE', '%Monte Seu Pastel%')->update(['price' => $basePrice]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Configurações e valores atualizados com sucesso.',
+            'settings' => [
+                'pizza_sizes' => SystemSetting::getSetting('pizza_sizes', []),
+                'pizza_borders' => SystemSetting::getSetting('pizza_borders', []),
+                'monte_pastel' => SystemSetting::getSetting('monte_pastel', []),
+                'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            ],
+        ]);
+    }
+
+    public function syncPizzaPrices(Request $request): JsonResponse
+    {
+        $this->checkAdmin();
+        $sizes = SystemSetting::getSetting('pizza_sizes', []);
+        $small = collect($sizes)->firstWhere('id', 'pequena');
+        $basePrice = $small ? (float) $small['price'] : 36.00;
+
+        $updatedCount = Product::whereHas('category', function ($q) {
+            $q->whereIn('slug', ['pizzas-tradicionais', 'pizzas-doces']);
+        })->orWhere('name', 'LIKE', 'Pizza%')->update(['price' => $basePrice]);
+
+        return response()->json([
+            'message' => "Preço base de {$updatedCount} pizzas sincronizado para R$ " . number_format($basePrice, 2, ',', '.'),
+        ]);
+    }
+
     // --- ATENDENTES (Exclusivo Admin) ---
 
     public function getAttendants(): JsonResponse
@@ -333,6 +432,95 @@ class AdminController extends Controller
             'message' => 'Atendente cadastrado com sucesso.',
             'attendant' => $attendant,
         ], 201);
+    }
+
+    // --- ADMINISTRADORES (Exclusivo Admin) ---
+
+    public function getAdmins(): JsonResponse
+    {
+        $this->checkAdmin();
+        $admins = User::where('role', 'admin')->orderBy('name', 'asc')->get();
+        return response()->json($admins);
+    }
+
+    public function createAdmin(Request $request): JsonResponse
+    {
+        $this->checkAdmin();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:30',
+            'document' => 'nullable|string|max:30',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $cleanName = trim(mb_strtoupper(preg_replace('/[^\p{L}\s]/u', '', $validated['name'])));
+        if (empty($cleanName)) {
+            return response()->json(['message' => 'Nome completo inválido. Use apenas letras e espaços.'], 422);
+        }
+
+        if (!empty($validated['document']) && strlen(preg_replace('/\D/', '', $validated['document'])) === 11) {
+            if (!$this->isValidCpf($validated['document'])) {
+                return response()->json(['message' => 'O CPF informado é inválido. Verifique os números digitados.'], 422);
+            }
+        }
+
+        $admin = User::create([
+            'name' => $cleanName,
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'document' => $validated['document'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'Administrador cadastrado com sucesso.',
+            'admin' => $admin,
+        ], 201);
+    }
+
+    // --- DADOS DA LANCHONETE & WHATSAPP (Exclusivo Admin) ---
+
+    public function getStoreInfo(): JsonResponse
+    {
+        $this->checkAdmin();
+        return response()->json([
+            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            'store_info' => SystemSetting::getSetting('store_info', [
+                'name' => 'AKY LANCHES',
+                'slogan' => 'Cardápio Digital & Pedidos',
+                'address' => 'Rua Principal, Centro - Teixeira - PB',
+                'hours' => 'Todos os dias, das 18h00 às 23h30',
+                'document' => '',
+            ]),
+        ]);
+    }
+
+    public function saveStoreInfo(Request $request): JsonResponse
+    {
+        $this->checkAdmin();
+
+        $validated = $request->validate([
+            'store_whatsapp' => 'nullable|string|max:30',
+            'store_info' => 'nullable|array',
+        ]);
+
+        if (isset($validated['store_whatsapp'])) {
+            SystemSetting::setSetting('store_whatsapp', trim($validated['store_whatsapp']), 'WhatsApp comercial da AKY Lanches');
+        }
+
+        if (isset($validated['store_info'])) {
+            SystemSetting::setSetting('store_info', $validated['store_info'], 'Dados gerais da AKY Lanches');
+        }
+
+        return response()->json([
+            'message' => 'Dados da lanchonete e WhatsApp atualizados com sucesso.',
+            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            'store_info' => SystemSetting::getSetting('store_info', []),
+        ]);
     }
 
     public function updateUser(Request $request, int $id): JsonResponse

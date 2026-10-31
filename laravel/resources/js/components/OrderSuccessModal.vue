@@ -48,7 +48,7 @@
 
           <!-- Ações -->
           <div class="d-grid gap-2">
-            <!-- Botão de Envio para WhatsApp com Link de Rastreio e Dados -->
+            <!-- Botão de Envio para WhatsApp da AKY Lanches com Pedido Formatado -->
             <a
               :href="whatsappUrl"
               target="_blank"
@@ -56,7 +56,7 @@
               style="background-color: #25D366; border-color: #25D366;"
             >
               <i class="bi bi-whatsapp fs-5 me-2"></i>
-              <span>Receber Dados no WhatsApp</span>
+              <span>Enviar Pedido no WhatsApp da Lanchonete</span>
             </a>
 
             <button class="btn btn-aky-primary py-2 fw-semibold rounded-pill shadow-sm" @click="$emit('track', order.order_number)">
@@ -80,6 +80,10 @@ export default {
       type: Object,
       default: null,
     },
+    storeWhatsapp: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -89,43 +93,84 @@ export default {
   computed: {
     whatsappUrl() {
       if (!this.order) return '#';
-      const rawPhone = this.order.customer_phone || '';
-      const digits = rawPhone.replace(/\D/g, '');
-      const phone = digits.startsWith('55') ? digits : ('55' + digits);
+
+      // Pega o número comercial da AKY Lanches configurado pelo Admin
+      const rawStorePhone = this.storeWhatsapp || '';
+      let storeDigits = rawStorePhone.replace(/\D/g, '');
+      if (!storeDigits) {
+        // Fallback de segurança se ainda não tiver sido configurado
+        storeDigits = '5583999999999';
+      }
+      const storePhone = storeDigits.startsWith('55') ? storeDigits : ('55' + storeDigits);
+
       const trackingUrl = `${window.location.origin}/?rastreio=${this.order.order_number}`;
 
       const paymentMap = {
         dinheiro: 'Dinheiro',
-        pix: 'PIX',
+        pix: 'PIX (Na Entrega)',
         cartao_credito: 'Cartão de Crédito',
         cartao_debito: 'Cartão de Débito',
       };
       const paymentName = paymentMap[this.order.payment_method] || this.order.payment_method || 'Não informado';
       let trocoText = '';
       if (this.order.payment_method === 'dinheiro' && this.order.needs_change && this.order.change_for) {
-        trocoText = ` (Troco para R$ ${Number(this.order.change_for).toFixed(2).replace('.', ',')})`;
+        trocoText = `\n💵 *Troco para:* R$ ${Number(this.order.change_for).toFixed(2).replace('.', ',')}`;
       }
 
       let itemsList = '';
       if (this.order.items && this.order.items.length) {
-        itemsList = '\n*Itens do Pedido:*\n' + this.order.items.map(item => `• ${item.quantity}x ${item.product_name_snapshot || 'Item'}`).join('\n') + '\n';
+        itemsList = this.order.items.map((item, idx) => {
+          let line = `${idx + 1}. *${item.quantity}x ${item.product_name_snapshot || 'Item'}*`;
+          if (item.unit_price) {
+            line += ` (R$ ${Number(item.unit_price).toFixed(2).replace('.', ',')} un.)`;
+          }
+          if (item.notes) {
+            line += `\n   ↳ _${item.notes}_`;
+          }
+          return line;
+        }).join('\n\n');
+      }
+
+      let addressDetails = this.order.delivery_address || 'Teixeira - PB';
+      if (this.order.delivery_complement) {
+        addressDetails += ` - Compl: ${this.order.delivery_complement}`;
+      }
+      if (this.order.delivery_reference) {
+        addressDetails += `\n📍 *Ponto de Ref:* ${this.order.delivery_reference}`;
+      }
+      if (this.order.delivery_cep) {
+        addressDetails += `\n📮 *CEP:* ${this.order.delivery_cep}`;
+      }
+
+      let generalNotes = '';
+      if (this.order.notes && this.order.notes.trim()) {
+        generalNotes = `\n📝 *Observações:* ${this.order.notes.trim()}\n`;
       }
 
       const text =
-`🍔 *AKY LANCHES - PEDIDO CONFIRMADO!*
+`👋 Olá, *AKY Lanches*! Acabei de fazer um pedido pelo cardápio digital.
 
-Olá, *${this.order.customer_name || 'Cliente'}*! Seu pedido foi registrado com sucesso.
+🍔 *NOVO PEDIDO #${this.order.order_number}*
+━━━━━━━━━━━━━━━━━━━━━
+👤 *Cliente:* ${this.order.customer_name || 'Não informado'}
+📱 *Telefone:* ${this.order.customer_phone || 'Não informado'}
 
-📋 *Código do Pedido:* #${this.order.order_number}
-💰 *Total:* R$ ${Number(this.order.total).toFixed(2).replace('.', ',')} (${paymentName}${trocoText})
-📍 *Endereço de Entrega:* ${this.order.delivery_address || 'Teixeira - PB'}${this.order.delivery_complement ? ' (' + this.order.delivery_complement + ')' : ''}
-${itemsList}
-🔍 *Acompanhe seu pedido em tempo real pelo link abaixo:*
+📍 *Endereço de Entrega:*
+${addressDetails}
+
+🛒 *Itens do Pedido:*
+${itemsList || 'Nenhum item informado'}
+${generalNotes}
+━━━━━━━━━━━━━━━━━━━━━
+💳 *Forma de Pagamento:* ${paymentName}${trocoText}
+💰 *TOTAL:* R$ ${Number(this.order.total).toFixed(2).replace('.', ',')}
+
+🔍 *Link de Acompanhamento:*
 ${trackingUrl}
 
-Agradecemos pela preferência! 🍟🥤`;
+Por favor, confirmem o recebimento do meu pedido! 🙏🍟🥤`;
 
-      return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+      return `https://wa.me/${storePhone}?text=${encodeURIComponent(text)}`;
     },
   },
   methods: {
