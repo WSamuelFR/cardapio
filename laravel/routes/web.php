@@ -20,6 +20,7 @@ Route::prefix('api')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/orders', [AdminController::class, 'getOrders']);
         Route::patch('/orders/{id}/status', [AdminController::class, 'updateOrderStatus']);
+        Route::patch('/orders/{id}/phone', [AdminController::class, 'updateOrderPhone']);
         Route::delete('/orders/{id}', [AdminController::class, 'deleteOrder']);
 
         Route::get('/categories', [AdminController::class, 'getCategories']);

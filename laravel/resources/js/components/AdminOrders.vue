@@ -117,10 +117,33 @@
 
           <div class="card-body p-3">
             <h6 class="fw-bold text-dark mb-1">{{ order.customer_name }}</h6>
-            <div class="small text-muted mb-2 d-flex justify-content-between align-items-center">
-              <span><i class="bi bi-telephone me-1 text-aky-primary"></i> {{ order.customer_phone }}</span>
+            <div class="small text-muted mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1">
+              <span class="d-inline-flex align-items-center gap-1">
+                <i class="bi bi-telephone text-aky-primary"></i>
+                <span :class="isPhoneSuspect(order.customer_phone) ? 'text-danger fw-bold' : ''">{{ order.customer_phone }}</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link p-0 text-muted"
+                  title="Editar número de telefone do pedido"
+                  @click="openEditPhoneModal(order)"
+                >
+                  <i class="bi bi-pencil-square text-primary"></i>
+                </button>
+              </span>
+
+              <button
+                v-if="isPhoneSuspect(order.customer_phone)"
+                type="button"
+                class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-bold d-inline-flex align-items-center shadow-sm"
+                style="font-size: 0.73rem;"
+                title="Número de teste ou formato inválido. Clique para corrigir antes de enviar para o WhatsApp."
+                @click="openEditPhoneModal(order)"
+              >
+                <i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i> Corrigir WhatsApp
+              </button>
+
               <a
-                v-if="order.customer_phone"
+                v-else-if="order.customer_phone"
                 :href="getCustomerWhatsAppUrl(order)"
                 target="_blank"
                 class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-0.5 fw-bold d-inline-flex align-items-center text-decoration-none shadow-sm"
@@ -131,8 +154,13 @@
               </a>
             </div>
             <div class="small text-secondary mb-3">
-              <i class="bi bi-geo-alt me-1 text-aky-primary"></i> {{ order.delivery_address }}
-              <span v-if="order.delivery_complement"> ({{ order.delivery_complement }})</span>
+              <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-dark rounded-pill px-2.5 py-1 mb-1 d-inline-flex align-items-center">
+                <i class="bi bi-shop me-1 text-warning"></i> Retirada no Estabelecimento
+              </span>
+              <div v-else>
+                <i class="bi bi-geo-alt me-1 text-aky-primary"></i> {{ order.delivery_address }}
+                <span v-if="order.delivery_complement"> ({{ order.delivery_complement }})</span>
+              </div>
             </div>
 
             <!-- Itens do Pedido -->
@@ -297,10 +325,14 @@
               <button
                 class="btn btn-outline-secondary btn-sm w-100 rounded-pill py-2 text-start px-3 d-flex align-items-center justify-content-between"
                 @click="assignSelectedMotoboy(null)"
+                :disabled="selectedOrderForMotoboy && selectedOrderForMotoboy.status === 'saiu_para_entrega'"
               >
                 <span><i class="bi bi-x-circle me-1 text-danger"></i> Deixar sem entregador</span>
                 <i class="bi bi-chevron-right small text-muted"></i>
               </button>
+              <small v-if="selectedOrderForMotoboy && selectedOrderForMotoboy.status === 'saiu_para_entrega'" class="text-danger d-block mt-1 ps-2" style="font-size: 0.7rem;">
+                * Pedidos a caminho da entrega devem ter um motoboy atribuído.
+              </small>
             </div>
 
             <hr class="my-2 opacity-25">
@@ -429,11 +461,120 @@
       </div>
     </div>
 
+    <!-- MODAL DE EDITAR TELEFONE DO PEDIDO -->
+    <div v-if="showPhoneModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+          <div class="modal-header bg-dark text-white p-3">
+            <h6 class="modal-title fw-bold mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-telephone-fill text-warning"></i>
+              <span>Editar Telefone do Pedido #{{ orderToEditPhone?.order_number }}</span>
+            </h6>
+            <button type="button" class="btn-close btn-close-white" @click="showPhoneModal = false"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="small text-muted mb-3">
+              Atualize o WhatsApp de <strong>{{ orderToEditPhone?.customer_name }}</strong> para enviar notificações e abrir conversa diretamente no aplicativo:
+            </p>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark">Número de Telefone / WhatsApp</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="bi bi-whatsapp text-success"></i>
+                </span>
+                <input
+                  type="tel"
+                  class="form-control border-start-0 ps-1"
+                  v-model="newPhoneValue"
+                  @input="handleEditPhoneInput"
+                  placeholder="(83) 99999-9999"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light p-3 border-0 d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-3" @click="showPhoneModal = false" :disabled="savingPhone">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-dark rounded-pill px-4 fw-bold" @click="saveOrderPhone" :disabled="savingPhone || !newPhoneValue">
+              <span v-if="savingPhone" class="spinner-border spinner-border-sm me-1"></span>
+              <i v-else class="bi bi-check2-circle me-1"></i> Salvar Telefone
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE NOTIFICAR CLIENTE NO WHATSAPP APÓS ALTERAÇÃO DE STATUS -->
+    <div v-if="showNotifyWhatsAppModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+          <div class="modal-header bg-dark text-white p-3">
+            <h6 class="modal-title fw-bold mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-whatsapp text-success fs-5"></i>
+              <span>Notificar Cliente no WhatsApp?</span>
+            </h6>
+            <button type="button" class="btn-close btn-close-white" @click="showNotifyWhatsAppModal = false"></button>
+          </div>
+          <div class="modal-body p-4 text-center">
+            <div class="rounded-circle bg-success bg-opacity-10 text-success p-3 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+              <i class="bi bi-send-check-fill fs-2"></i>
+            </div>
+            <h5 class="fw-bold text-dark mb-1">Status Atualizado com Sucesso!</h5>
+            <p class="text-muted small mb-3">
+              O pedido <strong>#{{ orderToNotifyWhatsApp?.order_number }}</strong> de <strong>{{ orderToNotifyWhatsApp?.customer_name }}</strong> agora está:
+              <br>
+              <span class="badge rounded-pill px-3 py-1 mt-1 fs-6" :class="statusButtonClass(orderToNotifyWhatsApp?.status)">
+                {{ statusLabel(orderToNotifyWhatsApp?.status) }}
+              </span>
+            </p>
+            <div v-if="orderToNotifyWhatsApp?.needs_change && orderToNotifyWhatsApp?.change_for" class="alert alert-warning border-0 rounded-3 py-2 px-3 small text-start mb-3">
+              <i class="bi bi-cash-coin me-1"></i>
+              <strong>Atenção ao Troco:</strong> O cliente pediu troco para R$ {{ formatPrice(orderToNotifyWhatsApp?.change_for) }} (Troco: R$ {{ formatPrice(Number(orderToNotifyWhatsApp?.change_for) - Number(orderToNotifyWhatsApp?.total)) }}). Essa informação já foi incluída automaticamente na mensagem do WhatsApp!
+            </div>
+            <!-- Seletor de Modelo de Mensagem -->
+            <div class="mb-3 text-start bg-light p-2.5 rounded-3 border">
+              <label class="form-label small fw-bold text-dark mb-1 d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-chat-quote-fill text-success me-1"></i> Modelo de Mensagem:</span>
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.68rem;">Personalizado</span>
+              </label>
+              <select class="form-select form-select-sm rounded-3 fw-semibold" v-model="selectedMsgTemplateId">
+                <option :value="null">Modelo Padrão do Sistema</option>
+                <option v-for="tpl in customWhatsAppList" :key="'opt-' + tpl.id" :value="tpl.id">
+                  {{ tpl.title }} ({{ tpl.trigger }})
+                </option>
+              </select>
+            </div>
+
+            <p class="small text-secondary mb-0">
+              Deseja abrir o aplicativo do WhatsApp agora para notificar o cliente?
+            </p>
+          </div>
+          <div class="modal-footer bg-light p-3 border-0 d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-3" @click="showNotifyWhatsAppModal = false">
+              Agora Não
+            </button>
+            <a
+              :href="getCustomerWhatsAppUrl(orderToNotifyWhatsApp)"
+              target="_blank"
+              class="btn btn-success rounded-pill px-4 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5"
+              @click="showNotifyWhatsAppModal = false"
+            >
+              <i class="bi bi-whatsapp"></i>
+              <span>Sim, Enviar no WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import { maskPhone } from '../utils/masks';
 
 export default {
   data() {
@@ -451,6 +592,14 @@ export default {
       orderToDelete: null,
       isSubmitting: false,
       pollingInterval: null,
+      showPhoneModal: false,
+      orderToEditPhone: null,
+      newPhoneValue: '',
+      savingPhone: false,
+      showNotifyWhatsAppModal: false,
+      orderToNotifyWhatsApp: null,
+      customWhatsAppList: [],
+      selectedMsgTemplateId: null,
     };
   },
   computed: {
@@ -486,6 +635,7 @@ export default {
   mounted() {
     this.fetchOrders();
     this.fetchMotoboys();
+    this.fetchWhatsAppTemplate();
     this.startPolling();
   },
   beforeUnmount() {
@@ -547,6 +697,16 @@ export default {
         console.error(err);
       }
     },
+    async fetchWhatsAppTemplate() {
+      try {
+        const res = await axios.get('/api/admin/store-info');
+        if (res.data && res.data.whatsapp_messages) {
+          this.customWhatsAppList = res.data.whatsapp_messages;
+        }
+      } catch (err) {
+        // silencioso
+      }
+    },
     async fetchOrders(silent = false) {
       if (!silent) this.loading = true;
       try {
@@ -569,19 +729,32 @@ export default {
 
       try {
         const payload = { motoboy_id: motoboyId };
+        let statusChanged = false;
         if (motoboyId && (order.status === 'recebido' || order.status === 'em_preparacao')) {
           payload.status = 'saiu_para_entrega';
+          statusChanged = true;
         }
 
         await axios.patch(`/api/admin/orders/${order.id}/assign-motoboy`, payload);
         this.showMotoboyModal = false;
-        this.fetchOrders();
+        if (statusChanged) {
+          order.status = 'saiu_para_entrega';
+        }
+        await this.fetchOrders();
+        this.openWhatsAppPromptModal(order);
       } catch (err) {
         alert(err.response?.data?.message || 'Erro ao atribuir motoboy.');
       }
     },
     requestStatusChange(order, newStatus) {
       if (order.status === 'concluido') return;
+
+      // Regra Obrigatória: Para colocar como Saiu para Entrega / A Caminho, precisa de um entregador atribuído!
+      if (newStatus === 'saiu_para_entrega' && !order.motoboy_id) {
+        this.openMotoboyModal(order);
+        return;
+      }
+
       this.pendingStatusChange = {
         order,
         newStatus,
@@ -591,14 +764,18 @@ export default {
     },
     async confirmStatusChange() {
       if (!this.pendingStatusChange.order || !this.pendingStatusChange.newStatus) return;
+      const order = this.pendingStatusChange.order;
+      const newStatus = this.pendingStatusChange.newStatus;
       this.isSubmitting = true;
       try {
-        await axios.patch(`/api/admin/orders/${this.pendingStatusChange.order.id}/status`, {
-          status: this.pendingStatusChange.newStatus
+        await axios.patch(`/api/admin/orders/${order.id}/status`, {
+          status: newStatus
         });
+        order.status = newStatus;
         this.showConfirmStatusModal = false;
         this.pendingStatusChange = { order: null, newStatus: '', newStatusLabel: '' };
-        this.fetchOrders();
+        await this.fetchOrders();
+        this.openWhatsAppPromptModal(order);
       } catch (err) {
         alert(err.response?.data?.message || 'Erro ao atualizar status do pedido.');
       } finally {
@@ -669,28 +846,126 @@ export default {
       const phone = digits.startsWith('55') ? digits : ('55' + digits);
       const trackingUrl = `${window.location.origin}/?rastreio=${order.order_number}`;
 
+      const isPickup = order.delivery_address && order.delivery_address.includes('RETIRADA');
       const statusLabels = {
         recebido: 'Recebido e aguardando confirmação',
-        em_preparacao: 'Em preparação na cozinha',
-        saiu_para_entrega: 'Saiu para entrega com o motoboy',
-        concluido: 'Concluído e entregue',
+        em_preparacao: 'Em preparação na cozinha 👨‍🍳',
+        saiu_para_entrega: isPickup ? 'Pronto para retirada no balcão 🛍️' : 'Saiu para entrega com o entregador 🛵',
+        concluido: 'Concluído e entregue com sucesso! 🎉',
         cancelado: 'Cancelado',
       };
       const statusText = statusLabels[order.status] || order.status;
 
-      const text =
-`Olá, *${order.customer_name}*! Acompanhe seu pedido na *AKY LANCHES*:
+      let paymentInfo = `💳 *Forma de Pagamento:* ${this.paymentLabel(order.payment_method)}`;
+      let trocoInfo = '';
+      if (order.payment_method === 'dinheiro') {
+        if (order.needs_change && order.change_for) {
+          const changeVal = Math.max(0, Number(order.change_for) - Number(order.total || 0));
+          paymentInfo = `💵 *Pagamento:* Dinheiro (Troco para R$ ${this.formatPrice(order.change_for)})\n💰 *Valor do Troco:* R$ ${this.formatPrice(changeVal)}`;
+          trocoInfo = `\n💰 *Valor do Troco:* R$ ${this.formatPrice(changeVal)}`;
+          if (order.status === 'saiu_para_entrega' && !isPickup) {
+            paymentInfo += `\n🛵 *Atenção:* O entregador já está levando seu troco de R$ ${this.formatPrice(changeVal)} em mãos!`;
+          }
+        } else {
+          paymentInfo = `💵 *Pagamento:* Dinheiro (Não precisa de troco)`;
+        }
+      }
+
+      const motoboyInfo = (order.status === 'saiu_para_entrega' && order.motoboy && !isPickup)
+        ? `\n🏍️ *Entregador:* ${order.motoboy.name}`
+        : '';
+
+      // Busca o modelo customizado selecionado ou o compatível com a etapa do pedido
+      let template = null;
+      if (this.selectedMsgTemplateId && this.customWhatsAppList.length) {
+        template = this.customWhatsAppList.find(m => m.id === this.selectedMsgTemplateId && m.is_active);
+      }
+      if (!template && this.customWhatsAppList.length) {
+        if (isPickup && order.status === 'saiu_para_entrega') {
+          template = this.customWhatsAppList.find(m => m.trigger === 'pronto_retirada' && m.is_active);
+        }
+        if (!template) {
+          template = this.customWhatsAppList.find(m => m.trigger === order.status && m.is_active);
+        }
+      }
+
+      let text = '';
+      if (template && template.text && template.text.trim()) {
+        text = template.text
+          .replace(/{codigo}/g, order.order_number)
+          .replace(/{cliente}/g, order.customer_name || 'Cliente')
+          .replace(/{status}/g, statusText)
+          .replace(/{endereco}/g, order.delivery_address || 'Teixeira - PB')
+          .replace(/{total}/g, this.formatPrice(order.total))
+          .replace(/{pagamento}/g, paymentInfo)
+          .replace(/{troco}/g, trocoInfo)
+          .replace(/{entregador}/g, motoboyInfo)
+          .replace(/{link_rastreio}/g, trackingUrl);
+      } else {
+        text =
+`Olá, *${order.customer_name}*! Atualização do seu pedido na *AKY LANCHES*:
 
 📋 *Pedido:* #${order.order_number}
-📍 *Status atual:* ${statusText}
+📍 *Status atual:* *${statusText}*
 💰 *Total:* R$ ${this.formatPrice(order.total)}
+${paymentInfo}${motoboyInfo}
 
 🔍 *Link de acompanhamento em tempo real:*
 ${trackingUrl}
 
 Qualquer dúvida estamos à disposição! 🍔🥤`;
+      }
 
       return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    },
+    openWhatsAppPromptModal(order) {
+      if (!order) return;
+      this.orderToNotifyWhatsApp = order;
+
+      // Pré-seleciona automaticamente a mensagem correspondente ao status
+      const isPickup = order.delivery_address && order.delivery_address.includes('RETIRADA');
+      if (isPickup && order.status === 'saiu_para_entrega') {
+        const found = this.customWhatsAppList.find(m => m.trigger === 'pronto_retirada' && m.is_active);
+        this.selectedMsgTemplateId = found ? found.id : null;
+      } else {
+        const found = this.customWhatsAppList.find(m => m.trigger === order.status && m.is_active);
+        this.selectedMsgTemplateId = found ? found.id : null;
+      }
+
+      this.showNotifyWhatsAppModal = true;
+    },
+    isPhoneSuspect(phone) {
+      if (!phone) return true;
+      const clean = phone.replace(/\D/g, '');
+      if (clean.length < 10) return true;
+      if (clean.includes('99999999') || phone.includes('(99)')) return true;
+      return false;
+    },
+    openEditPhoneModal(order) {
+      this.orderToEditPhone = order;
+      this.newPhoneValue = order.customer_phone || '';
+      this.showPhoneModal = true;
+    },
+    handleEditPhoneInput(e) {
+      this.newPhoneValue = maskPhone(e.target.value);
+      e.target.value = this.newPhoneValue;
+    },
+    async saveOrderPhone() {
+      if (!this.orderToEditPhone || !this.newPhoneValue) return;
+      this.savingPhone = true;
+      try {
+        const res = await axios.patch(`/api/admin/orders/${this.orderToEditPhone.id}/phone`, {
+          customer_phone: this.newPhoneValue,
+        });
+        this.orderToEditPhone.customer_phone = this.newPhoneValue;
+        this.showPhoneModal = false;
+        this.orderToEditPhone = null;
+        this.newPhoneValue = '';
+      } catch (err) {
+        alert(err.response?.data?.message || 'Erro ao atualizar telefone do pedido.');
+      } finally {
+        this.savingPhone = false;
+      }
     },
   },
 };

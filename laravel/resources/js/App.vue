@@ -5,18 +5,18 @@
     <header class="bg-white border-bottom shadow-sm sticky-top py-2">
       <div class="container d-flex align-items-center justify-content-between">
         
-        <!-- Logo Oficial e Nome da Loja -->
-        <div class="d-flex align-items-center cursor-pointer" @click="currentView = 'home'">
+        <!-- Logo Oficial e Nome da Loja (Protegido contra quebra de linha no PC e Celular) -->
+        <div class="d-flex align-items-center cursor-pointer flex-shrink-0 text-nowrap" @click="currentView = 'home'">
           <!-- Imagem da Logo com fundo e tamanho ideais para visibilidade perfeita -->
-          <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches Logo" class="me-2" style="height: 52px; width: auto; object-fit: contain;">
-          <div>
-            <span class="fw-bold fs-5 tracking-tight d-block leading-none text-dark">AKY LANCHES</span>
-            <small class="text-aky-primary fw-semibold" style="font-size: 0.75rem;">Cardápio Digital & Pedidos</small>
+          <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches Logo" class="me-2 flex-shrink-0" style="height: 50px; width: auto; object-fit: contain;">
+          <div class="text-nowrap flex-shrink-0">
+            <span class="fw-bold fs-5 tracking-tight d-block leading-none text-dark text-nowrap">AKY LANCHES</span>
+            <small class="text-aky-primary fw-semibold text-nowrap d-block" style="font-size: 0.75rem;">Cardápio Digital & Pedidos</small>
           </div>
         </div>
 
         <!-- MENU DE NAVEGAÇÃO DESKTOP COM OS MESMOS ÍCONES DO MODO CELULAR -->
-        <nav class="d-none d-md-flex align-items-center gap-1 mx-3">
+        <nav class="d-none d-md-flex align-items-center gap-1 mx-2 flex-wrap justify-content-center">
           <button
             :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'home' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentView = 'home'"
@@ -121,14 +121,17 @@
               <li><a class="dropdown-item text-danger cursor-pointer" @click="handleLogout"><i class="bi bi-box-arrow-right me-2"></i> Sair</a></li>
             </ul>
           </div>
+          
+          <!-- Botão Moderno de Acesso ao Painel -->
           <button
             v-else
-            class="btn btn-outline-secondary rounded-pill btn-sm px-3 py-1 py-md-2 fw-semibold"
+            class="btn btn-dark rounded-pill btn-sm px-3 py-1.5 py-md-2 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5 border transition"
             @click="showLogin = true"
-            title="Acesso Restrito"
+            title="Acesso Administrativo"
           >
-            <i class="bi bi-lock-fill me-1"></i>
-            <span class="d-none d-sm-inline">Área Restrita</span>
+            <i class="bi bi-shield-lock-fill text-warning"></i>
+            <span class="d-none d-sm-inline">Painel Admin</span>
+            <span class="d-sm-none">Entrar</span>
           </button>
 
         </div>
@@ -247,6 +250,7 @@
         :theme-color="sectionData.themeColor"
         :badge-text="sectionData.badgeText"
         :items="sectionData.items"
+        :back-to="sectionData.backTo"
         @back="closeSection"
         @add-to-cart="addToCart"
         @select-product="openProductDetail"
@@ -312,6 +316,7 @@
     <CartModal
       :show="showCart"
       :cart="cart"
+      :store-info="menuData.menu_settings ? menuData.menu_settings.store_info : null"
       @close="showCart = false"
       @update-qty="updateCartQty"
       @remove-item="removeFromCart"
@@ -321,6 +326,8 @@
     <OrderSuccessModal
       :order="createdOrder"
       :store-whatsapp="menuData.menu_settings ? menuData.menu_settings.store_whatsapp : ''"
+      :store-info="menuData.menu_settings ? menuData.menu_settings.store_info : null"
+      :whatsapp-template="menuData.menu_settings ? menuData.menu_settings.whatsapp_order_template : ''"
       @close="createdOrder = null"
       @track="trackNewOrder"
     />
@@ -330,6 +337,28 @@
       @close="showLogin = false"
       @logged-in="onLoggedIn"
     />
+
+    <!-- ALERTA SONORO & TOAST FLUTUANTE DE NOVO PEDIDO PARA ADMIN (EM QUALQUER PÁGINA) -->
+    <transition name="fade">
+      <div
+        v-if="newOrderNotification"
+        class="position-fixed top-0 end-0 m-3 p-3 bg-dark text-white rounded-4 shadow-lg border border-warning d-flex align-items-center gap-3 cursor-pointer"
+        style="z-index: 1090; max-width: 380px;"
+        @click="goToOrdersFromNotification"
+      >
+        <div class="rounded-circle bg-warning text-dark p-2.5 d-flex align-items-center justify-content-center flex-shrink-0">
+          <i class="bi bi-bell-fill fs-4 text-dark"></i>
+        </div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="d-flex align-items-center justify-content-between mb-0.5">
+            <strong class="text-warning small text-uppercase">🔔 Novo Pedido Recebido!</strong>
+            <button type="button" class="btn-close btn-close-white btn-sm" @click.stop="newOrderNotification = null"></button>
+          </div>
+          <h6 class="fw-bold mb-0 text-truncate text-white">#{{ newOrderNotification.order_number }} • {{ newOrderNotification.customer_name }}</h6>
+          <small class="text-white-50" style="font-size: 0.72rem;">Clique aqui para abrir os pedidos</small>
+        </div>
+      </div>
+    </transition>
 
   </div>
 </template>
@@ -394,7 +423,19 @@ export default {
       },
       menuPollingInterval: null,
       visibilityHandler: null,
+      newOrderNotification: null,
+      lastKnownOrderId: null,
+      adminNotificationInterval: null,
     };
+  },
+  watch: {
+    currentUser(newVal) {
+      if (newVal && (newVal.role === 'admin' || newVal.role === 'attendant')) {
+        this.startAdminNotificationPolling();
+      } else {
+        this.stopAdminNotificationPolling();
+      }
+    },
   },
   computed: {
     cartCount() {
@@ -422,6 +463,7 @@ export default {
   },
   beforeUnmount() {
     this.stopMenuPolling();
+    this.stopAdminNotificationPolling();
   },
   methods: {
     startMenuPolling() {
@@ -468,7 +510,9 @@ export default {
         const res = await axios.get('/api/auth/me');
         if (res.data.authenticated) {
           this.currentUser = res.data.user;
-          if (this.currentUser.role === 'motoboy') {
+          if (this.currentUser.role === 'admin' || this.currentUser.role === 'attendant') {
+            this.startAdminNotificationPolling();
+          } else if (this.currentUser.role === 'motoboy') {
             this.currentView = 'motoboy-orders';
           }
         }
@@ -615,13 +659,18 @@ export default {
       localStorage.removeItem('aky_cart');
       this.cart = [];
 
-      if (user.role === 'motoboy') {
+      if (user.role === 'admin' || user.role === 'attendant') {
+        this.startAdminNotificationPolling();
+        this.currentView = 'admin-orders';
+      } else if (user.role === 'motoboy') {
         this.currentView = 'motoboy-orders';
       } else {
         this.currentView = 'admin-orders';
       }
     },
     async handleLogout() {
+      this.stopAdminNotificationPolling();
+      this.newOrderNotification = null;
       try {
         await axios.post('/api/auth/logout');
         this.currentUser = null;
@@ -632,6 +681,86 @@ export default {
       } catch (e) {
         console.error(e);
       }
+    },
+    playNewOrderSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+
+        const now = ctx.currentTime;
+        // Tom 1 - Agudo inicial
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); // D5
+        osc1.frequency.exponentialRampToValueAtTime(880.00, now + 0.15); // A5
+        gain1.gain.setValueAtTime(0.3, now);
+        gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.25);
+
+        // Tom 2 - Sino harmônico de campainha de pedido
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(880.00, now + 0.25); // A5
+        osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.45); // D6
+        gain2.gain.setValueAtTime(0.35, now + 0.25);
+        gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.25);
+        osc2.stop(now + 0.7);
+      } catch (e) {
+        console.warn('Audio notification unavailable:', e);
+      }
+    },
+    startAdminNotificationPolling() {
+      this.stopAdminNotificationPolling();
+      this.checkNewOrdersForAdmin(true);
+      // Checa a cada 12 segundos em background mesmo estando em outras abas
+      this.adminNotificationInterval = setInterval(() => {
+        this.checkNewOrdersForAdmin(false);
+      }, 12000);
+    },
+    stopAdminNotificationPolling() {
+      if (this.adminNotificationInterval) {
+        clearInterval(this.adminNotificationInterval);
+        this.adminNotificationInterval = null;
+      }
+    },
+    async checkNewOrdersForAdmin(initial = false) {
+      if (!this.currentUser || (this.currentUser.role !== 'admin' && this.currentUser.role !== 'attendant')) return;
+      try {
+        const res = await axios.get('/api/admin/orders');
+        const orders = res.data.data || res.data || [];
+        if (orders.length > 0) {
+          const latest = orders[0];
+          if (initial) {
+            this.lastKnownOrderId = latest.id;
+          } else if (this.lastKnownOrderId !== null && latest.id > this.lastKnownOrderId) {
+            this.lastKnownOrderId = latest.id;
+            this.playNewOrderSound();
+            this.newOrderNotification = {
+              order_number: latest.order_number,
+              customer_name: latest.customer_name,
+            };
+            setTimeout(() => {
+              this.newOrderNotification = null;
+            }, 10000);
+          }
+        }
+      } catch (err) {
+        // Polling silencioso
+      }
+    },
+    goToOrdersFromNotification() {
+      this.newOrderNotification = null;
+      this.currentView = 'admin-orders';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
   },
 };

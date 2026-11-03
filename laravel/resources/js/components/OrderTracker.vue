@@ -76,49 +76,64 @@
         </div>
       </div>
 
-      <!-- 3. STATUS: SAIU PARA ENTREGA (COM IDENTIFICAÇÃO DO MOTOBOY E ANIMAÇÃO DA MOTO) -->
+      <!-- 3. STATUS: SAIU PARA ENTREGA (COM IDENTIFICAÇÃO DO MOTOBOY E ANIMAÇÃO DA MOTO OU AVISO DE RETIRADA) -->
       <div v-else-if="order.status === 'saiu_para_entrega'" class="delivery-track-box my-3 p-3 bg-white rounded-4 shadow-sm border border-info border-start border-4 border-info">
         
-        <!-- Identificação do Motoboy -->
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
-          <div class="d-flex align-items-center">
-            <div class="rounded-circle bg-info bg-opacity-25 p-2 text-dark me-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-              <i class="bi bi-bicycle fs-4 text-info"></i>
+        <template v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-info bg-opacity-25 text-dark p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+              <i class="bi bi-shop fs-2 text-info"></i>
             </div>
             <div>
-              <span class="badge bg-info text-dark rounded-pill mb-1">Status Atual: A Caminho</span>
-              <h6 class="fw-bold text-dark mb-0 fs-6">
-                Entregador: {{ order.motoboy ? order.motoboy.name : 'Equipe AKY Lanches' }}
-              </h6>
+              <span class="badge bg-info text-dark rounded-pill mb-1 fw-bold">Status Atual: Pronto para Retirada!</span>
+              <h6 class="fw-bold text-dark mb-1">Seu pedido já está pronto no balcão!</h6>
+              <p class="text-muted small mb-0">Você já pode comparecer ao balcão da AKY Lanches (Centro - Teixeira - PB) para retirar seu lanche quentinho.</p>
             </div>
           </div>
-          <span class="text-muted small">
-            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Indo até o seu endereço
-          </span>
-        </div>
+        </template>
 
-        <!-- CENÁRIO COM A RUA E A MOTO ANIMADA EM MOVIMENTO -->
-        <div class="street-container position-relative overflow-hidden rounded-3">
-          <div class="asphalt">
-            <div class="road-lines"></div>
+        <template v-else>
+          <!-- Identificação do Motoboy -->
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+            <div class="d-flex align-items-center">
+              <div class="rounded-circle bg-info bg-opacity-25 p-2 text-dark me-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                <i class="bi bi-bicycle fs-4 text-info"></i>
+              </div>
+              <div>
+                <span class="badge bg-info text-dark rounded-pill mb-1">Status Atual: A Caminho</span>
+                <h6 class="fw-bold text-dark mb-0 fs-6">
+                  Entregador: {{ order.motoboy ? order.motoboy.name : 'Equipe AKY Lanches' }}
+                </h6>
+              </div>
+            </div>
+            <span class="text-muted small">
+              <i class="bi bi-geo-alt-fill text-danger me-1"></i> Indo até o seu endereço
+            </span>
           </div>
 
-          <div class="moto-vehicle">
-            <div class="moto-wrapper">
-              <span class="moto-icon">🛵</span>
+          <!-- CENÁRIO COM A RUA E A MOTO ANIMADA EM MOVIMENTO -->
+          <div class="street-container position-relative overflow-hidden rounded-3">
+            <div class="asphalt">
+              <div class="road-lines"></div>
+            </div>
+
+            <div class="moto-vehicle">
+              <div class="moto-wrapper">
+                <span class="moto-icon">🛵</span>
+              </div>
+            </div>
+
+            <div class="destination-house">
+              <i class="bi bi-house-door-fill text-white fs-5"></i>
             </div>
           </div>
 
-          <div class="destination-house">
-            <i class="bi bi-house-door-fill text-white fs-5"></i>
+          <div class="text-center mt-2">
+            <small class="text-muted fst-italic">
+              <i class="bi bi-hourglass-split text-warning me-1"></i> Seu pedido está quentinho na mochila térmica e já está chegando!
+            </small>
           </div>
-        </div>
-
-        <div class="text-center mt-2">
-          <small class="text-muted fst-italic">
-            <i class="bi bi-hourglass-split text-warning me-1"></i> Seu pedido está quentinho na mochila térmica e já está chegando!
-          </small>
-        </div>
+        </template>
       </div>
 
       <!-- 4. STATUS: CONCLUÍDO -->

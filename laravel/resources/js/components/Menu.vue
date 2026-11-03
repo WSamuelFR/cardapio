@@ -31,13 +31,13 @@
         <!-- Topo da Categoria: Nome, Ícone, Badge e Botão Ver Tudo -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <div class="d-flex align-items-center gap-2">
-            <div :class="['rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm', getCardTheme(catIdx).badgeClass]" style="width: 40px; height: 40px;">
+            <div :class="['rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm', getCategoryTheme(cat).headerIcon]" style="width: 40px; height: 40px;">
               <i :class="[getCategoryIcon(cat.slug), 'fs-5']"></i>
             </div>
             <div>
               <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                 <span>{{ cat.name }}</span>
-                <span :class="['badge rounded-pill small fw-normal d-none d-sm-inline', getCardTheme(catIdx).badgeClass]">
+                <span :class="['badge rounded-pill small fw-normal d-none d-sm-inline', getCategoryTheme(cat).badge]">
                   {{ cat.products ? cat.products.length : 0 }} itens
                 </span>
               </h4>
@@ -46,8 +46,8 @@
 
           <!-- Botão Ver Tudo da Categoria -->
           <button
-            :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold shadow-sm transition d-flex align-items-center gap-1', getCardTheme(catIdx).outlineBtnClass]"
-            @click="openCategorySection(cat, catIdx)"
+            :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold shadow-sm transition d-flex align-items-center gap-1', getCategoryTheme(cat).btnOutline]"
+            @click="openCategorySection(cat)"
           >
             <span>Ver tudo</span>
             <i class="bi bi-arrow-right"></i>
@@ -59,7 +59,7 @@
           <small class="text-muted">Nenhum produto cadastrado nesta categoria ainda.</small>
         </div>
 
-        <!-- TRACK COM ROLAGEM HORIZONTAL SUAVE DOS CARDS DA CATEGORIA (VERMELHO, AMARELO, VERDE) -->
+        <!-- TRACK COM ROLAGEM HORIZONTAL SUAVE DOS CARDS DA CATEGORIA (COMBOS VERDES, MONTADORES AZUIS, RESTANTE VERMELHO) -->
         <div
           v-else
           class="d-flex gap-3 overflow-x-auto pb-2 no-scrollbar horizontal-scroll-track"
@@ -72,7 +72,7 @@
             style="width: 290px; min-width: 290px; scroll-snap-align: start;"
           >
             <div
-              :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 overflow-hidden cursor-pointer transition', getCardTheme(catIdx + prodIdx).borderClass, !product.is_available ? 'opacity-75' : '']"
+              :class="['card aky-card h-100 bg-white border-start border-4 shadow-sm rounded-4 overflow-hidden cursor-pointer transition', getItemTheme(product, cat).borderClass, !product.is_available ? 'opacity-75' : '']"
               @click="$emit('select-product', product, 'menu')"
             >
               <div class="d-flex p-3 gap-3">
@@ -86,8 +86,8 @@
                     class="w-100 h-100 object-fit-cover"
                   >
                   <div v-else class="text-center text-muted">
-                    <i :class="[getCategoryIcon(cat.slug), getCardTheme(catIdx + prodIdx).iconClass, 'fs-2 opacity-75 d-block']"></i>
-                    <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(catIdx + prodIdx).iconClass]">AKY</span>
+                    <i :class="[getCategoryIcon(cat.slug), getItemTheme(product, cat).iconClass, 'fs-2 opacity-75 d-block']"></i>
+                    <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(product, cat).iconClass]">AKY</span>
                   </div>
                 </div>
 
@@ -112,19 +112,19 @@
                         <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                           R$ {{ formatPrice(product.price) }}
                         </span>
-                        <span :class="['fw-bold fs-6', getCardTheme(catIdx + prodIdx).priceClass]">
+                        <span :class="['fw-bold fs-6', getItemTheme(product, cat).priceClass]">
                           R$ {{ formatPrice(product.promotional_price) }}
                         </span>
                       </div>
                       <div v-else>
-                        <span :class="['fw-bold fs-6', getCardTheme(catIdx + prodIdx).priceClass]">
+                        <span :class="['fw-bold fs-6', getItemTheme(product, cat).priceClass]">
                           R$ {{ formatPrice(product.effective_price || product.price) }}
                         </span>
                       </div>
                     </div>
 
                     <button
-                      :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(catIdx + prodIdx).btnClass]"
+                      :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getItemTheme(product, cat).btnClass]"
                       style="width: 36px; height: 36px;"
                       :disabled="!product.is_available"
                       :title="isCustomizable(product) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
@@ -147,10 +147,10 @@
             style="width: 170px; min-width: 170px; scroll-snap-align: start;"
           >
             <div
-              :class="['card aky-card border-2 border-dashed bg-white p-3 rounded-4 text-center cursor-pointer h-100 w-100 d-flex flex-column align-items-center justify-content-center transition shadow-sm', getCardTheme(catIdx).borderClass]"
-              @click="openCategorySection(cat, catIdx)"
+              :class="['card aky-card border-2 border-dashed bg-white p-3 rounded-4 text-center cursor-pointer h-100 w-100 d-flex flex-column align-items-center justify-content-center transition shadow-sm', getCategoryTheme(cat).borderDashed]"
+              @click="openCategorySection(cat)"
             >
-              <div :class="['rounded-circle p-3 mb-2', getCardTheme(catIdx).badgeClass]">
+              <div :class="['rounded-circle p-3 mb-2', getCategoryTheme(cat).headerIcon]">
                 <i class="bi bi-arrow-right fs-4"></i>
               </div>
               <span class="fw-bold text-dark small d-block">Ver todos</span>
@@ -219,9 +219,66 @@ export default {
       if (!product) return false;
       const name = (product.name || '').toLowerCase();
       const catSlug = (product.category && product.category.slug) ? product.category.slug.toLowerCase() : '';
-      if (name.includes('monte seu pastel')) return true;
+      if (name.includes('monte seu pastel') || name.includes('monte seu')) return true;
       if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
+      if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       return false;
+    },
+    getItemTheme(product, cat = null) {
+      const isCombo = product?.is_combo || cat?.slug === 'combos-especiais' || (cat?.name && cat.name.toLowerCase().includes('combo'));
+      if (isCombo) {
+        return {
+          borderClass: 'border-success',
+          btnClass: 'btn-success text-white',
+          priceClass: 'text-success fw-bold',
+          iconClass: 'text-success',
+        };
+      }
+      const isBuilder = this.isCustomizable(product) || (cat && (cat.slug.includes('pizza') || cat.slug.includes('monte') || cat.slug.includes('tapioca') || cat.slug.includes('cuscuz')));
+      if (isBuilder) {
+        return {
+          borderClass: 'border-primary',
+          btnClass: 'btn-primary text-white',
+          priceClass: 'text-primary fw-bold',
+          iconClass: 'text-primary',
+        };
+      }
+      return {
+        borderClass: 'border-danger',
+        btnClass: 'btn-danger text-white',
+        priceClass: 'text-danger fw-bold',
+        iconClass: 'text-danger',
+      };
+    },
+    getCategoryTheme(cat) {
+      const slug = (cat?.slug || '').toLowerCase();
+      const name = (cat?.name || '').toLowerCase();
+      if (slug.includes('combo') || name.includes('combo')) {
+        return {
+          color: 'success',
+          headerIcon: 'bg-success text-white',
+          badge: 'bg-success bg-opacity-10 text-success border border-success',
+          btnOutline: 'btn-outline-success',
+          borderDashed: 'border-success',
+        };
+      }
+      if (slug.includes('pizza') || slug.includes('monte') || slug.includes('tapioca') || slug.includes('cuscuz')) {
+        return {
+          color: 'primary',
+          headerIcon: 'bg-primary text-white',
+          badge: 'bg-primary bg-opacity-10 text-primary border border-primary',
+          btnOutline: 'btn-outline-primary',
+          borderDashed: 'border-primary',
+        };
+      }
+      return {
+        color: 'danger',
+        headerIcon: 'bg-danger text-white',
+        badge: 'bg-danger bg-opacity-10 text-danger border border-danger',
+        btnOutline: 'btn-outline-danger',
+        borderDashed: 'border-danger',
+      };
     },
     handleCardAdd(product) {
       if (this.isCustomizable(product)) {
@@ -244,13 +301,13 @@ export default {
       if (slug.includes('sanduiche') || slug.includes('artesanal') || slug.includes('classico')) return 'bi-flower1';
       return 'bi-bag-heart-fill';
     },
-    openCategorySection(cat, catIdx = 0) {
-      const theme = this.getCardTheme(catIdx);
+    openCategorySection(cat) {
+      const theme = this.getCategoryTheme(cat);
       this.$emit('open-section', {
         title: cat.name,
         subtitle: 'Confira todos os lanches e opções disponíveis em ' + cat.name,
         icon: this.getCategoryIcon(cat.slug),
-        themeColor: theme.themeName,
+        themeColor: theme.color,
         badgeText: (cat.products ? cat.products.length : 0) + ' opções',
         items: cat.products || [],
         backTo: 'menu',

@@ -36,8 +36,15 @@
               <span class="fw-semibold text-dark">{{ order.customer_name }}</span>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="text-muted">Endereço:</span>
-              <span class="text-end text-dark">{{ order.delivery_address }}</span>
+              <span class="text-muted">Modalidade:</span>
+              <span :class="isPickup ? 'badge bg-dark rounded-pill px-2.5 py-1' : 'badge bg-primary bg-opacity-10 text-primary rounded-pill px-2.5 py-1'">
+                <i :class="isPickup ? 'bi bi-shop me-1' : 'bi bi-bicycle me-1'"></i>
+                {{ isPickup ? 'Retirar no Estabelecimento' : 'Entrega no Endereço' }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-muted">{{ isPickup ? 'Local de Retirada:' : 'Endereço:' }}</span>
+              <span class="text-end text-dark fw-semibold">{{ order.delivery_address }}</span>
             </div>
             <hr class="my-2 text-muted opacity-25">
             <div class="d-flex justify-content-between align-items-center">
@@ -84,6 +91,14 @@ export default {
       type: String,
       default: '',
     },
+    storeInfo: {
+      type: Object,
+      default: null,
+    },
+    whatsappTemplate: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -91,6 +106,9 @@ export default {
     };
   },
   computed: {
+    isPickup() {
+      return this.order && this.order.delivery_address && this.order.delivery_address.includes('RETIRADA');
+    },
     whatsappUrl() {
       if (!this.order) return '#';
 
@@ -131,15 +149,21 @@ export default {
         }).join('\n\n');
       }
 
+      let addressHeader = '📍 *Endereço de Entrega:*';
       let addressDetails = this.order.delivery_address || 'Teixeira - PB';
-      if (this.order.delivery_complement) {
-        addressDetails += ` - Compl: ${this.order.delivery_complement}`;
-      }
-      if (this.order.delivery_reference) {
-        addressDetails += `\n📍 *Ponto de Ref:* ${this.order.delivery_reference}`;
-      }
-      if (this.order.delivery_cep) {
-        addressDetails += `\n📮 *CEP:* ${this.order.delivery_cep}`;
+      if (this.isPickup) {
+        addressHeader = '🏪 *Modalidade:* RETIRADA NO ESTABELECIMENTO (Balcão AKY Lanches)';
+        addressDetails = 'Rua Principal, Centro - Teixeira - PB';
+      } else {
+        if (this.order.delivery_complement) {
+          addressDetails += ` - Compl: ${this.order.delivery_complement}`;
+        }
+        if (this.order.delivery_reference) {
+          addressDetails += `\n📍 *Ponto de Ref:* ${this.order.delivery_reference}`;
+        }
+        if (this.order.delivery_cep) {
+          addressDetails += `\n📮 *CEP:* ${this.order.delivery_cep}`;
+        }
       }
 
       let generalNotes = '';
@@ -147,7 +171,19 @@ export default {
         generalNotes = `\n📝 *Observações:* ${this.order.notes.trim()}\n`;
       }
 
-      const text =
+      let text = '';
+      if (this.whatsappTemplate && this.whatsappTemplate.trim()) {
+        text = this.whatsappTemplate
+          .replace(/{codigo}/g, this.order.order_number)
+          .replace(/{cliente}/g, this.order.customer_name || 'Não informado')
+          .replace(/{telefone}/g, this.order.customer_phone || 'Não informado')
+          .replace(/{endereco}/g, `${addressHeader}\n${addressDetails}`)
+          .replace(/{itens}/g, (itemsList || 'Nenhum item') + generalNotes)
+          .replace(/{pagamento}/g, `${paymentName}${trocoText}`)
+          .replace(/{total}/g, Number(this.order.total).toFixed(2).replace('.', ','))
+          .replace(/{link_rastreio}/g, trackingUrl);
+      } else {
+        text =
 `👋 Olá, *AKY Lanches*! Acabei de fazer um pedido pelo cardápio digital.
 
 🍔 *NOVO PEDIDO #${this.order.order_number}*
@@ -155,7 +191,7 @@ export default {
 👤 *Cliente:* ${this.order.customer_name || 'Não informado'}
 📱 *Telefone:* ${this.order.customer_phone || 'Não informado'}
 
-📍 *Endereço de Entrega:*
+${addressHeader}
 ${addressDetails}
 
 🛒 *Itens do Pedido:*
@@ -169,6 +205,7 @@ ${generalNotes}
 ${trackingUrl}
 
 Por favor, confirmem o recebimento do meu pedido! 🙏🍟🥤`;
+      }
 
       return `https://wa.me/${storePhone}?text=${encodeURIComponent(text)}`;
     },

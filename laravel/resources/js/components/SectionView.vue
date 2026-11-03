@@ -62,7 +62,7 @@
       </button>
     </div>
 
-    <!-- Grade Completa de Cards com Cores Alternadas (Vermelho, Amarelo, Verde) -->
+    <!-- Grade Completa de Cards (Combos Verdes, Montadores Azuis, Restante Vermelho) -->
     <div v-else class="row g-3">
       <div
         v-for="(item, idx) in filteredItems"
@@ -70,7 +70,7 @@
         class="col-12 col-md-6 col-lg-4"
       >
         <div
-          :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition border-start border-4', getCardTheme(idx).borderClass, !item.is_available ? 'opacity-75' : '']"
+          :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition border-start border-4', getCardTheme(idx, item).borderClass, !item.is_available ? 'opacity-75' : '']"
           @click="$emit('select-product', item, 'section')"
         >
           <div class="d-flex p-3 gap-3">
@@ -84,8 +84,8 @@
                 class="w-100 h-100 object-fit-cover"
               >
               <div v-else class="text-center text-muted">
-                <i :class="[icon || 'bi-tag-fill', 'fs-2 opacity-75 d-block', getCardTheme(idx).iconClass]"></i>
-                <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(idx).iconClass]">
+                <i :class="[icon || 'bi-tag-fill', 'fs-2 opacity-75 d-block', getCardTheme(idx, item).iconClass]"></i>
+                <span style="font-size: 0.65rem;" :class="['fw-semibold', getCardTheme(idx, item).iconClass]">
                   {{ item.is_combo ? 'Combo' : (item.is_promotion ? 'Promoção' : 'AKY') }}
                 </span>
               </div>
@@ -109,19 +109,19 @@
                     <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                       R$ {{ formatPrice(item.price) }}
                     </span>
-                    <span :class="['fw-bold fs-6', getCardTheme(idx).priceClass]">
+                    <span :class="['fw-bold fs-6', getCardTheme(idx, item).priceClass]">
                       R$ {{ formatPrice(item.promotional_price) }}
                     </span>
                   </div>
                   <div v-else>
-                    <span :class="['fw-bold fs-6', getCardTheme(idx).priceClass]">
+                    <span :class="['fw-bold fs-6', getCardTheme(idx, item).priceClass]">
                       R$ {{ formatPrice(item.effective_price || item.price) }}
                     </span>
                   </div>
                 </div>
 
                 <button
-                  :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx).btnClass]"
+                  :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getCardTheme(idx, item).btnClass]"
                   style="width: 36px; height: 36px;"
                   :disabled="!item.is_available"
                   :title="isCustomizable(item) ? 'Personalizar opções' : 'Adicionar ao pedido'"
@@ -168,6 +168,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    backTo: {
+      type: String,
+      default: 'home',
+    },
   },
   data() {
     return {
@@ -191,37 +195,70 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
-    getCardTheme(idx) {
-      const i = Math.abs(idx) % 3;
-      if (i === 0) {
+    getCardTheme(idx, item = null) {
+      if (item && this.backTo === 'menu') {
+        const isCombo = item.is_combo || (item.category && item.category.slug === 'combos-especiais');
+        if (isCombo) {
+          return {
+            borderClass: 'border-success',
+            btnClass: 'btn-success text-white',
+            priceClass: 'text-success fw-bold',
+            iconClass: 'text-success',
+          };
+        }
+        if (this.isCustomizable(item)) {
+          return {
+            borderClass: 'border-primary',
+            btnClass: 'btn-primary text-white',
+            priceClass: 'text-primary fw-bold',
+            iconClass: 'text-primary',
+          };
+        }
         return {
           borderClass: 'border-danger',
           btnClass: 'btn-danger text-white',
-          priceClass: 'text-danger',
+          priceClass: 'text-danger fw-bold',
           iconClass: 'text-danger',
         };
-      } else if (i === 1) {
-        return {
-          borderClass: 'border-warning',
-          btnClass: 'btn-warning text-dark fw-bold',
-          priceClass: 'text-warning-emphasis',
-          iconClass: 'text-warning',
-        };
-      } else {
+      }
+      const color = this.themeColor || 'danger';
+      if (color === 'success') {
         return {
           borderClass: 'border-success',
           btnClass: 'btn-success text-white',
-          priceClass: 'text-success',
+          priceClass: 'text-success fw-bold',
           iconClass: 'text-success',
         };
+      } else if (color === 'primary') {
+        return {
+          borderClass: 'border-primary',
+          btnClass: 'btn-primary text-white',
+          priceClass: 'text-primary fw-bold',
+          iconClass: 'text-primary',
+        };
+      } else if (color === 'warning') {
+        return {
+          borderClass: 'border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          priceClass: 'text-warning-emphasis fw-bold',
+          iconClass: 'text-warning',
+        };
       }
+      return {
+        borderClass: 'border-danger',
+        btnClass: 'btn-danger text-white',
+        priceClass: 'text-danger fw-bold',
+        iconClass: 'text-danger',
+      };
     },
     isCustomizable(item) {
       if (!item) return false;
       const name = (item.name || '').toLowerCase();
       const catSlug = (item.category && item.category.slug) ? item.category.slug.toLowerCase() : '';
-      if (name.includes('monte seu pastel')) return true;
+      if (name.includes('monte seu pastel') || name.includes('monte seu')) return true;
       if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
+      if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       return false;
     },
     handleCardAdd(item) {

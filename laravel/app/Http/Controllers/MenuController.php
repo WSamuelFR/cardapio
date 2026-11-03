@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -86,6 +87,7 @@ class MenuController extends Controller
                     'hours' => 'Todos os dias, das 18h00 às 23h30',
                     'document' => '',
                 ]),
+                'whatsapp_messages' => \App\Models\SystemSetting::getSetting('whatsapp_messages', []),
             ],
         ]);
     }
@@ -93,10 +95,12 @@ class MenuController extends Controller
     public function createOrder(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'order_type' => 'nullable|string|in:entrega,retirada',
             'customer_name' => 'required|string|max:150',
             'customer_phone' => 'required|string|max:30',
-            'delivery_cep' => 'required|string|max:10',
-            'delivery_address' => 'required|string|max:255',
+            'customer_cpf' => 'required|string|max:20',
+            'delivery_cep' => 'nullable|string|max:10',
+            'delivery_address' => 'nullable|string|max:255',
             'delivery_complement' => 'nullable|string|max:100',
             'delivery_reference' => 'nullable|string|max:150',
             'notes' => 'nullable|string|max:500',
@@ -111,6 +115,14 @@ class MenuController extends Controller
             'items.*.notes' => 'nullable|string|max:500',
         ]);
 
+        if (!$this->validateCpf($validated['customer_cpf'] ?? '')) {
+            return response()->json([
+                'message' => 'CPF inválido. Por favor, digite um CPF válido para confirmar o pedido.'
+            ], 422);
+        }
+
+        $encryptedDocument = Crypt::encryptString(preg_replace('/\D/', '', $validated['customer_cpf']));
+
         $cleanCustomerName = trim(mb_strtoupper(preg_replace('/[^\p{L}\s]/u', '', $validated['customer_name'])));
         if (empty($cleanCustomerName)) {
             return response()->json([
@@ -119,33 +131,25 @@ class MenuController extends Controller
         }
         $validated['customer_name'] = $cleanCustomerName;
 
-        // Validação de Regra de Negócio: Entrega apenas em Teixeira - PB (CEP base 58735-000)
-        $cepDigits = preg_replace('/\D/', '', $validated['delivery_cep']);
-        $isTeixeira = false;
+        $isPickup = ($validated['order_type'] ?? 'entrega') === 'retirada';
+        $storeInfo = \App\Models\SystemSetting::getSetting('store_info', []);
+        $storeAddress = !empty($storeInfo['address']) ? trim($storeInfo['address']) : 'Rua Principal, Centro - Teixeira - PB';
 
-        if (str_starts_with($cepDigits, '58735')) {
-            $isTeixeira = true;
-        } else {
-            try {
-                $response = Http::timeout(3)->get("https://viacep.com.br/ws/{$cepDigits}/json/");
-                if ($response->successful()) {
-                    $data = $response->json();
-                    if (!empty($data['localidade']) && strcasecmp($data['localidade'], 'Teixeira') === 0 && (!empty($data['uf']) && strcasecmp($data['uf'], 'PB') === 0)) {
-                        $isTeixeira = true;
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Em caso de falha de conexão com a API externa, apenas o CEP 58735 é aceito
+        if (!$isPickup) {
+            $validated['delivery_cep'] = '58735-000';
+            if (empty($validated['delivery_address'])) {
+                return response()->json([
+                    'message' => 'Por favor, informe a rua, número e bairro para a entrega em Teixeira - PB.'
+                ], 422);
             }
+        } else {
+            $validated['delivery_cep'] = '58735-000';
+            $validated['delivery_address'] = 'RETIRADA NO ESTABELECIMENTO (' . $storeAddress . ')';
+            $validated['delivery_complement'] = null;
+            $validated['delivery_reference'] = 'Balcão da Loja';
         }
 
-        if (!$isTeixeira) {
-            return response()->json([
-                'message' => 'desculpe, não entregamos na sua região!'
-            ], 422);
-        }
-
-        return DB::transaction(function () use ($validated) {
+        return DB::transaction(function () use ($validated, $encryptedDocument) {
             $total = 0.00;
             $itemsData = [];
 
@@ -185,6 +189,7 @@ class MenuController extends Controller
                 'order_number' => $orderNumber,
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
+                'customer_document_encrypted' => $encryptedDocument,
                 'delivery_cep' => $validated['delivery_cep'],
                 'delivery_address' => $validated['delivery_address'],
                 'delivery_complement' => $validated['delivery_complement'] ?? null,
@@ -205,6 +210,7 @@ class MenuController extends Controller
             return response()->json([
                 'message' => 'Pedido realizado com sucesso!',
                 'order' => $order->load('items'),
+                'store_whatsapp' => \App\Models\SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
             ], 201);
         });
     }
@@ -220,6 +226,31 @@ class MenuController extends Controller
         }
 
         return response()->json(['order' => $order]);
+    }
+
+    /**
+     * Validação Matemática Oficial do CPF (Módulo 11)
+     */
+    private function validateCpf(string $cpf): bool
+    {
+        $cpf = preg_replace('/\D/', '', $cpf);
+        if (strlen($cpf) !== 11) {
+            return false;
+        }
+        if (preg_match('/^(\d)\1{10}$/', $cpf)) {
+            return false;
+        }
+        for ($t = 9; $t < 11; $t++) {
+            $d = 0;
+            for ($c = 0; $c < $t; $c++) {
+                $d += (int) $cpf[$c] * (($t + 1) - $c);
+            }
+            $d = ((10 * $d) % 11) % 10;
+            if ((int) $cpf[$t] !== $d) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

@@ -481,23 +481,25 @@
     <div v-else-if="currentTab === 'settings'" class="settings-tab">
       
       <!-- Barra Superior de Salvar Rápido (Responsiva) -->
-      <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-        <div>
-          <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-sliders text-primary"></i>
-            <span>Configurações dos Montadores & Preços Globais</span>
-          </h5>
-        </div>
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-sm-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-sliders text-primary"></i>
+              <span>Configurações dos Montadores & Preços Globais</span>
+            </h5>
+          </div>
 
-        <button
-          class="btn btn-dark rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto flex-shrink-0"
-          @click="saveSettings"
-          :disabled="savingSettings"
-        >
-          <span v-if="savingSettings" class="spinner-border spinner-border-sm"></span>
-          <i v-else class="bi bi-floppy-fill"></i>
-          <span>Salvar Todas as Alterações</span>
-        </button>
+          <button
+            class="btn btn-dark rounded-pill px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 flex-shrink-0"
+            @click="saveSettings"
+            :disabled="savingSettings"
+          >
+            <span v-if="savingSettings" class="spinner-border spinner-border-sm"></span>
+            <i v-else class="bi bi-floppy-fill"></i>
+            <span>Salvar Todas as Alterações</span>
+          </button>
+        </div>
       </div>
 
       <!-- 1. BLOCO DE CONFIGURAÇÃO DAS PIZZAS -->
@@ -821,7 +823,7 @@
       </div>
 
       <!-- BOTÃO INFERIOR DE SALVAR (RESPONSIVO) -->
-      <div class="text-center text-md-end mb-5">
+      <div class="d-flex justify-content-center justify-content-md-end mb-5">
         <button
           class="btn btn-dark rounded-pill px-5 py-3 fw-bold shadow d-inline-flex align-items-center justify-content-center gap-2 w-100 w-md-auto"
           @click="saveSettings"
@@ -1386,7 +1388,7 @@
             <div
               :class="[
                 'rounded-circle p-3 mb-2 d-flex align-items-center justify-content-center',
-                feedbackModalData.type === 'success' ? 'bg-success bg-opacity-10 text-success' : (feedbackModalData.type === 'warning' ? 'bg-warning bg-opacity-15 text-warning' : 'bg-danger bg-opacity-10 text-danger')
+                feedbackModalData.type === 'success' ? 'bg-success bg-opacity-10 text-success' : (feedbackModalData.type === 'warning' ? 'bg-warning bg-opacity-10 text-warning' : 'bg-danger bg-opacity-10 text-danger')
               ]"
               style="width: 58px; height: 58px;"
             >
@@ -1442,7 +1444,6 @@ export default {
 
       // Configurações Dinâmicas dos Montadores
       menuSettings: {
-        store_whatsapp: '(83) 99999-9999',
         pizza_sizes: [],
         pizza_borders: [],
         monte_pastel: {
@@ -1593,7 +1594,6 @@ export default {
           const maxFree = mp.max_free_ingredients !== undefined ? mp.max_free_ingredients : (chargeFrom - 1);
 
           this.menuSettings = {
-            store_whatsapp: settingsRes.data.store_whatsapp || '(83) 99999-9999',
             pizza_sizes: settingsRes.data.pizza_sizes || [],
             pizza_borders: settingsRes.data.pizza_borders || [],
             monte_pastel: {
@@ -1679,9 +1679,12 @@ export default {
       this.savingSettings = true;
       try {
         this.syncPastelFreeIngredients();
-        const res = await axios.post('/api/admin/menu-settings', this.menuSettings);
+        const payload = { ...this.menuSettings };
+        delete payload.store_whatsapp;
+        const res = await axios.post('/api/admin/menu-settings', payload);
         if (res.data && res.data.settings) {
-          this.menuSettings = res.data.settings;
+          const { store_whatsapp, ...otherSettings } = res.data.settings;
+          this.menuSettings = otherSettings;
         }
         await this.fetchData();
         this.$emit('menu-updated');
@@ -2020,3 +2023,16 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+@media (min-width: 768px) {
+  .w-md-auto {
+    width: auto !important;
+  }
+}
+@media (min-width: 576px) {
+  .w-sm-auto {
+    width: auto !important;
+  }
+}
+</style>

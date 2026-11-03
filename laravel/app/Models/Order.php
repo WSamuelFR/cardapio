@@ -14,6 +14,7 @@ class Order extends Model
         'order_number',
         'customer_name',
         'customer_phone',
+        'customer_document_encrypted',
         'delivery_cep',
         'delivery_address',
         'delivery_complement',
@@ -25,6 +26,13 @@ class Order extends Model
         'payment_method',
         'needs_change',
         'change_for',
+    ];
+
+    /**
+     * Oculta o documento criptografado de qualquer resposta de API para proteger a privacidade
+     */
+    protected $hidden = [
+        'customer_document_encrypted',
     ];
 
     protected function casts(): array

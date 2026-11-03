@@ -73,6 +73,12 @@ class AdminController extends Controller
             ], 422);
         }
 
+        if ($validated['status'] === 'saiu_para_entrega' && empty($order->motoboy_id)) {
+            return response()->json([
+                'message' => 'Para alterar o status para "Saiu para Entrega", é obrigatório atribuir um entregador (motoboy) ao pedido.'
+            ], 422);
+        }
+
         $order->status = $validated['status'];
         $order->save();
 
@@ -496,6 +502,7 @@ class AdminController extends Controller
                 'hours' => 'Todos os dias, das 18h00 às 23h30',
                 'document' => '',
             ]),
+            'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
         ]);
     }
 
@@ -506,20 +513,119 @@ class AdminController extends Controller
         $validated = $request->validate([
             'store_whatsapp' => 'nullable|string|max:30',
             'store_info' => 'nullable|array',
+            'whatsapp_messages' => 'nullable|array',
         ]);
 
         if (isset($validated['store_whatsapp'])) {
-            SystemSetting::setSetting('store_whatsapp', trim($validated['store_whatsapp']), 'WhatsApp comercial da AKY Lanches');
+            $cleaned = trim($validated['store_whatsapp']);
+            SystemSetting::setSetting('store_whatsapp', $cleaned, 'WhatsApp comercial da AKY Lanches');
+
+            // Atualiza globalmente pedidos antigos no banco de dados que estavam com telefone de teste (99) ou placeholder
+            Order::where(function ($q) {
+                $q->where('customer_phone', 'LIKE', '%(99)%')
+                  ->orWhere('customer_phone', 'LIKE', '%999999999%')
+                  ->orWhere('customer_phone', 'LIKE', '%99 99999%')
+                  ->orWhere('customer_phone', 'LIKE', '%9999-9999%');
+            })->update(['customer_phone' => $cleaned]);
+
+            // Sincroniza telefone do admin caso estivesse em branco ou com 99
+            $user = auth()->user();
+            if ($user && ($user->phone === '(99) 99999-9999' || empty($user->phone))) {
+                $user->update(['phone' => $cleaned]);
+            }
         }
 
         if (isset($validated['store_info'])) {
             SystemSetting::setSetting('store_info', $validated['store_info'], 'Dados gerais da AKY Lanches');
         }
 
+        if (isset($validated['whatsapp_messages'])) {
+            SystemSetting::setSetting('whatsapp_messages', $validated['whatsapp_messages'], 'Modelos de mensagens do WhatsApp de pedidos');
+        }
+
         return response()->json([
-            'message' => 'Dados da lanchonete e WhatsApp atualizados com sucesso.',
+            'message' => 'Configurações atualizadas globalmente com sucesso.',
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
             'store_info' => SystemSetting::getSetting('store_info', []),
+            'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
+        ]);
+    }
+
+    public function defaultWhatsAppMessages(): array
+    {
+        return [
+            [
+                'id' => 'msg_recebido',
+                'title' => 'Pedido Recebido',
+                'trigger' => 'recebido',
+                'description' => 'Enviada quando o pedido acaba de ser confirmado no sistema.',
+                'text' => "Olá, *{cliente}*! 👋\n\nRecebemos o seu pedido na *AKY LANCHES*!\n\n📋 *Pedido:* #{codigo}\n📍 *Status atual:* *Recebido e confirmado!*\n💰 *Total:* R$ {total}\n{pagamento}\n\n🔍 *Acompanhe em tempo real pelo link:*\n{link_rastreio}\n\nJá estamos organizando sua comanda. Em instantes começa a preparação! 🍔🍟",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_em_preparacao',
+                'title' => 'Pedido em Preparação',
+                'trigger' => 'em_preparacao',
+                'description' => 'Enviada quando a cozinha inicia o preparo dos itens.',
+                'text' => "Olá, *{cliente}*! 👨‍🍳\n\nSeu pedido *#{codigo}* acabou de entrar na chapa e na cozinha da *AKY LANCHES*!\n\n🔥 Estamos montando e fritando tudo com o maior capricho.\n💰 *Total:* R$ {total}\n{pagamento}\n\n🔍 *Link de acompanhamento em tempo real:*\n{link_rastreio}\n\nLogo logo estará prontinho! 🥤🍔",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_saiu_para_entrega',
+                'title' => 'Saiu para Entrega (Com Motoboy)',
+                'trigger' => 'saiu_para_entrega',
+                'description' => 'Enviada quando o pedido sai para entrega com o motoboy.',
+                'text' => "Partiu! 🛵 Olá, *{cliente}*!\n\nSeu pedido *#{codigo}* acabou de sair quentinho para entrega!\n\n{entregador}\n📍 *Destino:* {endereco}\n{pagamento}{troco}\n💰 *Total a pagar:* R$ {total}\n\n🔍 *Acompanhe a rota em tempo real:*\n{link_rastreio}\n\nFique atento à campainha ou interfone. Já já chega aí! 🍔🍟",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_pronto_retirada',
+                'title' => 'Pronto para Retirada no Balcão',
+                'trigger' => 'pronto_retirada',
+                'description' => 'Enviada para pedidos marcados para Retirar no Local quando estiverem prontos.',
+                'text' => "Seu pedido está pronto! 🛍️ Olá, *{cliente}*!\n\nO pedido *#{codigo}* já está embalado e te esperando no balcão da *AKY LANCHES*!\n\n📍 *Local de Retirada:* {endereco}\n💰 *Total:* R$ {total}\n{pagamento}\n\nVenha buscar enquanto está quentinho e crocante! Te esperamos! 😊🍔",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_concluido',
+                'title' => 'Pedido Concluído / Agradecimento',
+                'trigger' => 'concluido',
+                'description' => 'Enviada após a entrega ou retirada confirmada.',
+                'text' => "Pedido entregue com sucesso! 🎉\n\nOlá, *{cliente}*! Muito obrigado por escolher a *AKY LANCHES*!\n\nEsperamos que seu lanche esteja delicioso! Bom apetite! 😋🍔🥤\n\nQualquer dúvida ou feedback estamos sempre à disposição por aqui. Até a próxima!",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_cancelado',
+                'title' => 'Pedido Cancelado',
+                'trigger' => 'cancelado',
+                'description' => 'Enviada caso o pedido precise ser cancelado.',
+                'text' => "Aviso sobre seu pedido: ⚠️\n\nOlá, *{cliente}*. Informamos que o pedido *#{codigo}* precisou ser cancelado.\n\nSe tiver qualquer dúvida ou se precisar refazer o pedido com alguma alteração, é só responder esta mensagem que nossa equipe te atende na hora! 🙏",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+        ];
+    }
+
+    public function updateOrderPhone(Request $request, int $id): JsonResponse
+    {
+        $this->checkStaff();
+
+        $validated = $request->validate([
+            'customer_phone' => 'required|string|max:30',
+        ]);
+
+        $order = Order::findOrFail($id);
+        $order->customer_phone = trim($validated['customer_phone']);
+        $order->save();
+
+        return response()->json([
+            'message' => 'Telefone do pedido atualizado com sucesso!',
+            'order' => $order->load(['items', 'motoboy:id,name']),
         ]);
     }
 
@@ -667,7 +773,13 @@ class AdminController extends Controller
         $order->motoboy_id = $validated['motoboy_id'] ?? null;
         
         if (!empty($validated['status'])) {
-            $order->status = $validated['status'];
+            if ($validated['status'] === 'saiu_para_entrega' && empty($order->motoboy_id)) {
+            return response()->json([
+                'message' => 'Para alterar o status para "Saiu para Entrega", é obrigatório atribuir um entregador (motoboy) ao pedido.'
+            ], 422);
+        }
+
+        $order->status = $validated['status'];
         }
 
         $order->save();

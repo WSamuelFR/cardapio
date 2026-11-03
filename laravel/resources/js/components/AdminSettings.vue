@@ -19,25 +19,42 @@
         <i class="bi bi-person-plus-fill"></i>
         <span>Novo Administrador</span>
       </button>
+
+      <button
+        v-else-if="currentTab === 'whatsapp'"
+        class="btn btn-success rounded-pill btn-sm px-3 fw-semibold shadow-sm d-flex align-items-center gap-1.5"
+        @click="openCreateMessageModal"
+      >
+        <i class="bi bi-plus-circle-fill"></i>
+        <span>Nova Mensagem WhatsApp</span>
+      </button>
     </div>
 
     <!-- SELETOR DE ABAS MODERNO & RESPONSIVO (Segmented Control) -->
-    <div class="bg-white p-2 rounded-4 shadow-sm border mb-4" style="max-width: 580px;">
+    <div class="bg-white p-2 rounded-4 shadow-sm border mb-4" style="max-width: 680px;">
       <div class="row g-2">
-        <div class="col-6">
+        <div class="col-12 col-sm-4">
           <button
             :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'store' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentTab = 'store'"
           >
-            <i class="bi bi-shop me-1"></i> Dados da Loja & WhatsApp
+            <i class="bi bi-shop me-1"></i> Dados da Loja
           </button>
         </div>
-        <div class="col-6">
+        <div class="col-12 col-sm-4">
+          <button
+            :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'whatsapp' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark']"
+            @click="currentTab = 'whatsapp'"
+          >
+            <i class="bi bi-whatsapp me-1"></i> Mensagens WhatsApp ({{ whatsappMessages.length }})
+          </button>
+        </div>
+        <div class="col-12 col-sm-4">
           <button
             :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'admins' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentTab = 'admins'"
           >
-            <i class="bi bi-shield-lock-fill me-1"></i> Administradores ({{ admins.length }})
+            <i class="bi bi-shield-lock-fill me-1"></i> Admins ({{ admins.length }})
           </button>
         </div>
       </div>
@@ -207,8 +224,114 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- ABA 2: GESTÃO DE ADMINISTRADORES DO SISTEMA             -->
+    <!-- ABA 2: GESTÃO COMPLETA DE MENSAGENS DO WHATSAPP DE PEDIDOS -->
     <!-- ======================================================== -->
+    <div v-else-if="currentTab === 'whatsapp'">
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex justify-content-between align-items-start align-items-sm-center flex-wrap gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-whatsapp text-success fs-4"></i>
+              <span>Gestão Completa de Mensagens de Pedido (WhatsApp)</span>
+            </h5>
+            <small class="text-muted">Crie e edite as mensagens que o sistema envia ao cliente por etapa de pedido sem mexer em código</small>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold shadow-sm"
+              @click="restoreDefaultWhatsAppTemplates"
+            >
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Restaurar Padrões
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm d-flex align-items-center gap-1.5"
+              @click="openCreateMessageModal"
+            >
+              <i class="bi bi-plus-circle-fill"></i>
+              <span>Nova Mensagem</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grade de Cards com as Mensagens do Sistema Cadastradas -->
+        <div class="row g-3">
+          <div
+            v-for="(msg, idx) in whatsappMessages"
+            :key="'wmsg-' + msg.id"
+            class="col-12 col-md-6 col-lg-4"
+          >
+            <div :class="['card border-0 border-start border-3 shadow-sm rounded-4 h-100 bg-light p-3 d-flex flex-column justify-content-between', getTriggerBorderClass(msg.trigger), !msg.is_active ? 'opacity-75' : '']">
+              <div>
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                  <div>
+                    <span :class="['badge rounded-pill px-2.5 py-1 mb-1 fw-bold', getTriggerBadgeClass(msg.trigger)]">
+                      {{ getTriggerLabel(msg.trigger) }}
+                    </span>
+                    <h6 class="fw-bold text-dark mb-0 text-truncate" :title="msg.title">{{ msg.title }}</h6>
+                  </div>
+                  
+                  <div class="d-flex align-items-center gap-1">
+                    <button
+                      class="btn btn-sm btn-white border rounded-pill px-2 py-1 text-primary shadow-sm"
+                      @click="openEditMessageModal(idx)"
+                      title="Editar esta mensagem"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button
+                      v-if="!msg.is_system"
+                      class="btn btn-sm btn-white border rounded-pill px-2 py-1 text-danger shadow-sm"
+                      @click="deleteCustomMessage(idx)"
+                      title="Excluir mensagem personalizada"
+                    >
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <small class="text-muted d-block mb-2" style="font-size: 0.73rem;">{{ msg.description || 'Mensagem configurada para notificações de pedidos.' }}</small>
+
+                <!-- Pré-visualização do texto -->
+                <div class="bg-white rounded-3 p-2.5 small font-monospace text-dark border mb-3 overflow-hidden" style="max-height: 120px; font-size: 0.72rem; white-space: pre-line;">
+                  {{ msg.text }}
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <span class="small fw-semibold text-muted">Status do Envio:</span>
+                <div class="form-check form-switch mb-0">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :id="'msg-act-' + msg.id"
+                    v-model="msg.is_active"
+                    @change="saveWhatsAppMessagesFast"
+                  >
+                  <label class="form-check-label small fw-semibold" :class="msg.is_active ? 'text-success' : 'text-danger'" :for="'msg-act-' + msg.id">
+                    {{ msg.is_active ? 'Ativa' : 'Desativada' }}
+                  </label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="text-end mt-4 pt-3 border-top">
+          <button
+            class="btn btn-dark rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+            @click="saveStoreSettings"
+            :disabled="savingStore"
+          >
+            <span v-if="savingStore" class="spinner-border spinner-border-sm"></span>
+            <i v-else class="bi bi-floppy-fill"></i>
+            <span>Salvar Todas as Mensagens</span>
+          </button>
+        </div>
+      </div>
+    </div>
     <div v-else-if="currentTab === 'admins'">
       
       <div v-if="loadingAdmins" class="text-center py-5">
@@ -436,28 +559,83 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- MODAL: EDITAR ADMINISTRADOR                              -->
+    <!-- MODAL: EDITAR ADMINISTRADOR (COM NAVEGAÇÃO POR SETAS)    -->
     <!-- ======================================================== -->
     <div v-if="showEditModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
           
-          <div class="modal-header text-white border-0 py-3 px-4" style="background: linear-gradient(135deg, #111 0%, #333 100%);">
-            <div class="d-flex align-items-center gap-2">
-              <div class="rounded-circle bg-danger text-white p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                <i class="bi bi-pencil-square fs-5"></i>
-              </div>
-              <div>
-                <h5 class="modal-title fw-bold text-white mb-0">Editar Administrador</h5>
-                <small class="text-white-50" style="font-size: 0.75rem;">Atualize os dados de acesso</small>
+          <!-- Cabeçalho Dinâmico com Setas de Navegação e Logo AKY Lanches -->
+          <div
+            class="modal-header text-white border-0 py-3 px-3 px-sm-4 d-flex align-items-center justify-content-between"
+            style="background: linear-gradient(135deg, #111 0%, #333 100%);"
+          >
+            <!-- Título com Logo e Subtítulo -->
+            <div class="d-flex align-items-center gap-2 min-w-0 me-2">
+              <img src="/images/aky_lanches_icon.svg" alt="Aky Lanches" class="rounded-circle bg-white p-1 shadow-sm flex-shrink-0" style="width: 44px; height: 44px; object-fit: contain;">
+              <div class="min-w-0">
+                <h5 class="modal-title fw-bold text-white mb-0 text-truncate">
+                  Editar Administrador
+                </h5>
+                <small class="text-white-50 d-block text-truncate" style="font-size: 0.78rem;">
+                  Atualize dados cadastrais e credenciais
+                </small>
               </div>
             </div>
-            <button type="button" class="btn-close btn-close-white" @click="showEditModal = false"></button>
+
+            <!-- Controles de Navegação por Setas e Fechar -->
+            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+              <div class="bg-black bg-opacity-25 rounded-pill p-1 d-flex align-items-center gap-1 shadow-sm">
+                <!-- Seta Anterior -->
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-white p-0 d-flex align-items-center justify-content-center"
+                  :disabled="editIndex <= 0"
+                  @click="prevAdmin"
+                  title="Administrador anterior"
+                  style="width: 28px; height: 28px; text-decoration: none;"
+                >
+                  <i class="bi bi-chevron-left fw-bold"></i>
+                </button>
+
+                <!-- Contador de Admins -->
+                <span class="text-white fw-bold px-1.5 small user-select-none" style="font-size: 0.75rem;">
+                  {{ editIndex + 1 }} / {{ admins.length }}
+                </span>
+
+                <!-- Seta Próximo -->
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-white p-0 d-flex align-items-center justify-content-center"
+                  :disabled="editIndex >= admins.length - 1"
+                  @click="nextAdmin"
+                  title="Próximo administrador"
+                  style="width: 28px; height: 28px; text-decoration: none;"
+                >
+                  <i class="bi bi-chevron-right fw-bold"></i>
+                </button>
+              </div>
+
+              <!-- Botão Fechar -->
+              <button type="button" class="btn-close btn-close-white ms-1" @click="showEditModal = false"></button>
+            </div>
           </div>
 
           <form @submit.prevent="updateAdmin">
-            <div class="modal-body p-4">
+            <div class="modal-body p-3 p-sm-4">
               
+              <!-- Alerta de Sucesso -->
+              <div v-if="editSuccess" class="alert alert-success py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <div>Dados do administrador atualizados com sucesso!</div>
+              </div>
+
+              <!-- Alerta de Erro -->
+              <div v-if="editError" class="alert alert-danger py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <div>{{ editError }}</div>
+              </div>
+
               <!-- Nome Completo -->
               <div class="mb-3">
                 <label class="form-label small fw-bold text-dark mb-1">Nome Completo *</label>
@@ -524,14 +702,21 @@
                       placeholder="000.000.000-00"
                     >
                   </div>
+                  <div v-if="isEditCpfValid === true" class="text-success small mt-1 d-flex align-items-center" style="font-size: 0.72rem;">
+                    <i class="bi bi-check-circle-fill me-1"></i> CPF matematicamente válido
+                  </div>
+                  <div v-else-if="isEditCpfValid === false" class="text-danger small mt-1 d-flex align-items-center" style="font-size: 0.72rem;">
+                    <i class="bi bi-exclamation-octagon-fill me-1"></i> CPF inválido. Verifique os números digitados.
+                  </div>
                 </div>
               </div>
 
               <!-- Nova Senha Opcional -->
               <div class="mb-3">
-                <label class="form-label small fw-bold text-dark mb-1">
-                  Nova Senha <span class="text-muted fw-normal">(deixe em branco se não quiser alterar)</span>
-                </label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label small fw-bold text-dark mb-0">Nova Senha</label>
+                  <small class="text-muted" style="font-size: 0.72rem;">Deixe vazio para manter a atual</small>
+                </div>
                 <div class="input-group">
                   <span class="input-group-text bg-light border-end-0 text-muted">
                     <i class="bi bi-key-fill"></i>
@@ -540,20 +725,42 @@
                     type="password"
                     class="form-control border-start-0 ps-1"
                     v-model="editForm.password"
-                    placeholder="Preencha apenas se for redefinir"
+                    placeholder="Mínimo 6 caracteres (opcional)"
                     minlength="6"
                   >
                 </div>
               </div>
 
+              <!-- Status Ativo / Inativo Switch -->
+              <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border">
+                <div>
+                  <div class="fw-bold text-dark small">Status do Acesso</div>
+                  <small class="text-muted" style="font-size: 0.74rem;">Permite ou bloqueia a entrada do administrador</small>
+                </div>
+                <div class="form-check form-switch mb-0">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="edit-admin-status"
+                    v-model="editForm.is_active"
+                    :disabled="currentUser && currentUser.id === editForm.id && activeAdminsCount <= 1"
+                  >
+                  <label class="form-check-label small fw-bold ms-1" :class="editForm.is_active ? 'text-success' : 'text-danger'" for="edit-admin-status">
+                    {{ editForm.is_active ? 'Liberado' : 'Bloqueado' }}
+                  </label>
+                </div>
+              </div>
+
             </div>
 
-            <div class="modal-footer border-0 px-4 pb-4 pt-0">
-              <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" @click="showEditModal = false">
-                Cancelar
+            <!-- Rodapé do Modal -->
+            <div class="modal-footer border-top bg-light p-3 d-flex flex-column-reverse flex-sm-row justify-content-between gap-2">
+              <button type="button" class="btn btn-light border rounded-pill px-4 py-2 text-muted fw-semibold w-100 w-sm-auto" @click="showEditModal = false">
+                Fechar
               </button>
-              <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm" :disabled="savingAdmin">
+              <button type="submit" class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm w-100 w-sm-auto" :disabled="savingAdmin">
                 <span v-if="savingAdmin" class="spinner-border spinner-border-sm me-1"></span>
+                <i v-else class="bi bi-check2-circle me-1"></i>
                 Salvar Alterações
               </button>
             </div>
@@ -564,8 +771,164 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- MODAL MODERNO DE FEEDBACK (Substitui alert() nativo)     -->
+    <!-- MODAL: CRIAR OU EDITAR MENSAGEM DO WHATSAPP DE PEDIDO   -->
     <!-- ======================================================== -->
+    <div v-if="showMsgModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+          
+          <div
+            class="modal-header text-white border-0 py-3 px-3 px-sm-4 d-flex align-items-center justify-content-between"
+            style="background: linear-gradient(135deg, #198754 0%, #157347 100%);"
+          >
+            <div class="d-flex align-items-center gap-2 min-w-0 me-2">
+              <img src="/images/aky_lanches_icon.svg" alt="Aky Lanches" class="rounded-circle bg-white p-1 shadow-sm flex-shrink-0" style="width: 44px; height: 44px; object-fit: contain;">
+              <div class="min-w-0">
+                <h5 class="modal-title fw-bold text-white mb-0 text-truncate">
+                  {{ isEditingMsg ? 'Editar Mensagem WhatsApp' : 'Nova Mensagem WhatsApp' }}
+                </h5>
+                <small class="text-white-50 d-block text-truncate" style="font-size: 0.78rem;">
+                  Mensagens automáticas de atendimento por WhatsApp
+                </small>
+              </div>
+            </div>
+
+            <!-- Navegação por setas se estiver editando -->
+            <div v-if="isEditingMsg" class="d-flex align-items-center gap-1 flex-shrink-0">
+              <div class="bg-black bg-opacity-25 rounded-pill p-1 d-flex align-items-center gap-1 shadow-sm">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-white p-0 d-flex align-items-center justify-content-center"
+                  :disabled="editMsgIndex <= 0"
+                  @click="prevMsg"
+                  style="width: 28px; height: 28px; text-decoration: none;"
+                >
+                  <i class="bi bi-chevron-left fw-bold"></i>
+                </button>
+                <span class="text-white fw-bold px-1.5 small user-select-none" style="font-size: 0.75rem;">
+                  {{ editMsgIndex + 1 }} / {{ whatsappMessages.length }}
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-white p-0 d-flex align-items-center justify-content-center"
+                  :disabled="editMsgIndex >= whatsappMessages.length - 1"
+                  @click="nextMsg"
+                  style="width: 28px; height: 28px; text-decoration: none;"
+                >
+                  <i class="bi bi-chevron-right fw-bold"></i>
+                </button>
+              </div>
+              <button type="button" class="btn-close btn-close-white ms-1" @click="showMsgModal = false"></button>
+            </div>
+            <button v-else type="button" class="btn-close btn-close-white" @click="showMsgModal = false"></button>
+          </div>
+
+          <form @submit.prevent="saveMessageFromModal">
+            <div class="modal-body p-3 p-sm-4 bg-light">
+              <div class="row g-3">
+                
+                <!-- Título da Mensagem -->
+                <div class="col-12 col-sm-7">
+                  <label class="form-label small fw-bold text-dark mb-1">Título da Mensagem *</label>
+                  <input
+                    type="text"
+                    class="form-control rounded-3"
+                    v-model="msgForm.title"
+                    placeholder="Ex: Pedido a Caminho"
+                    required
+                  >
+                </div>
+
+                <!-- Gatilho / Etapa do Pedido -->
+                <div class="col-12 col-sm-5">
+                  <label class="form-label small fw-bold text-dark mb-1">Etapa / Gatilho *</label>
+                  <select class="form-select rounded-3" v-model="msgForm.trigger" required>
+                    <option value="recebido">Status: Recebido</option>
+                    <option value="em_preparacao">Status: Em Preparação</option>
+                    <option value="saiu_para_entrega">Status: Saiu para Entrega</option>
+                    <option value="pronto_retirada">Retirada: Pronto no Balcão</option>
+                    <option value="concluido">Status: Concluído</option>
+                    <option value="cancelado">Status: Cancelado</option>
+                    <option value="avulsa">Mensagem Rápida / Opcional</option>
+                  </select>
+                </div>
+
+                <!-- Descrição Curta -->
+                <div class="col-12">
+                  <label class="form-label small fw-bold text-dark mb-1">Descrição / Finalidade</label>
+                  <input
+                    type="text"
+                    class="form-control rounded-3"
+                    v-model="msgForm.description"
+                    placeholder="Ex: Mensagem enviada avisando que o motoboy saiu com o troco"
+                  >
+                </div>
+
+                <!-- Texto da Mensagem -->
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label small fw-bold text-dark mb-0">Texto da Mensagem no WhatsApp *</label>
+                    <small class="text-muted" style="font-size: 0.72rem;">Use asteriscos para *negrito* e underline para _itálico_</small>
+                  </div>
+                  <textarea
+                    class="form-control font-monospace rounded-3 bg-white"
+                    rows="8"
+                    v-model="msgForm.text"
+                    placeholder="Escreva a mensagem aqui..."
+                    required
+                  ></textarea>
+
+                  <!-- Tags dinâmicas clicáveis para inserir no texto -->
+                  <div class="mt-2">
+                    <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">Inserir tags inteligentes no texto:</small>
+                    <div class="d-flex flex-wrap gap-1">
+                      <button
+                        v-for="tag in ['{cliente}', '{codigo}', '{status}', '{endereco}', '{total}', '{pagamento}', '{troco}', '{entregador}', '{link_rastreio}']"
+                        :key="tag"
+                        type="button"
+                        class="btn btn-sm btn-white border rounded-pill py-0.5 px-2 text-dark font-monospace shadow-sm"
+                        style="font-size: 0.7rem;"
+                        @click="insertTagInModal(tag)"
+                      >
+                        + {{ tag }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status Ativa/Desativada -->
+                <div class="col-12">
+                  <div class="p-2.5 bg-white rounded-3 d-flex justify-content-between align-items-center border">
+                    <div>
+                      <span class="small fw-bold text-dark">Mensagem Ativa no Sistema</span>
+                      <small class="text-muted d-block" style="font-size: 0.7rem;">Quando desativada, não aparecerá como sugestão de envio</small>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="modal-msg-act" v-model="msgForm.is_active">
+                      <label class="form-check-label small fw-bold ms-1" :class="msgForm.is_active ? 'text-success' : 'text-danger'" for="modal-msg-act">
+                        {{ msgForm.is_active ? 'Ativa' : 'Desativada' }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="modal-footer border-top bg-white p-3 d-flex flex-column-reverse flex-sm-row justify-content-between gap-2">
+              <button type="button" class="btn btn-light border rounded-pill px-4 py-2 text-muted fw-semibold w-100 w-sm-auto" @click="showMsgModal = false">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm w-100 w-sm-auto">
+                <i class="bi bi-check2-circle me-1"></i>
+                Salvar Mensagem
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
     <div v-if="showFeedbackModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1080;">
       <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
@@ -573,7 +936,7 @@
             <div
               :class="[
                 'rounded-circle p-3 mb-2 d-flex align-items-center justify-content-center',
-                feedbackData.type === 'success' ? 'bg-success bg-opacity-10 text-success' : (feedbackData.type === 'warning' ? 'bg-warning bg-opacity-15 text-warning' : 'bg-danger bg-opacity-10 text-danger')
+                feedbackData.type === 'success' ? 'bg-success bg-opacity-10 text-success' : (feedbackData.type === 'warning' ? 'bg-warning bg-opacity-10 text-warning' : 'bg-danger bg-opacity-10 text-danger')
               ]"
               style="width: 58px; height: 58px;"
             >
@@ -634,6 +997,8 @@ export default {
       // Dados da Loja & WhatsApp
       storeSettings: {
         store_whatsapp: '(83) 99999-9999',
+        whatsapp_order_template: '',
+        whatsapp_status_template: '',
         store_info: {
           name: 'AKY LANCHES',
           slogan: 'Cardápio Digital & Pedidos',
@@ -645,6 +1010,21 @@ export default {
 
       // Administradores
       admins: [],
+
+      // Gestão de Mensagens WhatsApp
+      whatsappMessages: [],
+      showMsgModal: false,
+      isEditingMsg: false,
+      editMsgIndex: 0,
+      msgForm: {
+        id: '',
+        title: '',
+        trigger: 'recebido',
+        description: '',
+        text: '',
+        is_active: true,
+        is_system: false,
+      },
 
       // Modal de Criação de Admin
       showCreateModal: false,
@@ -658,6 +1038,9 @@ export default {
 
       // Modal de Edição de Admin
       showEditModal: false,
+      editIndex: 0,
+      editSuccess: false,
+      editError: null,
       editForm: {
         id: null,
         name: '',
@@ -665,6 +1048,7 @@ export default {
         phone: '',
         document: '',
         password: '',
+        is_active: true,
       },
 
       // Modal Moderno de Notificação
@@ -686,6 +1070,13 @@ export default {
       if (digits.length === 11) return isValidCpf(digits);
       return false;
     },
+    isEditCpfValid() {
+      if (!this.editForm.document) return null;
+      const digits = onlyDigits(this.editForm.document);
+      if (digits.length === 0) return null;
+      if (digits.length === 11) return isValidCpf(digits);
+      return false;
+    },
   },
   mounted() {
     this.fetchStoreInfo();
@@ -695,6 +1086,180 @@ export default {
     openFeedback(title, message, type = 'success') {
       this.feedbackData = { title, message, type };
       this.showFeedbackModal = true;
+    },
+    // MÉTODOS DE GESTÃO COMPLETA DE MENSAGENS DO WHATSAPP
+    getTriggerLabel(trigger) {
+      const map = {
+        recebido: 'Status: Recebido',
+        em_preparacao: 'Status: Em Preparação',
+        saiu_para_entrega: 'Status: A Caminho',
+        pronto_retirada: 'Retirada: Pronto no Balcão',
+        concluido: 'Status: Concluído',
+        cancelado: 'Status: Cancelado',
+        avulsa: 'Mensagem Opcional / Rápida',
+      };
+      return map[trigger] || trigger;
+    },
+    getTriggerBadgeClass(trigger) {
+      const map = {
+        recebido: 'bg-warning text-dark',
+        em_preparacao: 'bg-primary text-white',
+        saiu_para_entrega: 'bg-info text-dark',
+        pronto_retirada: 'bg-dark text-warning',
+        concluido: 'bg-success text-white',
+        cancelado: 'bg-danger text-white',
+        avulsa: 'bg-secondary text-white',
+      };
+      return map[trigger] || 'bg-light text-dark';
+    },
+    getTriggerBorderClass(trigger) {
+      const map = {
+        recebido: 'border-warning',
+        em_preparacao: 'border-primary',
+        saiu_para_entrega: 'border-info',
+        pronto_retirada: 'border-dark',
+        concluido: 'border-success',
+        cancelado: 'border-danger',
+        avulsa: 'border-secondary',
+      };
+      return map[trigger] || 'border-secondary';
+    },
+    openCreateMessageModal() {
+      this.isEditingMsg = false;
+      this.msgForm = {
+        id: 'msg_custom_' + Date.now(),
+        title: '',
+        trigger: 'recebido',
+        description: '',
+        text: '',
+        is_active: true,
+        is_system: false,
+      };
+      this.showMsgModal = true;
+    },
+    openEditMessageModal(index) {
+      this.isEditingMsg = true;
+      this.editMsgIndex = index;
+      const target = this.whatsappMessages[index];
+      if (target) {
+        this.msgForm = JSON.parse(JSON.stringify(target));
+      }
+      this.showMsgModal = true;
+    },
+    prevMsg() {
+      if (this.editMsgIndex > 0) {
+        this.editMsgIndex--;
+        const target = this.whatsappMessages[this.editMsgIndex];
+        if (target) this.msgForm = JSON.parse(JSON.stringify(target));
+      }
+    },
+    nextMsg() {
+      if (this.editMsgIndex < this.whatsappMessages.length - 1) {
+        this.editMsgIndex++;
+        const target = this.whatsappMessages[this.editMsgIndex];
+        if (target) this.msgForm = JSON.parse(JSON.stringify(target));
+      }
+    },
+    insertTagInModal(tag) {
+      this.msgForm.text = (this.msgForm.text || '') + ' ' + tag;
+    },
+    saveMessageFromModal() {
+      if (!this.msgForm.title.trim() || !this.msgForm.text.trim()) {
+        this.openFeedback('Campos Obrigatórios', 'Por favor, informe o título e o texto da mensagem.', 'warning');
+        return;
+      }
+      if (this.isEditingMsg) {
+        if (this.whatsappMessages[this.editMsgIndex]) {
+          this.whatsappMessages[this.editMsgIndex] = JSON.parse(JSON.stringify(this.msgForm));
+        }
+      } else {
+        this.whatsappMessages.push(JSON.parse(JSON.stringify(this.msgForm)));
+      }
+      this.showMsgModal = false;
+      this.saveWhatsAppMessagesFast();
+      this.openFeedback('Mensagem Salva!', 'Modelo de mensagem salvo com sucesso.', 'success');
+    },
+    deleteCustomMessage(index) {
+      const msg = this.whatsappMessages[index];
+      if (!msg) return;
+      if (!confirm(`Tem certeza que deseja excluir a mensagem "${msg.title}"?`)) return;
+      this.whatsappMessages.splice(index, 1);
+      this.saveWhatsAppMessagesFast();
+      this.openFeedback('Mensagem Excluída', 'O modelo de mensagem foi removido com sucesso.', 'success');
+    },
+    async saveWhatsAppMessagesFast() {
+      try {
+        await axios.post('/api/admin/store-info', {
+          ...this.storeSettings,
+          whatsapp_messages: this.whatsappMessages,
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    getDefaultMessages() {
+      return [
+        {
+          id: 'msg_recebido',
+          title: 'Pedido Recebido',
+          trigger: 'recebido',
+          description: 'Enviada quando o pedido acaba de ser confirmado no sistema.',
+          text: "Olá, *{cliente}*! 👋\n\nRecebemos o seu pedido na *AKY LANCHES*!\n\n📋 *Pedido:* #{codigo}\n📍 *Status atual:* *Recebido e confirmado!*\n💰 *Total:* R$ {total}\n{pagamento}\n\n🔍 *Acompanhe em tempo real pelo link:*\n{link_rastreio}\n\nJá estamos organizando sua comanda. Em instantes começa a preparação! 🍔🍟",
+          is_system: true,
+          is_active: true,
+        },
+        {
+          id: 'msg_em_preparacao',
+          title: 'Pedido em Preparação',
+          trigger: 'em_preparacao',
+          description: 'Enviada quando a cozinha inicia o preparo dos itens.',
+          text: "Olá, *{cliente}*! 👨‍🍳\n\nSeu pedido *#{codigo}* acabou de entrar na chapa e na cozinha da *AKY LANCHES*!\n\n🔥 Estamos montando e fritando tudo com o maior capricho.\n💰 *Total:* R$ {total}\n{pagamento}\n\n🔍 *Link de acompanhamento em tempo real:*\n{link_rastreio}\n\nLogo logo estará prontinho! 🥤🍔",
+          is_system: true,
+          is_active: true,
+        },
+        {
+          id: 'msg_saiu_para_entrega',
+          title: 'Saiu para Entrega (Com Motoboy)',
+          trigger: 'saiu_para_entrega',
+          description: 'Enviada quando o pedido sai para entrega com o motoboy.',
+          text: "Partiu! 🛵 Olá, *{cliente}*!\n\nSeu pedido *#{codigo}* acabou de sair quentinho para entrega!\n\n{entregador}\n📍 *Destino:* {endereco}\n{pagamento}{troco}\n💰 *Total a pagar:* R$ {total}\n\n🔍 *Acompanhe a rota em tempo real:*\n{link_rastreio}\n\nFique atento à campainha ou interfone. Já já chega aí! 🍔🍟",
+          is_system: true,
+          is_active: true,
+        },
+        {
+          id: 'msg_pronto_retirada',
+          title: 'Pronto para Retirada no Balcão',
+          trigger: 'pronto_retirada',
+          description: 'Enviada para pedidos marcados para Retirar no Local quando estiverem prontos.',
+          text: "Seu pedido está pronto! 🛍️ Olá, *{cliente}*!\n\nO pedido *#{codigo}* já está embalado e te esperando no balcão da *AKY LANCHES*!\n\n📍 *Local de Retirada:* {endereco}\n💰 *Total:* R$ {total}\n{pagamento}\n\nVenha buscar enquanto está quentinho e crocante! Te esperamos! 😊🍔",
+          is_system: true,
+          is_active: true,
+        },
+        {
+          id: 'msg_concluido',
+          title: 'Pedido Concluído / Agradecimento',
+          trigger: 'concluido',
+          description: 'Enviada após a entrega ou retirada confirmada.',
+          text: "Pedido entregue com sucesso! 🎉\n\nOlá, *{cliente}*! Muito obrigado por escolher a *AKY LANCHES*!\n\nEsperamos que seu lanche esteja delicioso! Bom apetite! 😋🍔🥤\n\nQualquer dúvida ou feedback estamos sempre à disposição por aqui. Até a próxima!",
+          is_system: true,
+          is_active: true,
+        },
+        {
+          id: 'msg_cancelado',
+          title: 'Pedido Cancelado',
+          trigger: 'cancelado',
+          description: 'Enviada caso o pedido precise ser cancelado.',
+          text: "Aviso sobre seu pedido: ⚠️\n\nOlá, *{cliente}*. Informamos que o pedido *#{codigo}* precisou ser cancelado.\n\nSe tiver qualquer dúvida ou se precisar refazer o pedido com alguma alteração, é só responder esta mensagem que nossa equipe te atende na hora! 🙏",
+          is_system: true,
+          is_active: true,
+        },
+      ];
+    },
+    restoreDefaultWhatsAppTemplates() {
+      if (!confirm('Deseja restaurar todas as mensagens de pedido do WhatsApp para os modelos padrão do sistema?')) return;
+      this.whatsappMessages = this.getDefaultMessages();
+      this.saveWhatsAppMessagesFast();
+      this.openFeedback('Padrões Restaurados', 'Todas as mensagens originais de pedidos foram restauradas.', 'success');
     },
     formatDate(dateStr) {
       if (!dateStr) return 'Recente';
@@ -747,6 +1312,11 @@ export default {
           if (res.data.store_whatsapp) {
             this.storeSettings.store_whatsapp = res.data.store_whatsapp;
           }
+          if (res.data.whatsapp_messages && Array.isArray(res.data.whatsapp_messages)) {
+            this.whatsappMessages = res.data.whatsapp_messages;
+          } else {
+            this.whatsappMessages = this.getDefaultMessages();
+          }
           if (res.data.store_info) {
             this.storeSettings.store_info = {
               ...this.storeSettings.store_info,
@@ -763,15 +1333,27 @@ export default {
     async saveStoreSettings() {
       this.savingStore = true;
       try {
-        const res = await axios.post('/api/admin/store-info', this.storeSettings);
-        if (res.data && res.data.store_info) {
-          this.storeSettings.store_info = {
-            ...this.storeSettings.store_info,
-            ...res.data.store_info,
-          };
+        const payload = {
+          ...this.storeSettings,
+          whatsapp_messages: this.whatsappMessages,
+        };
+        const res = await axios.post('/api/admin/store-info', payload);
+        if (res.data) {
+          if (res.data.store_info) {
+            this.storeSettings.store_info = {
+              ...this.storeSettings.store_info,
+              ...res.data.store_info,
+            };
+          }
+          if (res.data.store_whatsapp) {
+            this.storeSettings.store_whatsapp = res.data.store_whatsapp;
+          }
+          if (res.data.whatsapp_messages && Array.isArray(res.data.whatsapp_messages)) {
+            this.whatsappMessages = res.data.whatsapp_messages;
+          }
         }
         this.$emit('menu-updated');
-        this.openFeedback('Dados Salvos!', 'As informações da lanchonete e o WhatsApp foram salvos com sucesso.', 'success');
+        this.openFeedback('Dados Salvos!', 'As informações da lanchonete e as mensagens do WhatsApp foram salvas com sucesso.', 'success');
       } catch (err) {
         this.openFeedback('Erro ao Salvar', err.response?.data?.message || 'Não foi possível salvar os dados da lanchonete.', 'danger');
       } finally {
@@ -826,6 +1408,14 @@ export default {
 
     // Modal de Edição de Admin
     openEditAdminModal(admin) {
+      const idx = this.admins.findIndex(a => a.id === admin.id);
+      this.editIndex = idx >= 0 ? idx : 0;
+      this.loadAdminIntoEditForm(this.admins[this.editIndex]);
+      this.showEditModal = true;
+    },
+
+    loadAdminIntoEditForm(admin) {
+      if (!admin) return;
       this.editForm = {
         id: admin.id,
         name: admin.name,
@@ -833,15 +1423,42 @@ export default {
         phone: admin.phone || '',
         document: admin.document || '',
         password: '',
+        is_active: !!admin.is_active,
       };
-      this.showEditModal = true;
+      this.editError = null;
+      this.editSuccess = false;
+    },
+
+    prevAdmin() {
+      if (this.editIndex > 0) {
+        this.editIndex--;
+        this.loadAdminIntoEditForm(this.admins[this.editIndex]);
+      }
+    },
+
+    nextAdmin() {
+      if (this.editIndex < this.admins.length - 1) {
+        this.editIndex++;
+        this.loadAdminIntoEditForm(this.admins[this.editIndex]);
+      }
     },
 
     // Atualizar Admin
     async updateAdmin() {
-      const docDigits = onlyDigits(this.editForm.document);
-      if (docDigits.length > 0 && docDigits.length === 11 && !isValidCpf(docDigits)) {
-        this.openFeedback('CPF Inválido', 'O CPF informado contém erro nos dígitos verificadores.', 'warning');
+      this.editError = null;
+      this.editSuccess = false;
+
+      this.editForm.name = maskName(this.editForm.name);
+      this.editForm.phone = maskPhone(this.editForm.phone);
+      this.editForm.document = maskDocument(this.editForm.document);
+
+      if (!this.editForm.name.trim()) {
+        this.editError = 'Nome completo inválido. Digite apenas letras.';
+        return;
+      }
+
+      if (this.isEditCpfValid === false) {
+        this.editError = 'O CPF informado contém erro nos dígitos verificadores.';
         return;
       }
 
@@ -852,17 +1469,30 @@ export default {
           email: this.editForm.email,
           phone: this.editForm.phone,
           document: this.editForm.document,
+          is_active: this.editForm.is_active,
         };
         if (this.editForm.password && this.editForm.password.trim().length >= 6) {
           payload.password = this.editForm.password.trim();
         }
 
         const res = await axios.put(`/api/admin/users/${this.editForm.id}`, payload);
-        this.showEditModal = false;
-        await this.fetchAdmins();
-        this.openFeedback('Dados Atualizados!', res.data.message || 'Dados do administrador atualizados com sucesso.', 'success');
+        this.editSuccess = true;
+        this.editForm.password = '';
+
+        const updated = res.data.user;
+        if (this.admins[this.editIndex]) {
+          Object.assign(this.admins[this.editIndex], updated);
+        }
+
+        setTimeout(() => {
+          this.editSuccess = false;
+        }, 2500);
       } catch (err) {
-        this.openFeedback('Erro ao Atualizar', err.response?.data?.message || 'Não foi possível atualizar o administrador.', 'danger');
+        if (err.response && err.response.data && err.response.data.message) {
+          this.editError = err.response.data.message;
+        } else {
+          this.editError = 'Não foi possível atualizar o administrador.';
+        }
       } finally {
         this.savingAdmin = false;
       }

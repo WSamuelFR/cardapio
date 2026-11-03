@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="modal fade show d-block cart-modal-backdrop" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1050;">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg cart-modal-dialog">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg cart-modal-dialog">
       <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
         
         <!-- Header Estilizado -->
@@ -111,11 +111,39 @@
               </div>
             </div>
 
-            <!-- Formulário de Entrega Otimizado para Teclado de Celular -->
+            <!-- Modalidade de Recebimento: Entrega ou Retirada -->
+            <div class="card border-0 shadow-sm rounded-4 p-2 bg-white mb-3">
+              <div class="row g-2">
+                <div class="col-6">
+                  <button
+                    type="button"
+                    :class="['btn w-100 rounded-3 py-2.5 btn-sm fw-bold border-0 transition d-flex align-items-center justify-content-center gap-1.5', orderType === 'entrega' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
+                    @click="orderType = 'entrega'"
+                  >
+                    <i class="bi bi-bicycle fs-5"></i>
+                    <span>Entrega</span>
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button
+                    type="button"
+                    :class="['btn w-100 rounded-3 py-2.5 btn-sm fw-bold border-0 transition d-flex align-items-center justify-content-center gap-1.5', orderType === 'retirada' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
+                    @click="orderType = 'retirada'"
+                  >
+                    <i class="bi bi-shop fs-5"></i>
+                    <span>Retirar no Local</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Formulário de Identificação & Endereço Otimizado para Teclado de Celular -->
             <div class="card border-0 shadow-sm rounded-3 p-3 bg-white mb-2">
               <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-geo-alt-fill text-aky-primary fs-5 me-2"></i>
-                <h6 class="fw-bold text-dark mb-0">Endereço de Entrega</h6>
+                <i :class="orderType === 'entrega' ? 'bi-geo-alt-fill text-aky-primary' : 'bi-shop text-dark'" class="bi fs-5 me-2"></i>
+                <h6 class="fw-bold text-dark mb-0">
+                  {{ orderType === 'entrega' ? 'Dados para Entrega' : 'Dados do Cliente para Retirada' }}
+                </h6>
               </div>
 
               <div class="row g-2">
@@ -148,85 +176,144 @@
                     @input="handlePhoneInput"
                     @change="handlePhoneInput"
                     @blur="handlePhoneInput"
-                    placeholder="(99) 99999-9999"
+                    placeholder="(83) 99999-9999"
                     autocomplete="off"
                     required
                   >
                 </div>
 
-                <!-- CEP com máscara e verificação em Teixeira - PB -->
+                <!-- CPF do Cliente Obrigatório com Validação Matemática Antifraude -->
                 <div class="col-12 col-md-6">
                   <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label class="form-label small fw-semibold text-muted mb-0">CEP de Entrega *</label>
-                    <span v-if="loadingCep" class="text-primary small" style="font-size: 0.7rem;">
-                      <span class="spinner-border spinner-border-sm me-1"></span> Verificando...
+                    <label class="form-label small fw-semibold text-muted mb-0">CPF do Titular *</label>
+                    <span v-if="customer.cpf && isCustomerCpfValid" class="text-success small fw-semibold" style="font-size: 0.7rem;">
+                      <i class="bi bi-check-circle-fill"></i> CPF Válido ✓
+                    </span>
+                    <span v-else-if="customer.cpf && !isCustomerCpfValid && customerCpfDigits.length === 11" class="text-danger small fw-semibold" style="font-size: 0.7rem;">
+                      <i class="bi bi-x-circle-fill"></i> CPF Inválido
                     </span>
                   </div>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-muted">
-                      <i class="bi bi-pin-map"></i>
-                    </span>
+                  <input
+                    ref="cpfInput"
+                    type="text"
+                    class="form-control rounded-3"
+                    :class="{'is-invalid': customer.cpf && !isCustomerCpfValid && customerCpfDigits.length === 11, 'is-valid': customer.cpf && isCustomerCpfValid}"
+                    :value="customer.cpf"
+                    @input="handleCpfInput"
+                    @change="handleCpfInput"
+                    @blur="handleCpfInput"
+                    placeholder="000.000.000-00"
+                    autocomplete="off"
+                    required
+                  >
+                  <small class="text-muted d-block mt-0.5" style="font-size: 0.68rem;">
+                    Validação matemática antifraude (criptografado com segurança)
+                  </small>
+                </div>
+
+                <!-- Informação de Retirada no Local com Mini Mapa e Botão Ampliar -->
+                <div v-if="orderType === 'retirada'" class="col-12">
+                  <div class="p-3 bg-light rounded-4 border">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-dark d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                          <i class="bi bi-shop fs-5 text-dark"></i>
+                        </div>
+                        <div>
+                          <strong class="text-dark d-block small">Retirada no Balcão da AKY Lanches</strong>
+                          <span class="text-muted small" style="font-size: 0.76rem;">{{ currentStoreAddress }}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-1 shadow-sm"
+                        @click="showStoreMapModal = true"
+                      >
+                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                        <span>Ver no Mapa</span>
+                      </button>
+                    </div>
+
+                    <!-- Mini Mapa Embutido do Google Maps -->
+                    <div class="rounded-3 overflow-hidden border shadow-sm mt-2 position-relative" style="height: 140px; background: #e9ecef;">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameborder="0"
+                        scrolling="no"
+                        marginheight="0"
+                        marginwidth="0"
+                        :src="'https://maps.google.com/maps?q=' + encodeURIComponent(currentStoreAddress) + '&t=&z=16&ie=UTF8&iwloc=&output=embed'"
+                        style="border:0;"
+                        loading="lazy"
+                      ></iframe>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CAMPOS EXCLUSIVOS DE ENTREGA -->
+                <template v-else>
+                  <!-- CEP Fixo e Travado para Teixeira - PB -->
+                  <div class="col-12 col-md-6">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <label class="form-label small fw-semibold text-muted mb-0">CEP de Entrega (Fixo)</label>
+                      <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
+                        <i class="bi bi-check-circle-fill me-1"></i> Teixeira - PB
+                      </span>
+                    </div>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light border-end-0 text-muted">
+                        <i class="bi bi-lock-fill text-success"></i>
+                      </span>
+                      <input
+                        type="text"
+                        class="form-control border-start-0 ps-1 rounded-end-3 bg-light text-dark fw-bold"
+                        value="58735-000"
+                        readonly
+                        title="Entregas realizadas exclusivamente em Teixeira - PB (CEP 58735-000)"
+                      >
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.68rem;">
+                      <i class="bi bi-info-circle me-1 text-primary"></i> Atendemos exclusivamente os bairros de Teixeira - PB.
+                    </small>
+                  </div>
+
+                  <!-- Endereço Completo -->
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold text-muted mb-1">Rua, Número e Bairro *</label>
                     <input
-                      ref="cepInput"
                       type="text"
-                      class="form-control border-start-0 ps-1 rounded-end-3"
-                      :value="customer.cep"
-                      @input="handleCepInput"
-                      @change="handleCepInput"
-                      @blur="handleCepInput"
-                      placeholder="58735-000"
-                      maxlength="9"
+                      class="form-control rounded-3"
+                      v-model="customer.address"
+                      placeholder="Ex: Rua São Sebastião, 120, Centro"
                       autocomplete="off"
                       required
                     >
                   </div>
 
-                  <!-- Mensagem de Região Válida ou Inválida -->
-                  <div v-if="cepValid === true" class="p-2 rounded-2 bg-success bg-opacity-10 text-success small mt-1.5 d-flex align-items-center gap-1.5">
-                    <i class="bi bi-check-circle-fill flex-shrink-0"></i>
-                    <span>Entrega disponível em <strong>{{ cepCityInfo }}</strong>!</span>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold text-muted mb-1">Complemento</label>
+                    <input
+                      type="text"
+                      class="form-control rounded-3"
+                      v-model="customer.complement"
+                      placeholder="Apto, Casa, Bloco"
+                      autocomplete="off"
+                    >
                   </div>
 
-                  <div v-else-if="cepErrorMessage" class="alert alert-danger border-0 rounded-3 p-2 small mt-1.5 mb-0 d-flex align-items-center gap-2">
-                    <i class="bi bi-exclamation-octagon-fill fs-5 text-danger flex-shrink-0"></i>
-                    <div><strong>{{ cepErrorMessage }}</strong></div>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold text-muted mb-1">Ponto de Referência</label>
+                    <input
+                      type="text"
+                      class="form-control rounded-3"
+                      v-model="customer.reference"
+                      placeholder="Ex: Próximo à praça"
+                      autocomplete="off"
+                    >
                   </div>
-                </div>
-
-                <!-- Endereço Completo -->
-                <div class="col-12 col-md-6">
-                  <label class="form-label small fw-semibold text-muted mb-1">Rua, Número e Bairro *</label>
-                  <input
-                    type="text"
-                    class="form-control rounded-3"
-                    v-model="customer.address"
-                    placeholder="Ex: Rua São Sebastião, 120, Centro"
-                    autocomplete="off"
-                    required
-                  >
-                </div>
-
-                <div class="col-6">
-                  <label class="form-label small fw-semibold text-muted mb-1">Complemento</label>
-                  <input
-                    type="text"
-                    class="form-control rounded-3"
-                    v-model="customer.complement"
-                    placeholder="Apto, Casa, Bloco"
-                    autocomplete="off"
-                  >
-                </div>
-
-                <div class="col-6">
-                  <label class="form-label small fw-semibold text-muted mb-1">Ponto de Referência</label>
-                  <input
-                    type="text"
-                    class="form-control rounded-3"
-                    v-model="customer.reference"
-                    placeholder="Ex: Próximo à praça"
-                    autocomplete="off"
-                  >
-                </div>
+                </template>
 
                 <div class="col-12 mt-2">
                   <label class="form-label small fw-semibold text-muted mb-1">Observações do Pedido</label>
@@ -395,12 +482,66 @@
 
       </div>
     </div>
+
+    <!-- MODAL DE MAPA AMPLIADO DA AKY LANCHES -->
+    <div v-if="showStoreMapModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7); z-index: 1070;">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="modal-header bg-dark text-white border-0 py-3 px-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-warning text-dark p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                <i class="bi bi-shop fs-5"></i>
+              </div>
+              <div>
+                <h6 class="modal-title fw-bold mb-0">Localização AKY Lanches</h6>
+                <small class="text-white-50" style="font-size: 0.72rem;">{{ currentStoreAddress }}</small>
+              </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" @click="showStoreMapModal = false"></button>
+          </div>
+
+          <div class="modal-body p-0" style="height: 380px; background: #e9ecef;">
+            <iframe
+              width="100%"
+              height="100%"
+              frameborder="0"
+              scrolling="no"
+              marginheight="0"
+              marginwidth="0"
+              :src="'https://maps.google.com/maps?q=' + encodeURIComponent(currentStoreAddress) + '&t=&z=17&ie=UTF8&iwloc=&output=embed'"
+              style="border:0;"
+              loading="lazy"
+            ></iframe>
+          </div>
+
+          <div class="modal-footer border-0 bg-light p-3 d-flex flex-column flex-sm-row justify-content-between gap-2">
+            <span class="small text-muted d-flex align-items-center gap-1">
+              <i class="bi bi-geo-alt-fill text-danger"></i> {{ currentStoreAddress }}
+            </span>
+            <div class="d-flex gap-2 w-100 w-sm-auto justify-content-end">
+              <a
+                :href="'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(currentStoreAddress)"
+                target="_blank"
+                class="btn btn-primary rounded-pill btn-sm px-3 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm"
+              >
+                <i class="bi bi-compass-fill"></i>
+                <span>Abrir Rota no GPS / Google Maps</span>
+              </a>
+              <button type="button" class="btn btn-secondary rounded-pill btn-sm px-3" @click="showStoreMapModal = false">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import { maskName, maskPhone, maskCep, onlyDigits, applyMask } from '../utils/masks';
+import { maskName, maskPhone, maskDocument, maskCep, onlyDigits, isValidCpf, applyMask } from '../utils/masks';
 
 export default {
   props: {
@@ -409,11 +550,17 @@ export default {
       type: Array,
       default: () => [],
     },
+    storeInfo: {
+      type: Object,
+      default: null,
+    },
   },
   data() {
     return {
       loading: false,
       errorMessage: null,
+      orderType: 'entrega', // 'entrega' ou 'retirada'
+      showStoreMapModal: false,
       paymentMethod: 'dinheiro',
       needsChange: false,
       changeFor: '',
@@ -424,6 +571,7 @@ export default {
       customer: {
         name: '',
         phone: '',
+        cpf: '',
         cep: '',
         address: '',
         complement: '',
@@ -433,8 +581,20 @@ export default {
     };
   },
   computed: {
+    isCustomerCpfValid() {
+      return isValidCpf(this.customer.cpf);
+    },
+    customerCpfDigits() {
+      return onlyDigits(this.customer.cpf || '');
+    },
     cartTotal() {
       return this.cart.reduce((sum, item) => sum + this.itemSubtotal(item), 0);
+    },
+    currentStoreAddress() {
+      if (this.storeInfo && this.storeInfo.address && this.storeInfo.address.trim()) {
+        return this.storeInfo.address.trim();
+      }
+      return 'Rua Principal, Centro - Teixeira - PB';
     },
     suggestedChange() {
       const total = this.cartTotal;
@@ -472,6 +632,9 @@ export default {
     },
     handlePhoneInput(e) {
       applyMask(e, maskPhone, val => { this.customer.phone = val; });
+    },
+    handleCpfInput(e) {
+      applyMask(e, maskDocument, val => { this.customer.cpf = val; });
     },
     handleCepInput(e) {
       applyMask(e, maskCep, val => {
@@ -560,7 +723,12 @@ export default {
         try {
           const data = JSON.parse(saved);
           this.customer.name = maskName(data.name || '');
-          this.customer.phone = maskPhone(data.phone || '');
+          let phone = maskPhone(data.phone || '');
+          // Limpa telefone antigo com DDD 99 ou número de teste fictício para não travar o WhatsApp
+          if (phone.includes('(99)') || phone.includes('99999-9999')) {
+            phone = '';
+          }
+          this.customer.phone = phone;
           this.customer.cep = maskCep(data.cep || '');
           this.customer.address = data.address || '';
           this.customer.complement = data.complement || '';
@@ -609,9 +777,13 @@ export default {
       if (nameEl && nameEl.value) {
         this.customer.name = maskName(nameEl.value);
       }
-      const phoneEl = this.$refs.phoneInput || (this.$el ? this.$el.querySelector('input[placeholder="(99) 99999-9999"]') : null);
+      const phoneEl = this.$refs.phoneInput || (this.$el ? this.$el.querySelector('input[placeholder="(83) 99999-9999"]') : null);
       if (phoneEl && phoneEl.value) {
         this.customer.phone = maskPhone(phoneEl.value);
+      }
+      const cpfEl = this.$refs.cpfInput || (this.$el ? this.$el.querySelector('input[placeholder="000.000.000-00"]') : null);
+      if (cpfEl && cpfEl.value) {
+        this.customer.cpf = maskDocument(cpfEl.value);
       }
       const cepEl = this.$refs.cepInput || (this.$el ? this.$el.querySelector('input[placeholder="58735-000"]') : null);
       if (cepEl && cepEl.value) {
@@ -620,30 +792,28 @@ export default {
 
       this.customer.name = maskName(this.customer.name);
       this.customer.phone = maskPhone(this.customer.phone);
-      this.customer.cep = maskCep(this.customer.cep);
+      this.customer.cpf = maskDocument(this.customer.cpf);
+      this.customer.cep = '58735-000';
 
-      if (!this.customer.name.trim() || !this.customer.phone.trim() || !this.customer.cep.trim() || !this.customer.address.trim()) {
-        this.errorMessage = 'Por favor, preencha seu nome, telefone, CEP e endereço de entrega.';
-        return;
-      }
+      if (this.orderType === 'entrega') {
+        if (!this.customer.name.trim() || !this.customer.phone.trim() || !this.customer.cpf.trim() || !this.customer.address.trim()) {
+          this.errorMessage = 'Por favor, preencha todos os campos obrigatórios (Nome, Telefone, CPF e Endereço).';
+          return;
+        }
 
-      const digits = onlyDigits(this.customer.cep);
-      if (digits.length !== 8) {
-        this.errorMessage = 'Por favor, informe um CEP válido com 8 dígitos.';
-        return;
-      }
+        if (!isValidCpf(this.customer.cpf)) {
+          this.errorMessage = 'CPF inválido. Por favor, digite um CPF válido para confirmar o pedido.';
+          return;
+        }
+      } else {
+        // Modalidade Retirada
+        if (!this.customer.name.trim() || !this.customer.phone.trim() || !this.customer.cpf.trim()) {
+          this.errorMessage = 'Por favor, informe seu Nome, Telefone e CPF para retirada do pedido.';
+          return;
+        }
 
-      // Validação da Regra de Negócio de Teixeira - PB
-      if (digits.startsWith('58735')) {
-        this.cepValid = true;
-        this.cepCityInfo = 'Teixeira - PB';
-      } else if (this.cepValid === false) {
-        this.errorMessage = this.cepErrorMessage || 'desculpe, não entregamos na sua região!';
-        return;
-      } else if (this.cepValid === null) {
-        await this.verifyCep(digits);
-        if (this.cepValid === false) {
-          this.errorMessage = this.cepErrorMessage || 'desculpe, não entregamos na sua região!';
+        if (!isValidCpf(this.customer.cpf)) {
+          this.errorMessage = 'CPF inválido. Por favor, digite um CPF válido para confirmar o pedido.';
           return;
         }
       }
@@ -659,12 +829,14 @@ export default {
 
       try {
         const payload = {
+          order_type: this.orderType,
           customer_name: this.customer.name,
           customer_phone: this.customer.phone,
-          delivery_cep: this.customer.cep,
-          delivery_address: this.customer.address,
-          delivery_complement: this.customer.complement,
-          delivery_reference: this.customer.reference,
+          customer_cpf: this.customer.cpf,
+          delivery_cep: '58735-000',
+          delivery_address: this.orderType === 'entrega' ? this.customer.address : ('RETIRADA NO ESTABELECIMENTO (' + this.currentStoreAddress + ')'),
+          delivery_complement: this.orderType === 'entrega' ? this.customer.complement : null,
+          delivery_reference: this.orderType === 'entrega' ? this.customer.reference : 'Balcão da Loja',
           notes: this.customer.notes,
           payment_method: this.paymentMethod,
           needs_change: this.needsChange,
@@ -680,7 +852,11 @@ export default {
 
         const res = await axios.post('/api/orders', payload);
         this.saveCustomerToSession();
-        this.$emit('order-created', res.data.order);
+        const createdOrder = res.data.order;
+        if (res.data && res.data.store_whatsapp) {
+          createdOrder.store_whatsapp = res.data.store_whatsapp;
+        }
+        this.$emit('order-created', createdOrder);
       } catch (err) {
         if (err.response && err.response.data && err.response.data.message) {
           this.errorMessage = err.response.data.message;
@@ -696,15 +872,23 @@ export default {
 </script>
 
 <style scoped>
+.cart-modal-backdrop {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 576px) {
   .cart-modal-dialog {
-    margin: 0;
-    max-width: 100%;
-    min-height: 100%;
+    margin: 0.5rem auto 1.5rem auto;
+    max-width: calc(100% - 1rem);
+    height: auto;
   }
   .cart-modal-dialog .modal-content {
-    min-height: 100vh;
-    border-radius: 0 !important;
+    max-height: calc(100dvh - 1.5rem);
+    border-radius: 1.25rem !important;
+  }
+  .cart-modal-dialog .modal-body {
+    -webkit-overflow-scrolling: touch;
   }
 }
 </style>

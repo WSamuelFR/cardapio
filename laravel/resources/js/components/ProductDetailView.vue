@@ -106,7 +106,7 @@
                 </div>
                 <div>
                   <span
-                    :class="['badge rounded-pill px-3 py-1.5 fw-bold small transition', selectedPastelIngredients.length === 0 ? 'bg-danger bg-opacity-15 text-danger border border-danger' : 'bg-success text-white shadow-sm']"
+                    :class="['badge rounded-pill px-3 py-1.5 fw-bold small transition', selectedPastelIngredients.length === 0 ? 'bg-danger bg-opacity-10 text-danger border border-danger' : 'bg-success text-white shadow-sm']"
                   >
                     {{ selectedPastelIngredients.length === 0 ? `Obrigatório (0/${pastelMaxFree})` : (selectedPastelIngredients.length <= pastelMaxFree ? `${selectedPastelIngredients.length}/${pastelMaxFree} Inclusos ✓` : `${selectedPastelIngredients.length} Selecionados (${selectedPastelIngredients.length - pastelMaxFree} extras)`) }}
                   </span>
