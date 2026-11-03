@@ -480,6 +480,78 @@
       </div>
     </div>
 
+    <!-- SEÇÃO DE AVALIAÇÕES DE CLIENTES (REGRA: EXCLUSIVO 4 ESTRELAS PARA CIMA) -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle bg-warning bg-opacity-25 text-dark p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+            <i class="bi bi-star-fill text-warning fs-4"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span>Avaliações dos Clientes</span>
+              <span v-if="productReviews && productReviews.count > 0" class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 0.75rem;">
+                ⭐ {{ productReviews.average }} ({{ productReviews.count }})
+              </span>
+            </h5>
+            <small class="text-muted">Opiniões reais de quem já pediu e aprovou</small>
+          </div>
+        </div>
+
+        <span class="badge bg-light text-muted border rounded-pill px-3 py-1.5 small fw-semibold">
+          <i class="bi bi-shield-check text-success me-1"></i> Apenas avaliações 4★ e 5★
+        </span>
+      </div>
+
+      <!-- Lista de Avaliações Positivas -->
+      <div v-if="productReviews && productReviews.reviews && productReviews.reviews.length > 0">
+        <div class="row g-3">
+          <div
+            v-for="(rev, index) in productReviews.reviews"
+            :key="'rev-' + index"
+            class="col-12 col-md-6"
+          >
+            <div class="p-3 rounded-4 bg-light border h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-secondary bg-opacity-10 text-dark fw-bold d-flex align-items-center justify-content-center small" style="width: 32px; height: 32px;">
+                      {{ rev.customer_name ? rev.customer_name.charAt(0) : 'C' }}
+                    </div>
+                    <span class="fw-bold text-dark small">{{ rev.customer_name }}</span>
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5" style="font-size: 0.65rem;">
+                      <i class="bi bi-patch-check-fill me-0.5"></i> Compra Verificada
+                    </span>
+                  </div>
+                  <small class="text-muted" style="font-size: 0.7rem;">{{ rev.date }}</small>
+                </div>
+
+                <div class="text-warning small mb-2">
+                  <span v-for="s in rev.food_rating" :key="'star-' + s">★</span>
+                </div>
+
+                <p v-if="rev.review_comment" class="text-dark small mb-0 fst-italic">
+                  "{{ rev.review_comment }}"
+                </p>
+                <p v-else class="text-muted small mb-0 fst-italic">
+                  O cliente deu nota máxima para este item!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado Vazio: Sem avaliações 4+ ainda -->
+      <div v-else class="text-center py-4 px-3 bg-light rounded-4 border">
+        <i class="bi bi-stars fs-1 text-warning d-block mb-2 opacity-75"></i>
+        <h6 class="fw-bold text-dark mb-1">Seja um dos primeiros a saborear e avaliar!</h6>
+        <p class="text-muted small mb-0" style="max-width: 440px; margin: 0 auto;">
+          Este item é preparado com ingredientes frescos selecionados. Após receber seu pedido, deixe sua avaliação com 4 ou 5 estrelas para aparecer aqui!
+        </p>
+      </div>
+    </div>
+
     <!-- Seção de Sugestões / Você também pode gostar -->
     <div v-if="suggestedItems.length > 0" class="mt-5">
       <div class="d-flex align-items-center justify-content-between mb-3">
@@ -533,6 +605,10 @@ export default {
       default: () => [],
     },
     menuSettings: {
+      type: Object,
+      default: () => null,
+    },
+    productReviews: {
       type: Object,
       default: () => null,
     },
@@ -784,6 +860,9 @@ export default {
       if (this.isPizza && this.pizzaFlavorsMode === 'half') {
         return this.secondPizzaFlavor !== null;
       }
+      if (this.isDrinkConfigurable) {
+        return !!this.selectedDrinkFlavor;
+      }
       return true;
     },
     suggestedItems() {
@@ -807,6 +886,7 @@ export default {
       this.secondFlavorSearch = '';
       this.selectedPizzaBorder = 'nenhuma';
       this.selectedExtras = [];
+      this.selectedDrinkFlavor = null;
     },
     increaseQty() {
       this.quantity += 1;

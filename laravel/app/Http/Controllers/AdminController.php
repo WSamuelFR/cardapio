@@ -73,13 +73,35 @@ class AdminController extends Controller
             ], 422);
         }
 
-        if ($validated['status'] === 'saiu_para_entrega' && empty($order->motoboy_id)) {
+        $isPickup = $order->delivery_address && str_contains($order->delivery_address, 'RETIRADA');
+
+        // Validação 1: Pedido de Entrega saindo para entrega precisa de motoboy
+        if ($validated['status'] === 'saiu_para_entrega' && !$isPickup && empty($order->motoboy_id)) {
             return response()->json([
-                'message' => 'Para alterar o status para "Saiu para Entrega", é obrigatório atribuir um entregador (motoboy) ao pedido.'
+                'message' => 'Para alterar o status para "Saiu para Entrega", é obrigatório atribuir um entregador (motoboy) ao pedido de entrega.'
             ], 422);
         }
 
+        // Validação 2: Se a regra estiver ativa, pedidos de entrega requerem confirmação do motoboy ou desempate pelo atendente/admin
+        $requireConfirmation = (bool) SystemSetting::getSetting('require_motoboy_confirmation', true);
+        if ($validated['status'] === 'concluido' && !$isPickup && $requireConfirmation) {
+            $user = Auth::user();
+            // Se for motoboy, ele marca a confirmação dele
+            if ($user && $user->role === 'motoboy') {
+                $order->motoboy_confirmed_at = now();
+            } else {
+                // Atendente ou Admin atuando como desempate/validador
+                // Se nenhum dos dois confirmou ainda e a confirmação é estrita, podemos registrar que o staff validou
+                // O atendente tem permissão para desempatar e concluir!
+            }
+        }
+
         $order->status = $validated['status'];
+        if ($validated['status'] === 'concluido') {
+            if (!$order->customer_confirmed_at && $isPickup) {
+                $order->customer_confirmed_at = now();
+            }
+        }
         $order->save();
 
         return response()->json([
@@ -495,6 +517,7 @@ class AdminController extends Controller
         $this->checkAdmin();
         return response()->json([
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            'require_motoboy_confirmation' => (bool) SystemSetting::getSetting('require_motoboy_confirmation', true),
             'store_info' => SystemSetting::getSetting('store_info', [
                 'name' => 'AKY LANCHES',
                 'slogan' => 'Cardápio Digital & Pedidos',
@@ -512,6 +535,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'store_whatsapp' => 'nullable|string|max:30',
+            'require_motoboy_confirmation' => 'nullable|boolean',
             'store_info' => 'nullable|array',
             'whatsapp_messages' => 'nullable|array',
         ]);
@@ -535,6 +559,10 @@ class AdminController extends Controller
             }
         }
 
+        if (array_key_exists('require_motoboy_confirmation', $validated)) {
+            SystemSetting::setSetting('require_motoboy_confirmation', (bool) $validated['require_motoboy_confirmation'], 'Exigir que o motoboy confirme a entrega para poder concluir');
+        }
+
         if (isset($validated['store_info'])) {
             SystemSetting::setSetting('store_info', $validated['store_info'], 'Dados gerais da AKY Lanches');
         }
@@ -546,6 +574,7 @@ class AdminController extends Controller
         return response()->json([
             'message' => 'Configurações atualizadas globalmente com sucesso.',
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            'require_motoboy_confirmation' => (bool) SystemSetting::getSetting('require_motoboy_confirmation', true),
             'store_info' => SystemSetting::getSetting('store_info', []),
             'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
         ]);
@@ -596,6 +625,15 @@ class AdminController extends Controller
                 'trigger' => 'concluido',
                 'description' => 'Enviada após a entrega ou retirada confirmada.',
                 'text' => "Pedido entregue com sucesso! 🎉\n\nOlá, *{cliente}*! Muito obrigado por escolher a *AKY LANCHES*!\n\nEsperamos que seu lanche esteja delicioso! Bom apetite! 😋🍔🥤\n\nQualquer dúvida ou feedback estamos sempre à disposição por aqui. Até a próxima!",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_avaliacao',
+                'title' => 'Solicitação de Avaliação do Pedido e Entrega',
+                'trigger' => 'avaliacao',
+                'description' => 'Enviada após entrega ou retirada para solicitar avaliação com estrelas e comentário.',
+                'text' => "Olá, *{cliente}*! 👋🍔\n\nEsperamos que seu pedido da *AKY LANCHES* esteja uma delícia!\n\n⭐ *Poderia avaliar sua experiência em menos de 1 minuto?*\n\nSua opinião é fundamental para avaliarmos nosso lanche e nossa entrega:\n👉 {link_rastreio}\n\nBasta clicar no link acima para dar suas estrelas e deixar seu comentário. Muito obrigado! ❤️",
                 'is_system' => true,
                 'is_active' => true,
             ],
@@ -773,10 +811,24 @@ class AdminController extends Controller
         $order->motoboy_id = $validated['motoboy_id'] ?? null;
         
         if (!empty($validated['status'])) {
-            if ($validated['status'] === 'saiu_para_entrega' && empty($order->motoboy_id)) {
+            $isPickup = $order->delivery_address && str_contains($order->delivery_address, 'RETIRADA');
+
+        // Validação 1: Pedido de Entrega saindo para entrega precisa de motoboy
+        if ($validated['status'] === 'saiu_para_entrega' && !$isPickup && empty($order->motoboy_id)) {
             return response()->json([
-                'message' => 'Para alterar o status para "Saiu para Entrega", é obrigatório atribuir um entregador (motoboy) ao pedido.'
+                'message' => 'Para alterar o status para "Saiu para Entrega", é obrigatório atribuir um entregador (motoboy) ao pedido de entrega.'
             ], 422);
+        }
+
+        // Validação 2: Se a regra estiver ativa, pedidos de entrega só podem ser concluídos pelo próprio entregador
+        $requireConfirmation = (bool) SystemSetting::getSetting('require_motoboy_confirmation', true);
+        if ($validated['status'] === 'concluido' && !$isPickup && $requireConfirmation) {
+            $user = Auth::user();
+            if ($user && $user->role !== 'motoboy') {
+                return response()->json([
+                    'message' => 'Regra ativa: Este pedido é para entrega e deve ser confirmado diretamente pelo entregador no aplicativo dele para ser concluído. (Essa regra pode ser desativada pelo Administrador nas Configurações).'
+                ], 422);
+            }
         }
 
         $order->status = $validated['status'];
@@ -815,11 +867,24 @@ class AdminController extends Controller
         }
 
         $order = Order::where('id', $id)->where('motoboy_id', $user->id)->firstOrFail();
-        $order->status = 'concluido';
+        
+        $order->motoboy_confirmed_at = now();
+        
+        // Se o cliente já confirmou o recebimento, ou se a regra não for estrita, passa para concluido
+        // Caso contrário, motoboy já confirmou sua parte!
+        $requireConfirmation = (bool) SystemSetting::getSetting('require_motoboy_confirmation', true);
+        
+        if (!empty($order->customer_confirmed_at) || !$requireConfirmation) {
+            $order->status = 'concluido';
+        } else {
+            // Permanece em saiu_para_entrega com motoboy_confirmed_at preenchido até o cliente ou atendente desempatar/confirmar
+            // Ou se desejar que o motoboy conclua caso a regra seja dele:
+            $order->status = 'concluido';
+        }
         $order->save();
 
         return response()->json([
-            'message' => 'Entrega confirmada como concluída!',
+            'message' => 'Entrega confirmada pelo entregador com sucesso!',
             'order' => $order,
         ]);
     }

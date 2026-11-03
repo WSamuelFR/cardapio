@@ -106,7 +106,7 @@
 
     <!-- Grade de Cards de Pedidos Operacionais -->
     <div v-else class="row g-3">
-      <div v-for="order in filteredOrders" :key="order.id" class="col-12 col-md-6 col-lg-4">
+      <div v-for="order in paginatedOrders" :key="order.id" class="col-12 col-md-6 col-lg-4">
         <div :class="['card border-0 border-start border-3 shadow-sm rounded-4 h-100 bg-white overflow-hidden transition', statusBorderClass(order.status), order.status === 'cancelado' ? 'opacity-75' : '']">
           <div class="card-header bg-transparent border-0 pt-3 px-3 pb-0 d-flex justify-content-between align-items-center">
             <span class="badge font-monospace fs-6 px-3 py-1 shadow-sm rounded-pill" :class="statusBadgeClass(order.status)">
@@ -196,9 +196,17 @@
               </div>
             </div>
 
-            <!-- BOTÃO PARA ABRIR O MODAL DE SELEÇÃO DE MOTOBOY COM BUSCA -->
+            <!-- BOTÃO PARA ABRIR O MODAL DE SELEÇÃO DE MOTOBOY COM BUSCA (Apenas se for pedido de entrega) -->
             <div class="mb-3">
+              <!-- Se for pedido de retirada no estabelecimento -->
+              <div v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="p-2.5 rounded-pill bg-light border text-center d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-shop text-dark fs-5"></i>
+                <span class="small fw-bold text-dark">Retirada no Balcão (Sem Entregador)</span>
+              </div>
+
+              <!-- Se for pedido de entrega tradicional -->
               <button
+                v-else
                 class="btn btn-sm w-100 rounded-pill py-2 d-flex align-items-center justify-content-between px-3 border shadow-sm transition"
                 :class="order.motoboy ? 'btn-white text-dark border-primary' : 'btn-light text-muted'"
                 :disabled="order.status === 'concluido'"
@@ -218,6 +226,40 @@
                   <i class="bi bi-lock-fill"></i>
                 </span>
               </button>
+            </div>
+
+            <!-- STATUS DE CONFIRMAÇÃO ANTIFRAUDE E AVALIAÇÃO DO CLIENTE -->
+            <div class="p-2 rounded-3 bg-light border small mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span style="font-size: 0.72rem;">
+                  <i class="bi bi-bicycle text-info me-1"></i> <strong>Motoboy:</strong>
+                </span>
+                <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-secondary" style="font-size: 0.68rem;">Disp. (Retirada)</span>
+                <span v-else-if="order.motoboy_confirmed_at" class="badge bg-success" style="font-size: 0.68rem;">Confirmou ✓</span>
+                <span v-else class="badge bg-secondary" style="font-size: 0.68rem;">Pendente ⏳</span>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center">
+                <span style="font-size: 0.72rem;">
+                  <i class="bi bi-person-check text-primary me-1"></i> <strong>Cliente:</strong>
+                </span>
+                <span v-if="order.customer_confirmed_at" class="badge bg-success" style="font-size: 0.68rem;">Confirmou ✓</span>
+                <span v-else class="badge bg-warning text-dark" style="font-size: 0.68rem;">Pendente ⏳</span>
+              </div>
+
+              <!-- Se houver avaliação de lanche / entrega -->
+              <div v-if="order.food_rating" class="mt-2 pt-2 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold text-dark" style="font-size: 0.72rem;">⭐ Avaliação:</span>
+                  <div class="text-warning small" style="font-size: 0.75rem;">
+                    <span>🍔 {{ order.food_rating }}★</span>
+                    <span class="ms-1.5">🛵 {{ order.delivery_rating }}★</span>
+                  </div>
+                </div>
+                <div v-if="order.review_comment" class="text-muted fst-italic p-1.5 bg-white rounded border" style="font-size: 0.7rem; line-height: 1.2;">
+                  "{{ order.review_comment }}"
+                </div>
+              </div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center pt-2 border-top">
@@ -253,7 +295,7 @@
                     type="button"
                     data-bs-toggle="dropdown"
                   >
-                    {{ statusLabel(order.status) }}
+                    {{ statusLabel(order.status, order.delivery_address && order.delivery_address.includes('RETIRADA')) }}
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2">
                     <li><h6 class="dropdown-header small text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Mudar Status:</h6></li>
@@ -269,7 +311,8 @@
                     </li>
                     <li>
                       <a class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2" href="#" @click.prevent="requestStatusChange(order, 'saiu_para_entrega')">
-                        <span class="p-1 rounded-circle bg-info d-inline-block"></span> <span>Saiu para Entrega</span>
+                        <span class="p-1 rounded-circle bg-info d-inline-block"></span>
+                        <span>{{ order.delivery_address && order.delivery_address.includes('RETIRADA') ? 'Pronto p/ Retirada' : 'Saiu para Entrega' }}</span>
                       </a>
                     </li>
                     <li>
@@ -290,6 +333,45 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- BARRA DE PAGINAÇÃO MOBILE-FIRST OTIMIZADA (Padrão AdminProducts) -->
+    <div v-if="filteredOrders.length > itemsPerPage" class="card border-0 shadow-sm rounded-4 p-3 bg-white mt-4">
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+        
+        <!-- Informações de Contagem -->
+        <div class="text-muted small fw-semibold text-center text-sm-start">
+          Mostrando <span class="text-dark fw-bold">{{ paginationStart }}</span> a <span class="text-dark fw-bold">{{ paginationEnd }}</span> de <span class="text-dark fw-bold">{{ filteredOrders.length }}</span> pedidos
+        </div>
+
+        <!-- Controles de Navegação Confortáveis -->
+        <div class="d-flex align-items-center gap-2">
+          <button
+            class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-none"
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            <i class="bi bi-chevron-left"></i>
+            <span>Anterior</span>
+          </button>
+
+          <div class="d-flex align-items-center gap-1 px-1">
+            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold" style="font-size: 0.82rem;">
+              {{ currentPage }} de {{ totalPages }}
+            </span>
+          </div>
+
+          <button
+            class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-none"
+            :disabled="currentPage >= totalPages"
+            @click="goToPage(currentPage + 1)"
+          >
+            <span>Próxima</span>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
       </div>
     </div>
 
@@ -403,9 +485,20 @@
               </span>
             </div>
 
-            <div v-if="pendingStatusChange.newStatus === 'concluido'" class="alert alert-warning border-0 rounded-3 py-2 px-3 small text-start d-flex gap-2 align-items-start mb-0">
-              <i class="bi bi-shield-lock-fill text-warning flex-shrink-0 mt-1"></i>
-              <div><strong>Atenção:</strong> Ao concluir o pedido, ele será bloqueado e não poderá mais ter seu status ou entregador alterados.</div>
+            <div v-if="pendingStatusChange.newStatus === 'concluido'" class="alert alert-warning border-0 rounded-3 py-2 px-3 small text-start d-flex flex-column gap-1 mb-0">
+              <div class="d-flex gap-2 align-items-start">
+                <i class="bi bi-shield-lock-fill text-warning flex-shrink-0 mt-1"></i>
+                <div>
+                  <strong>Atenção:</strong> Ao concluir o pedido, ele será bloqueado definitivamente.
+                </div>
+              </div>
+              <div v-if="pendingStatusChange.order && pendingStatusChange.order.delivery_address && !pendingStatusChange.order.delivery_address.includes('RETIRADA')" class="mt-1 pt-1 border-top border-warning border-opacity-25" style="font-size: 0.72rem;">
+                <span>🛵 Motoboy: <strong>{{ pendingStatusChange.order.motoboy_confirmed_at ? 'Confirmou ✓' : 'Pendente ⏳' }}</strong></span> | 
+                <span>👤 Cliente: <strong>{{ pendingStatusChange.order.customer_confirmed_at ? 'Confirmou ✓' : 'Pendente ⏳' }}</strong></span>
+                <div class="text-dark fw-bold mt-1">
+                  ⚖️ Como Atendente/Admin, sua confirmação atua como desempate e validação final da entrega!
+                </div>
+              </div>
             </div>
 
             <div v-else-if="pendingStatusChange.newStatus === 'cancelado'" class="alert alert-danger border-0 rounded-3 py-2 px-3 small text-start d-flex gap-2 align-items-start mb-0">
@@ -575,6 +668,7 @@
 <script>
 import axios from 'axios';
 import { maskPhone } from '../utils/masks';
+import { showError, showSuccess } from '../utils/swal';
 
 export default {
   data() {
@@ -600,7 +694,16 @@ export default {
       orderToNotifyWhatsApp: null,
       customWhatsAppList: [],
       selectedMsgTemplateId: null,
+
+      // Paginação
+      currentPage: 1,
+      itemsPerPage: 9,
     };
+  },
+  watch: {
+    selectedStatus() {
+      this.currentPage = 1;
+    },
   },
   computed: {
     statusCounts() {
@@ -623,6 +726,20 @@ export default {
       if (!this.selectedStatus) return this.allOrders;
       return this.allOrders.filter(o => o.status === this.selectedStatus);
     },
+    totalPages() {
+      return Math.ceil(this.filteredOrders.length / this.itemsPerPage) || 1;
+    },
+    paginatedOrders() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      return this.filteredOrders.slice(start, start + this.itemsPerPage);
+    },
+    paginationStart() {
+      if (this.filteredOrders.length === 0) return 0;
+      return (this.currentPage - 1) * this.itemsPerPage + 1;
+    },
+    paginationEnd() {
+      return Math.min(this.currentPage * this.itemsPerPage, this.filteredOrders.length);
+    },
     filteredMotoboys() {
       if (!this.motoboySearchTerm.trim()) return this.motoboys;
       const term = this.motoboySearchTerm.toLowerCase();
@@ -642,6 +759,12 @@ export default {
     this.stopPolling();
   },
   methods: {
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
     startPolling() {
       // Polling autônomo a cada 15 segundos para atualizar pedidos sem travar a interface
       this.pollingInterval = setInterval(() => {
@@ -743,14 +866,17 @@ export default {
         await this.fetchOrders();
         this.openWhatsAppPromptModal(order);
       } catch (err) {
-        alert(err.response?.data?.message || 'Erro ao atribuir motoboy.');
+        showError('Erro ao atribuir motoboy', err.response?.data?.message || 'Não foi possível atribuir o motoboy.');
       }
     },
     requestStatusChange(order, newStatus) {
       if (order.status === 'concluido') return;
 
-      // Regra Obrigatória: Para colocar como Saiu para Entrega / A Caminho, precisa de um entregador atribuído!
-      if (newStatus === 'saiu_para_entrega' && !order.motoboy_id) {
+      const isPickup = order.delivery_address && order.delivery_address.includes('RETIRADA');
+
+      // Regra Obrigatória: Pedidos de ENTREGA precisam de entregador para sair para entrega.
+      // Pedidos de RETIRADA no balcão NÃO exigem motoboy e passam direto!
+      if (newStatus === 'saiu_para_entrega' && !isPickup && !order.motoboy_id) {
         this.openMotoboyModal(order);
         return;
       }
@@ -758,7 +884,7 @@ export default {
       this.pendingStatusChange = {
         order,
         newStatus,
-        newStatusLabel: this.statusLabel(newStatus),
+        newStatusLabel: this.statusLabel(newStatus, isPickup),
       };
       this.showConfirmStatusModal = true;
     },
@@ -777,7 +903,7 @@ export default {
         await this.fetchOrders();
         this.openWhatsAppPromptModal(order);
       } catch (err) {
-        alert(err.response?.data?.message || 'Erro ao atualizar status do pedido.');
+        showError('Erro ao atualizar status', err.response?.data?.message || 'Não foi possível atualizar o status do pedido.');
       } finally {
         this.isSubmitting = false;
       }
@@ -794,8 +920,9 @@ export default {
         this.showDeleteModal = false;
         this.orderToDelete = null;
         this.fetchOrders();
+        showSuccess('Pedido Excluído', 'O pedido cancelado foi excluído com sucesso.');
       } catch (err) {
-        alert(err.response?.data?.message || 'Erro ao apagar pedido.');
+        showError('Erro ao apagar pedido', err.response?.data?.message || 'Não foi possível apagar o pedido.');
       } finally {
         this.isSubmitting = false;
       }
@@ -810,11 +937,14 @@ export default {
       };
       return map[status] || 'border-secondary';
     },
-    statusLabel(status) {
+    statusLabel(status, isPickup = false) {
+      if (status === 'saiu_para_entrega') {
+        return isPickup ? 'Pronto p/ Retirada' : 'A Caminho';
+      }
       const labels = {
         recebido: 'Recebido',
         em_preparacao: 'Em Preparo',
-        saiu_para_entrega: 'A Caminho',
+        saiu_para_entrega: isPickup ? 'Pronto p/ Retirada' : 'A Caminho',
         concluido: 'Concluído',
         cancelado: 'Cancelado',
       };
@@ -961,8 +1091,9 @@ Qualquer dúvida estamos à disposição! 🍔🥤`;
         this.showPhoneModal = false;
         this.orderToEditPhone = null;
         this.newPhoneValue = '';
+        showSuccess('Telefone Atualizado', 'O número de WhatsApp do cliente foi atualizado com sucesso.');
       } catch (err) {
-        alert(err.response?.data?.message || 'Erro ao atualizar telefone do pedido.');
+        showError('Erro ao atualizar telefone', err.response?.data?.message || 'Não foi possível atualizar o telefone.');
       } finally {
         this.savingPhone = false;
       }

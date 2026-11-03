@@ -114,17 +114,62 @@
               <span class="fw-bold text-aky-primary fs-5">R$ {{ formatPrice(order.total) }}</span>
             </div>
 
+            <!-- Confirmações Antifraude e Avaliação -->
+            <div class="mb-3 p-2 rounded-3 bg-light border small">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span><i class="bi bi-bicycle text-info me-1"></i> <strong>Sua Confirmação:</strong></span>
+                <span v-if="order.motoboy_confirmed_at" class="badge bg-success">Confirmado ✓</span>
+                <span v-else class="badge bg-secondary">Pendente ⏳</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-check text-primary me-1"></i> <strong>Cliente Recebeu:</strong></span>
+                <span v-if="order.customer_confirmed_at" class="badge bg-success">Confirmado ✓</span>
+                <span v-else class="badge bg-warning text-dark">Aguardando... ⏳</span>
+              </div>
+              
+              <!-- Se o cliente já avaliou -->
+              <div v-if="order.food_rating" class="mt-2 pt-2 border-top text-center">
+                <span class="badge bg-warning text-dark fw-bold mb-1">Avaliação do Cliente:</span>
+                <div class="small">
+                  <span>🍔 Lanche: <strong>{{ order.food_rating }}/5 ★</strong></span>
+                  <span class="ms-2">🛵 Entrega: <strong>{{ order.delivery_rating }}/5 ★</strong></span>
+                </div>
+                <div v-if="order.review_comment" class="fst-italic text-muted mt-1" style="font-size: 0.78rem;">
+                  "{{ order.review_comment }}"
+                </div>
+              </div>
+            </div>
+
             <!-- Botão de Confirmar Entrega Realizada -->
             <div v-if="order.status !== 'concluido'">
               <button
                 class="btn btn-success w-100 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center"
                 @click="completeDelivery(order.id)"
+                :disabled="order.motoboy_confirmed_at"
               >
-                <i class="bi bi-check2-circle fs-5 me-2"></i> Confirmar Entrega Realizada
+                <i class="bi bi-check2-circle fs-5 me-2"></i>
+                <span v-if="order.motoboy_confirmed_at">Entrega Confirmada por Você ✓</span>
+                <span v-else>Confirmar Entrega Realizada</span>
               </button>
+
+              <!-- Botão para pedir confirmação e avaliação via WhatsApp -->
+              <a
+                :href="getWhatsAppReviewLink(order)"
+                target="_blank"
+                class="btn btn-outline-success w-100 py-1.5 mt-2 rounded-pill fw-semibold shadow-sm d-flex align-items-center justify-content-center small"
+              >
+                <i class="bi bi-whatsapp me-1.5 text-success"></i> Pedir Confirmação / Avaliação no WhatsApp
+              </a>
             </div>
             <div v-else class="text-center py-2 text-success fw-bold small">
-              <i class="bi bi-check-circle-fill me-1"></i> Pedido entregue com sucesso!
+              <i class="bi bi-check-circle-fill me-1"></i> Pedido concluído com sucesso!
+              <a
+                :href="getWhatsAppReviewLink(order)"
+                target="_blank"
+                class="btn btn-sm btn-outline-success rounded-pill px-3 mt-2 d-inline-flex align-items-center"
+              >
+                <i class="bi bi-whatsapp me-1"></i> Enviar Link de Avaliação ao Cliente
+              </a>
             </div>
 
           </div>
@@ -138,6 +183,7 @@
 
 <script>
 import axios from 'axios';
+import { showConfirm, showSuccess, showError } from '../utils/swal';
 
 export default {
   data() {
@@ -168,13 +214,29 @@ export default {
         this.loading = false;
       }
     },
+    getWhatsAppReviewLink(order) {
+      const phone = this.sanitizePhone(order.customer_phone);
+      if (!phone) return '#';
+      const origin = window.location.origin;
+      const trackingUrl = `${origin}/?rastreio=${order.order_number}`;
+      const msg = `Olá, *${order.customer_name}*! 👋🍔\n\nSou o entregador da *AKY LANCHES* e seu pedido *#${order.order_number}* foi entregue!\n\n⭐ *Poderia avaliar seu lanche e a entrega em menos de 1 minuto?*\nBasta clicar no link abaixo para confirmar o recebimento e dar suas estrelas:\n👉 ${trackingUrl}\n\nMuito obrigado e bom apetite! ❤️`;
+      return `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
+    },
     async completeDelivery(orderId) {
-      if (!confirm('Deseja confirmar a entrega deste pedido?')) return;
+      const confirmed = await showConfirm(
+        'Confirmar Entrega?',
+        'Deseja registrar que a entrega deste pedido foi realizada?',
+        'Sim, Confirmar',
+        'Cancelar'
+      );
+      if (!confirmed) return;
+
       try {
         await axios.patch(`/api/motoboy/orders/${orderId}/complete`);
+        await showSuccess('Entrega Registrada!', 'Sua confirmação de entrega foi salva com sucesso.');
         this.fetchOrders();
       } catch (err) {
-        alert('Erro ao confirmar entrega.');
+        showError('Erro ao confirmar entrega', err.response?.data?.message || 'Não foi possível confirmar a entrega.');
       }
     },
   },

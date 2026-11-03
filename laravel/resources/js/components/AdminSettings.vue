@@ -115,6 +115,48 @@
         </div>
       </div>
 
+      <!-- Card Regras Operacionais de Entrega & Conclusão -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-bicycle text-primary fs-4"></i>
+              <span>Regras de Entrega e Conclusão de Pedidos</span>
+            </h5>
+            <small class="text-muted">Defina permissões operacionais para a equipe e entregadores</small>
+          </div>
+          <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1.5 fw-semibold small flex-shrink-0">
+            <i class="bi bi-sliders me-1"></i> Controle de Fluxo
+          </span>
+        </div>
+
+        <div class="p-3 bg-light rounded-4 border">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div style="max-width: 80%;">
+              <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-1.5">
+                <i class="bi bi-shield-check text-success"></i>
+                <span>Exigir confirmação do entregador para concluir pedidos de entrega</span>
+              </h6>
+              <small class="text-muted d-block" style="font-size: 0.75rem;">
+                Quando <strong>ativada</strong>, um pedido de entrega só poderá ser marcado como "Concluído" pelo próprio motoboy no painel dele. Quando <strong>desativada</strong>, administradores e atendentes podem concluir qualquer pedido diretamente pelo painel. (Pedidos para retirar no balcão nunca são bloqueados por esta regra).
+              </small>
+            </div>
+
+            <div class="form-check form-switch mb-0 fs-5">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="req-moto-confirm"
+                v-model="storeSettings.require_motoboy_confirmation"
+              >
+              <label class="form-check-label fs-6 fw-bold ms-1" :class="storeSettings.require_motoboy_confirmation ? 'text-success' : 'text-secondary'" for="req-moto-confirm">
+                {{ storeSettings.require_motoboy_confirmation ? 'Ativada' : 'Desativada' }}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Card Dados Gerais da Lanchonete -->
       <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
         <div class="mb-3">
@@ -978,6 +1020,7 @@
 <script>
 import axios from 'axios';
 import { maskName, maskPhone, maskDocument, onlyDigits, isValidCpf, applyMask } from '../utils/masks';
+import { showConfirm, showSuccess } from '../utils/swal';
 
 export default {
   name: 'AdminSettings',
@@ -997,6 +1040,7 @@ export default {
       // Dados da Loja & WhatsApp
       storeSettings: {
         store_whatsapp: '(83) 99999-9999',
+        require_motoboy_confirmation: true,
         whatsapp_order_template: '',
         whatsapp_status_template: '',
         store_info: {
@@ -1179,13 +1223,19 @@ export default {
       this.saveWhatsAppMessagesFast();
       this.openFeedback('Mensagem Salva!', 'Modelo de mensagem salvo com sucesso.', 'success');
     },
-    deleteCustomMessage(index) {
+    async deleteCustomMessage(index) {
       const msg = this.whatsappMessages[index];
       if (!msg) return;
-      if (!confirm(`Tem certeza que deseja excluir a mensagem "${msg.title}"?`)) return;
+      const confirmed = await showConfirm(
+        'Excluir Mensagem?',
+        `Tem certeza que deseja excluir o modelo "${msg.title}"?`,
+        'Sim, Excluir',
+        'Cancelar'
+      );
+      if (!confirmed) return;
       this.whatsappMessages.splice(index, 1);
       this.saveWhatsAppMessagesFast();
-      this.openFeedback('Mensagem Excluída', 'O modelo de mensagem foi removido com sucesso.', 'success');
+      showSuccess('Mensagem Excluída', 'O modelo de mensagem foi removido com sucesso.');
     },
     async saveWhatsAppMessagesFast() {
       try {
@@ -1255,11 +1305,17 @@ export default {
         },
       ];
     },
-    restoreDefaultWhatsAppTemplates() {
-      if (!confirm('Deseja restaurar todas as mensagens de pedido do WhatsApp para os modelos padrão do sistema?')) return;
+    async restoreDefaultWhatsAppTemplates() {
+      const confirmed = await showConfirm(
+        'Restaurar Modelos?',
+        'Deseja restaurar todas as mensagens de pedido do WhatsApp para os modelos padrão do sistema?',
+        'Sim, Restaurar',
+        'Cancelar'
+      );
+      if (!confirmed) return;
       this.whatsappMessages = this.getDefaultMessages();
       this.saveWhatsAppMessagesFast();
-      this.openFeedback('Padrões Restaurados', 'Todas as mensagens originais de pedidos foram restauradas.', 'success');
+      showSuccess('Padrões Restaurados', 'Todas as mensagens originais de pedidos foram restauradas.');
     },
     formatDate(dateStr) {
       if (!dateStr) return 'Recente';
@@ -1312,6 +1368,9 @@ export default {
           if (res.data.store_whatsapp) {
             this.storeSettings.store_whatsapp = res.data.store_whatsapp;
           }
+          if (res.data.require_motoboy_confirmation !== undefined) {
+            this.storeSettings.require_motoboy_confirmation = !!res.data.require_motoboy_confirmation;
+          }
           if (res.data.whatsapp_messages && Array.isArray(res.data.whatsapp_messages)) {
             this.whatsappMessages = res.data.whatsapp_messages;
           } else {
@@ -1347,6 +1406,9 @@ export default {
           }
           if (res.data.store_whatsapp) {
             this.storeSettings.store_whatsapp = res.data.store_whatsapp;
+          }
+          if (res.data.require_motoboy_confirmation !== undefined) {
+            this.storeSettings.require_motoboy_confirmation = !!res.data.require_motoboy_confirmation;
           }
           if (res.data.whatsapp_messages && Array.isArray(res.data.whatsapp_messages)) {
             this.whatsappMessages = res.data.whatsapp_messages;

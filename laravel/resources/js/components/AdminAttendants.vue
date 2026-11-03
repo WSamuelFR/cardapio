@@ -582,6 +582,7 @@
 <script>
 import axios from 'axios';
 import { maskName, maskPhone, maskDocument, applyMask, onlyDigits, isValidCpf } from '../utils/masks';
+import { showError } from '../utils/swal';
 
 export default {
   data() {
@@ -809,7 +810,7 @@ export default {
         await axios.patch(`/api/admin/attendants/${user.id}/toggle`);
         user.is_active = !user.is_active;
       } catch (err) {
-        alert('Erro ao alterar status.');
+        showError('Erro ao alterar status', 'Não foi possível atualizar o status do atendente.');
       }
     },
   },

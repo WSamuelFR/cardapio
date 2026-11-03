@@ -262,6 +262,7 @@
         :product="selectedProduct"
         :all-products="allProductsList"
         :menu-settings="menuData.menu_settings || null"
+        :product-reviews="menuData.product_reviews ? menuData.product_reviews[selectedProduct.id] : null"
         @back="closeProductDetail"
         @add-to-cart="onDetailAddToCart"
         @select-product="(p) => openProductDetail(p, productBackView)"
@@ -271,6 +272,7 @@
       <OrderTracker
         v-else-if="currentView === 'tracker'"
         :initial-code="trackerCode"
+        :store-info="menuData.menu_settings ? menuData.menu_settings.store_info : null"
       />
 
       <!-- TELA PAINEL DE PEDIDOS (Admin e Atendente) -->

@@ -70,11 +70,60 @@ class MenuController extends Controller
             $popular = $popular->merge($fallback);
         }
 
+        // Buscar avaliações de clientes de 4 estrelas ou mais vinculadas aos produtos e com permissão pública
+        $positiveReviews = DB::table('orders')
+            ->join('order_items', 'orders.id', '=', 'order_items.order_id')
+            ->whereNotNull('orders.food_rating')
+            ->where('orders.food_rating', '>=', 4)
+            ->where('orders.allow_public_review', true)
+            ->whereNotNull('order_items.product_id')
+            ->select(
+                'order_items.product_id',
+                'orders.food_rating',
+                'orders.review_comment',
+                'orders.customer_name',
+                'orders.review_show_name',
+                'orders.reviewed_at',
+                'orders.created_at'
+            )
+            ->orderBy('orders.reviewed_at', 'desc')
+            ->get()
+            ->groupBy('product_id');
+
+        $reviewsByProduct = [];
+        foreach ($positiveReviews as $productId => $reviews) {
+            $formattedReviews = [];
+            foreach ($reviews->take(10) as $rev) {
+                if (!empty($rev->review_show_name)) {
+                    $nameParts = explode(' ', trim($rev->customer_name));
+                    $displayName = ucfirst(mb_strtolower($nameParts[0] ?? 'Cliente'));
+                } else {
+                    $displayName = 'Cliente Anônimo';
+                }
+
+                $formattedReviews[] = [
+                    'customer_name' => $displayName,
+                    'is_anonymous' => empty($rev->review_show_name),
+                    'food_rating' => (int) $rev->food_rating,
+                    'review_comment' => $rev->review_comment,
+                    'date' => date('d/m/Y', strtotime($rev->reviewed_at ?: $rev->created_at)),
+                ];
+            }
+
+            $avgRating = round($reviews->avg('food_rating'), 1);
+            $reviewsByProduct[$productId] = [
+                'average' => $avgRating,
+                'count' => $reviews->count(),
+                'reviews' => $formattedReviews,
+            ];
+        }
+
         return response()->json([
             'categories' => $categories,
             'promotions' => $promotions,
             'combos' => $combos,
             'popular' => $popular,
+            'product_reviews' => $reviewsByProduct,
             'menu_settings' => [
                 'pizza_sizes' => \App\Models\SystemSetting::getSetting('pizza_sizes', []),
                 'pizza_borders' => \App\Models\SystemSetting::getSetting('pizza_borders', []),
@@ -218,7 +267,7 @@ class MenuController extends Controller
     public function trackOrder(string $orderNumber): JsonResponse
     {
         $order = Order::where('order_number', $orderNumber)
-            ->with(['items', 'motoboy:id,name'])
+            ->with(['items', 'motoboy:id,name,phone'])
             ->first();
 
         if (!$order) {
@@ -226,6 +275,57 @@ class MenuController extends Controller
         }
 
         return response()->json(['order' => $order]);
+    }
+
+    /**
+     * Confirmação de recebimento e avaliação do pedido pelo cliente no rastreio
+     */
+    public function confirmAndRateOrder(Request $request, string $orderNumber): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Pedido não encontrado.'], 404);
+        }
+
+        if ($order->status === 'cancelado') {
+            return response()->json(['message' => 'Não é possível avaliar um pedido cancelado.'], 422);
+        }
+
+        $validated = $request->validate([
+            'confirm_delivery' => 'nullable|boolean',
+            'food_rating' => 'required|integer|min:1|max:5',
+            'delivery_rating' => 'required|integer|min:1|max:5',
+            'review_comment' => 'nullable|string|max:1000',
+            'allow_public_review' => 'nullable|boolean',
+            'review_show_name' => 'nullable|boolean',
+        ]);
+
+        if (empty($order->customer_confirmed_at)) {
+            $order->customer_confirmed_at = now();
+        }
+
+        $order->food_rating = $validated['food_rating'];
+        $order->delivery_rating = $validated['delivery_rating'];
+        $order->review_comment = !empty($validated['review_comment']) ? trim($validated['review_comment']) : null;
+        $order->allow_public_review = array_key_exists('allow_public_review', $validated) ? (bool)$validated['allow_public_review'] : true;
+        $order->review_show_name = array_key_exists('review_show_name', $validated) ? (bool)$validated['review_show_name'] : true;
+        $order->reviewed_at = now();
+
+        $isPickup = $order->delivery_address && str_contains($order->delivery_address, 'RETIRADA');
+        $requireConfirmation = (bool) \App\Models\SystemSetting::getSetting('require_motoboy_confirmation', true);
+
+        // Se for retirada OU se o motoboy já confirmou OU se a regra de motoboy estiver desligada:
+        if ($isPickup || !empty($order->motoboy_confirmed_at) || !$requireConfirmation) {
+            $order->status = 'concluido';
+        }
+
+        $order->save();
+
+        return response()->json([
+            'message' => 'Obrigado por confirmar o recebimento e avaliar o seu pedido!',
+            'order' => $order->load(['items', 'motoboy:id,name,phone']),
+        ]);
     }
 
     /**

@@ -10,6 +10,7 @@ Route::prefix('api')->group(function () {
     Route::get('/menu', [MenuController::class, 'index']);
     Route::post('/orders', [MenuController::class, 'createOrder']);
     Route::get('/orders/{orderNumber}', [MenuController::class, 'trackOrder']);
+    Route::post('/orders/{orderNumber}/confirm-and-rate', [MenuController::class, 'confirmAndRateOrder']);
 
     // Autenticação
     Route::post('/auth/login', [AuthController::class, 'login']);

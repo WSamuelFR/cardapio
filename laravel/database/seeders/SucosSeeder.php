@@ -41,7 +41,13 @@ class SucosSeeder extends Seeder
             ['name' => 'Suco Natural de Maracujá', 'desc' => 'Suco calmante e refrescante de maracujá puro.', 'price' => 10.00],
             ['name' => 'Suco Natural de Morango', 'desc' => 'Suco feito com morangos frescos selecionados.', 'price' => 10.00],
             ['name' => 'Suco Natural de Uva', 'desc' => 'Suco natural integral de uva.', 'price' => 10.00],
-            ['name' => 'Suco Misto (Duas Frutas)', 'desc' => 'Combinação especial de até dois sabores de frutas da sua escolha.', 'price' => 12.00],
+            
+            // Sucos Mistos separados
+            ['name' => 'Suco Misto de Laranja com Acerola', 'desc' => 'Combinação refrescante de laranja com acerola fresca.', 'price' => 12.00],
+            ['name' => 'Suco Misto de Laranja com Morango', 'desc' => 'Combinação deliciosa de laranja com morango selecionado.', 'price' => 12.00],
+            ['name' => 'Suco Misto de Abacaxi com Maracujá', 'desc' => 'Combinação tropical refrescante de abacaxi com maracujá.', 'price' => 12.00],
+            ['name' => 'Suco Misto de Morango com Maracujá', 'desc' => 'Combinação perfeita de morango e maracujá.', 'price' => 12.00],
+            ['name' => 'Suco Misto de Caju com Acerola', 'desc' => 'Mistura clássica sertaneja de caju com acerola.', 'price' => 12.00],
         ];
 
         foreach ($items as $item) {
@@ -61,4 +67,3 @@ class SucosSeeder extends Seeder
         }
     }
 }
-

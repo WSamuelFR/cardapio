@@ -20,6 +20,14 @@ class Order extends Model
         'delivery_complement',
         'delivery_reference',
         'status',
+        'motoboy_confirmed_at',
+        'customer_confirmed_at',
+        'food_rating',
+        'delivery_rating',
+        'review_comment',
+        'allow_public_review',
+        'review_show_name',
+        'reviewed_at',
         'motoboy_id',
         'total',
         'notes',
@@ -41,6 +49,13 @@ class Order extends Model
             'total' => 'decimal:2',
             'needs_change' => 'boolean',
             'change_for' => 'decimal:2',
+            'motoboy_confirmed_at' => 'datetime',
+            'customer_confirmed_at' => 'datetime',
+            'reviewed_at' => 'datetime',
+            'food_rating' => 'integer',
+            'delivery_rating' => 'integer',
+            'allow_public_review' => 'boolean',
+            'review_show_name' => 'boolean',
         ];
     }
 
