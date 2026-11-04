@@ -1,25 +1,87 @@
 <template>
   <div class="home-container pb-5">
     
-    <!-- Banner Principal -->
-    <div class="card border-0 shadow-sm rounded-4 text-white overflow-hidden mb-4" style="background: linear-gradient(135deg, #d62828 0%, #9e1212 100%);">
-      <div class="card-body p-4 p-md-5 d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div style="max-width: 520px;">
-          <span class="badge bg-warning text-dark fw-bold px-3 py-1 rounded-pill mb-2 shadow-sm">
-            <i class="bi bi-star-fill me-1"></i> Tradição e Sabor
+    <!-- Banner Principal Interativo: Carrossel Informativo do Cliente -->
+    <div
+      class="card border-0 shadow-sm rounded-4 text-white overflow-hidden mb-4 position-relative client-carousel-card"
+      style="background: linear-gradient(135deg, #d62828 0%, #8f0d0d 100%); min-height: 250px;"
+      @mouseenter="stopCarousel"
+      @mouseleave="startCarousel"
+      @touchstart="stopCarousel"
+      @touchend="startCarousel"
+    >
+      <div class="card-body p-4 p-md-5 d-flex align-items-center justify-content-between flex-wrap gap-3 position-relative">
+        
+        <!-- Conteúdo do Slide Ativo -->
+        <div style="max-width: 560px;" class="carousel-slide-content">
+          <span :class="['badge fw-bold px-3 py-1 rounded-pill mb-2 shadow-sm d-inline-flex align-items-center gap-1', currentSlide.badgeClass]">
+            <i :class="currentSlide.badgeIcon"></i>
+            <span>{{ currentSlide.badgeText }}</span>
           </span>
-          <h1 class="fw-black mb-2 display-6 fw-bold">Bateu aquela fome?</h1>
-          <p class="text-white-50 mb-3 fs-6">
-            Peça agora seus pastéis sequinhos, salgados crocantes e sucos naturais sem complicação e sem necessidade de cadastro!
+
+          <h2 class="display-6 fw-bold mb-2 text-white" style="letter-spacing: -0.5px;">
+            {{ currentSlide.title }}
+          </h2>
+
+          <p class="text-white-50 mb-3 fs-6 lh-base">
+            {{ currentSlide.description }}
           </p>
-          <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm d-inline-flex align-items-center" @click="$emit('go-to-menu')">
-            <i class="bi bi-book-half me-2"></i> Ver Cardápio Completo
-          </button>
+
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button
+              class="btn rounded-pill px-4 py-2 fw-bold text-dark shadow-sm d-inline-flex align-items-center gap-2 transition"
+              :class="currentSlide.btnClass || 'btn-warning'"
+              @click="handleSlideAction(currentSlide.action)"
+            >
+              <i :class="currentSlide.btnIcon"></i>
+              <span>{{ currentSlide.btnText }}</span>
+            </button>
+
+            <!-- Contador de Dicas do Sistema -->
+            <span class="small text-white-50 px-2 fw-semibold">
+              Dica {{ currentSlideIndex + 1 }} de {{ slides.length }}
+            </span>
+          </div>
         </div>
-        <div class="d-none d-md-block text-center p-3 bg-white bg-opacity-10 rounded-circle shadow">
-          <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches" style="height: 120px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));">
+
+        <!-- Logo / Emblema da AKY Lanches com Animação -->
+        <div class="d-none d-md-block text-center p-3 bg-white bg-opacity-10 rounded-circle shadow-lg flex-shrink-0">
+          <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches" style="height: 125px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.35));">
         </div>
+
       </div>
+
+      <!-- Setas Laterais de Navegação Discretas -->
+      <button
+        type="button"
+        class="carousel-nav-btn prev-btn"
+        @click="prevSlide"
+        title="Dica anterior"
+      >
+        <i class="bi bi-chevron-left"></i>
+      </button>
+
+      <button
+        type="button"
+        class="carousel-nav-btn next-btn"
+        @click="nextSlide"
+        title="Próxima dica"
+      >
+        <i class="bi bi-chevron-right"></i>
+      </button>
+
+      <!-- Indicadores / Dots Clicáveis no Rodapé do Banner -->
+      <div class="carousel-dots-container">
+        <button
+          v-for="(s, sIdx) in slides"
+          :key="'dot-' + sIdx"
+          type="button"
+          :class="['carousel-dot-btn', currentSlideIndex === sIdx ? 'active' : '']"
+          @click="goToSlide(sIdx)"
+          :title="s.title"
+        ></button>
+      </div>
+
     </div>
 
     <!-- Barra de Pesquisa Rápida na Home -->
@@ -494,9 +556,88 @@ export default {
   data() {
     return {
       searchTerm: '',
+      currentSlideIndex: 0,
+      carouselTimer: null,
+      slides: [
+        {
+          badgeText: 'Tradição e Sabor',
+          badgeIcon: 'bi bi-star-fill text-dark',
+          badgeClass: 'bg-warning text-dark',
+          title: 'Bateu aquela fome? Peça sem Cadastro!',
+          description: 'Seja muito bem-vindo à AKY Lanches! Escolha seus pastéis sequinhos, salgados, pizzas e sucos naturais favoritos e envie seu pedido rapidinho, sem complicações.',
+          btnText: 'Ver Cardápio Completo',
+          btnIcon: 'bi bi-book-half',
+          btnClass: 'btn-warning text-dark',
+          action: 'menu',
+        },
+        {
+          badgeText: 'Personalização Total',
+          badgeIcon: 'bi bi-layers-fill text-dark',
+          badgeClass: 'bg-warning text-dark',
+          title: 'Monte seu Pastel ou Pizza do Seu Jeito!',
+          description: 'Aqui você tem liberdade para escolher! No "Monte Seu Pastel" você define os recheios salgados e doces, e nas Pizzas pode dividir meio a meio e adicionar bordas recheadas.',
+          btnText: 'Explorar Opções',
+          btnIcon: 'bi bi-sliders',
+          btnClass: 'btn-light text-dark',
+          action: 'menu',
+        },
+        {
+          badgeText: 'Praticidade & Comodidade',
+          badgeIcon: 'bi bi-geo-alt-fill text-white',
+          badgeClass: 'bg-info bg-opacity-75 text-white',
+          title: 'Entrega em Casa ou Retirada no Balcão!',
+          description: 'Prefere receber quentinho em seu endereço em Teixeira - PB ou buscar diretamente no nosso balcão? No carrinho você escolhe Entrega ou Retirada no Local, com mapa e rota GPS.',
+          btnText: 'Conhecer o Cardápio',
+          btnIcon: 'bi bi-shop',
+          btnClass: 'btn-warning text-dark',
+          action: 'menu',
+        },
+        {
+          badgeText: 'Finalização Direta',
+          badgeIcon: 'bi bi-whatsapp text-white',
+          badgeClass: 'bg-success text-white',
+          title: 'Pedido Fácil e Pagamento Flexível!',
+          description: 'Ao montar seu pedido no carrinho, escolha sua forma preferida de pagamento (PIX, Cartão ou Dinheiro com cálculo de troco) e envie a comanda pronta no WhatsApp com 1 toque.',
+          btnText: 'Fazer Meu Pedido',
+          btnIcon: 'bi bi-cart-check-fill',
+          btnClass: 'btn-light text-dark',
+          action: 'menu',
+        },
+        {
+          badgeText: 'Transparência ao Vivo',
+          badgeIcon: 'bi bi-clock-history text-white',
+          badgeClass: 'bg-primary text-white',
+          title: 'Acompanhe seu Pedido em Tempo Real!',
+          description: 'Ao concluir sua compra, você recebe um código exclusivo de acompanhamento. Use a aba "Rastrear" para saber exatamente quando seu lanche entrou na chapa e quando saiu para entrega!',
+          btnText: 'Rastrear um Pedido',
+          btnIcon: 'bi bi-search',
+          btnClass: 'btn-warning text-dark',
+          action: 'tracker',
+        },
+        {
+          badgeText: 'Sua Opinião Importa',
+          badgeIcon: 'bi bi-chat-heart-fill text-white',
+          badgeClass: 'bg-danger text-white border border-light',
+          title: 'Confirme a Entrega e Avalie com Estrelas!',
+          description: 'Recebeu seu pedido? Na página de rastreio você confirma o recebimento e pode avaliar o lanche e o atendimento com estrelas e comentário, com opção de assinar com seu nome ou como anônimo.',
+          btnText: 'Ir para o Rastreio',
+          btnIcon: 'bi bi-star-fill text-warning',
+          btnClass: 'btn-light text-dark',
+          action: 'tracker',
+        },
+      ],
     };
   },
+  mounted() {
+    this.startCarousel();
+  },
+  beforeUnmount() {
+    this.stopCarousel();
+  },
   computed: {
+    currentSlide() {
+      return this.slides[this.currentSlideIndex] || this.slides[0];
+    },
     displayedPromotions() {
       return (this.promotions || []).slice(0, 3);
     },
@@ -544,6 +685,35 @@ export default {
     },
   },
   methods: {
+    startCarousel() {
+      this.stopCarousel();
+      this.carouselTimer = setInterval(() => {
+        this.nextSlide();
+      }, 6500);
+    },
+    stopCarousel() {
+      if (this.carouselTimer) {
+        clearInterval(this.carouselTimer);
+        this.carouselTimer = null;
+      }
+    },
+    nextSlide() {
+      this.currentSlideIndex = (this.currentSlideIndex + 1) % this.slides.length;
+    },
+    prevSlide() {
+      this.currentSlideIndex = (this.currentSlideIndex - 1 + this.slides.length) % this.slides.length;
+    },
+    goToSlide(index) {
+      this.currentSlideIndex = index;
+      this.startCarousel();
+    },
+    handleSlideAction(action) {
+      if (action === 'tracker') {
+        this.$emit('go-to-tracker');
+      } else {
+        this.$emit('go-to-menu');
+      }
+    },
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
@@ -594,6 +764,84 @@ export default {
 </script>
 
 <style scoped>
+.client-carousel-card {
+  transition: transform 0.25s ease;
+}
+
+.carousel-slide-content {
+  animation: fadeInSlide 0.4s ease-in-out;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0.2;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.carousel-nav-btn:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: translateY(-50%) scale(1.1);
+  color: #ffd166;
+}
+
+.prev-btn {
+  left: 10px;
+}
+
+.next-btn {
+  right: 10px;
+}
+
+.carousel-dots-container {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.carousel-dot-btn {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  padding: 0;
+}
+
+.carousel-dot-btn.active {
+  background: #ffc107;
+  width: 26px;
+  border-radius: 10px;
+}
+
 .text-warning-emphasis {
   color: #b45309 !important;
 }

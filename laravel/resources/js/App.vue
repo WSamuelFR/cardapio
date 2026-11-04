@@ -228,6 +228,7 @@
         :popular="menuData.popular"
         @add-to-cart="addToCart"
         @go-to-menu="currentView = 'menu'"
+        @go-to-tracker="currentView = 'tracker'"
         @open-section="openSection"
         @select-product="openProductDetail"
       />

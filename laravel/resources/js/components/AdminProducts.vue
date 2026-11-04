@@ -1380,55 +1380,12 @@
       </div>
     </div>
 
-    <!-- MODAL MODERNO DE FEEDBACK / AVISO (Substitui alert() nativo) -->
-    <div v-if="showFeedbackModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1080;">
-      <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
-          <div class="modal-header bg-white border-0 pt-4 px-4 pb-2 text-center d-flex flex-column align-items-center">
-            <div
-              :class="[
-                'rounded-circle p-3 mb-2 d-flex align-items-center justify-content-center',
-                feedbackModalData.type === 'success' ? 'bg-success bg-opacity-10 text-success' : (feedbackModalData.type === 'warning' ? 'bg-warning bg-opacity-10 text-warning' : 'bg-danger bg-opacity-10 text-danger')
-              ]"
-              style="width: 58px; height: 58px;"
-            >
-              <i
-                :class="[
-                  'fs-1',
-                  feedbackModalData.type === 'success' ? 'bi bi-check-circle-fill text-success' : (feedbackModalData.type === 'warning' ? 'bi bi-exclamation-triangle-fill text-warning' : 'bi bi-x-circle-fill text-danger')
-                ]"
-              ></i>
-            </div>
-            <h5 class="fw-bold text-dark mb-0">{{ feedbackModalData.title }}</h5>
-          </div>
-
-          <div class="modal-body px-4 py-2 text-center">
-            <p class="text-muted small mb-0 lh-base">
-              {{ feedbackModalData.message }}
-            </p>
-          </div>
-
-          <div class="modal-footer border-0 px-4 pb-4 pt-3">
-            <button
-              type="button"
-              :class="[
-                'btn rounded-pill w-100 fw-bold btn-sm py-2 shadow-sm',
-                feedbackModalData.type === 'success' ? 'btn-success text-white' : (feedbackModalData.type === 'warning' ? 'btn-warning text-dark' : 'btn-danger text-white')
-              ]"
-              @click="showFeedbackModal = false"
-            >
-              OK, Entendido
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import { showSuccess, showError, showWarning } from '../utils/swal';
 
 export default {
   data() {
@@ -1613,8 +1570,13 @@ export default {
       }
     },
     openFeedback(title, message, type = 'success') {
-      this.feedbackModalData = { title, message, type };
-      this.showFeedbackModal = true;
+      if (type === 'success') {
+        showSuccess(title, message);
+      } else if (type === 'warning') {
+        showWarning(title, message);
+      } else {
+        showError(title, message);
+      }
     },
     syncPastelFreeIngredients() {
       const chargeFrom = Number(this.menuSettings.monte_pastel.charge_from_ingredient) || 5;

@@ -94,6 +94,13 @@ class SystemSettingsSeeder extends Seeder
             ],
             'Dados gerais e cadastrais da lanchonete'
         );
+
+        // 6. Regra Antifraude de Confirmação de Entrega pelo Motoboy
+        SystemSetting::setSetting(
+            'require_motoboy_confirmation',
+            true,
+            'Exigir que o entregador confirme a entrega para poder concluir o pedido'
+        );
     }
 }
 
