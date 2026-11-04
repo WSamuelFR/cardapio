@@ -1,0 +1,68 @@
+{
+  "name": "aky-lanches-desktop",
+  "version": "1.0.0",
+  "description": "AKY Lanches - Sistema de Atendimento e Cardápio Desktop",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --dir",
+    "dist": "electron-builder --win"
+  },
+  "author": "AKY Lanches",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.akylanches.desktop",
+    "productName": "AKY Lanches",
+    "directories": {
+      "output": "dist-app"
+    },
+    "win": {
+      "target": [
+        "dir"
+      ],
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "forceCodeSigning": false,
+    "extraResources": [
+      {
+        "from": "assets/icon.ico",
+        "to": "assets/icon.ico"
+      },
+      {
+        "from": "resources/php",
+        "to": "php",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../laravel",
+        "to": "laravel",
+        "filter": [
+          "**/*",
+          "!node_modules/**",
+          "!.git/**",
+          "!.env*",
+          "!*.sql",
+          "!storage/logs/*",
+          "!tests/**"
+        ]
+      },
+      {
+        "from": "../laravel/.env.desktop",
+        "to": "laravel/.env"
+      }
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html"
+    ]
+  }
+}
+

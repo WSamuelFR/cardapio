@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'cloud' => [
+        'url' => env('REMOTE_API_URL', 'https://akylanches.freedevs.tech'),
+    ],
+
 ];

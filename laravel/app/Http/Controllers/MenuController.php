@@ -49,11 +49,21 @@ class MenuController extends Controller
             ->pluck('product_id');
 
         if ($popularProductIds->isNotEmpty()) {
-            $idsOrdered = $popularProductIds->implode(',');
-            $popular = Product::whereIn('id', $popularProductIds)
-                ->where('is_available', true)
-                ->orderByRaw("FIELD(id, {$idsOrdered})")
-                ->get();
+            if (DB::connection()->getDriverName() === 'mysql') {
+                $idsOrdered = $popularProductIds->implode(',');
+                $popular = Product::whereIn('id', $popularProductIds)
+                    ->where('is_available', true)
+                    ->orderByRaw("FIELD(id, {$idsOrdered})")
+                    ->get();
+            } else {
+                // SQLite compatível
+                $popular = Product::whereIn('id', $popularProductIds)
+                    ->where('is_available', true)
+                    ->get()
+                    ->sortBy(function ($model) use ($popularProductIds) {
+                        return array_search($model->id, $popularProductIds->toArray());
+                    })->values();
+            }
         } else {
             $popular = collect();
         }
