@@ -1,0 +1,23 @@
+services:
+  cardapio-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cardapio-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8008:8080"
+    volumes:
+      - cardapio_storage:/var/www/html/storage/app/public
+    networks:
+      - infra-net
+
+volumes:
+  cardapio_storage:
+    name: cardapio_storage
+
+networks:
+  infra-net:
+    external: true
