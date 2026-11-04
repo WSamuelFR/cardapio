@@ -19,6 +19,8 @@ return [
 
     'default' => env('DB_CONNECTION', 'sqlite'),
 
+    'sqlite_backup_enabled' => env('SQLITE_BACKUP_ENABLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Database Connections

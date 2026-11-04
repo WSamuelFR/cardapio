@@ -11,12 +11,15 @@ services:
       - "8008:8080"
     volumes:
       - cardapio_storage:/var/www/html/storage/app/public
+      - cardapio_images:/var/www/html/public/images/products
     networks:
       - infra-net
 
 volumes:
   cardapio_storage:
     name: cardapio_storage
+  cardapio_images:
+    name: cardapio_images
 
 networks:
   infra-net:

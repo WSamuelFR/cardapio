@@ -1,0 +1,16 @@
+# Desktop build artifacts and binaries
+desktop/dist/
+desktop/node_modules/
+desktop/resources/php/
+desktop/installer/Output/
+
+# SQLite local backup databases
+laravel/database/backup/*.sqlite
+laravel/database/backup/*.sqlite-journal
+laravel/database/backup/*.sqlite-wal
+laravel/database/backup/*.sqlite-shm
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.log
