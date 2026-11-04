@@ -12,8 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Altera a coluna role na tabela users para incluir motoboy
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'attendant', 'motoboy') NOT NULL DEFAULT 'attendant'");
+        // Altera a coluna role na tabela users para incluir motoboy se for MySQL
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'attendant', 'motoboy') NOT NULL DEFAULT 'attendant'");
+        }
 
         Schema::table('orders', function (Blueprint $table) {
             $table->foreignId('motoboy_id')->nullable()->after('status')->constrained('users')->nullOnDelete();

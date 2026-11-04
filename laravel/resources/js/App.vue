@@ -53,6 +53,16 @@
               <span>Pedidos</span>
             </button>
 
+            <!-- Cozinha (KDS / TV) - Visível para Cozinha, Admin e Atendente -->
+            <button
+              v-if="currentUser.role === 'admin' || currentUser.role === 'attendant' || currentUser.role === 'kitchen'"
+              :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'kitchen-orders' ? 'btn-danger text-white shadow-sm' : 'btn-light text-dark']"
+              @click="currentView = 'kitchen-orders'"
+            >
+              <i class="bi bi-fire fs-6" :class="currentView === 'kitchen-orders' ? 'text-white' : 'text-danger'"></i>
+              <span>Cozinha / TV</span>
+            </button>
+
             <!-- Motoboy: Minhas Entregas -->
             <button
               v-if="currentUser.role === 'motoboy'"
@@ -111,8 +121,8 @@
             <button class="btn btn-outline-dark rounded-pill px-3 py-1 py-md-2 dropdown-toggle btn-sm fw-semibold" type="button" data-bs-toggle="dropdown">
               <i class="bi bi-person-circle me-1"></i>
               <span class="d-none d-sm-inline">{{ currentUser.name.split(' ')[0] }}</span>
-              <span class="badge ms-1" :class="currentUser.role === 'admin' ? 'bg-danger' : (currentUser.role === 'motoboy' ? 'bg-warning text-dark' : 'bg-primary')">
-                {{ currentUser.role === 'admin' ? 'Admin' : (currentUser.role === 'motoboy' ? 'Motoboy' : 'Atendente') }}
+              <span class="badge ms-1" :class="currentUser.role === 'admin' ? 'bg-danger' : (currentUser.role === 'motoboy' ? 'bg-warning text-dark' : (currentUser.role === 'kitchen' ? 'bg-danger text-white' : 'bg-primary'))">
+                {{ currentUser.role === 'admin' ? 'Admin' : (currentUser.role === 'motoboy' ? 'Motoboy' : (currentUser.role === 'kitchen' ? 'Cozinha' : 'Atendente')) }}
               </span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2" style="min-width: 220px;">
@@ -197,6 +207,15 @@
             >
               <i class="bi bi-kanban-fill d-block fs-6" :class="currentView === 'admin-orders' ? 'text-white' : 'text-warning'"></i>
               <span style="font-size: 0.72rem;">Pedidos</span>
+            </button>
+
+            <button
+              v-if="currentUser.role === 'admin' || currentUser.role === 'attendant' || currentUser.role === 'kitchen'"
+              :class="['btn btn-sm rounded-pill px-2 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'kitchen-orders' ? 'btn-danger text-white shadow-sm' : 'btn-light text-dark']"
+              @click="currentView = 'kitchen-orders'"
+            >
+              <i class="bi bi-fire d-block fs-6" :class="currentView === 'kitchen-orders' ? 'text-white' : 'text-danger'"></i>
+              <span style="font-size: 0.72rem;">Cozinha</span>
             </button>
 
             <button
@@ -306,6 +325,11 @@
         v-else-if="currentView === 'admin-orders'"
       />
 
+      <!-- TELA MONITOR KDS DA COZINHA (TV / Monitor) -->
+      <KitchenOrders
+        v-else-if="currentView === 'kitchen-orders'"
+      />
+
       <!-- TELA PAINEL DO MOTOBOY (Minhas Entregas) -->
       <MotoboyOrders
         v-else-if="currentView === 'motoboy-orders'"
@@ -331,8 +355,8 @@
 
     </main>
 
-    <!-- RODAPÉ -->
-    <footer class="bg-white border-top py-4 mt-auto">
+    <!-- RODAPÉ (Oculto no Monitor KDS da Cozinha para Máximo Aproveitamento da TV) -->
+    <footer v-if="currentView !== 'kitchen-orders'" class="bg-white border-top py-4 mt-auto">
       <div class="container text-center">
         <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches Logo" class="mb-2" style="height: 48px;">
         <h6 class="fw-bold text-dark mb-1">AKY LANCHES</h6>
@@ -414,6 +438,7 @@ import AdminProducts from './components/AdminProducts.vue';
 import AdminAttendants from './components/AdminAttendants.vue';
 import AdminSettings from './components/AdminSettings.vue';
 import MotoboyOrders from './components/MotoboyOrders.vue';
+import KitchenOrders from './components/KitchenOrders.vue';
 
 export default {
   components: {
@@ -431,6 +456,7 @@ export default {
     AdminAttendants,
     AdminSettings,
     MotoboyOrders,
+    KitchenOrders,
   },
   data() {
     return {
@@ -552,6 +578,8 @@ export default {
             this.startAdminNotificationPolling();
           } else if (this.currentUser.role === 'motoboy') {
             this.currentView = 'motoboy-orders';
+          } else if (this.currentUser.role === 'kitchen') {
+            this.currentView = 'kitchen-orders';
           }
         }
       } catch (e) {
@@ -702,6 +730,8 @@ export default {
         this.currentView = 'admin-orders';
       } else if (user.role === 'motoboy') {
         this.currentView = 'motoboy-orders';
+      } else if (user.role === 'kitchen') {
+        this.currentView = 'kitchen-orders';
       } else {
         this.currentView = 'admin-orders';
       }

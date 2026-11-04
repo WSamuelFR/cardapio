@@ -311,6 +311,32 @@
                 </div>
               </div>
 
+              <!-- Atribuição de Cozinha / Preparo -->
+              <div class="mb-3">
+                <button
+                  class="btn btn-sm w-100 rounded-pill py-2 d-flex align-items-center justify-content-between px-3 border shadow-sm transition"
+                  :class="order.kitchen_user ? 'btn-white text-dark border-danger' : 'btn-light text-muted'"
+                  :disabled="order.status === 'concluido'"
+                  @click="openKitchenModal(order)"
+                >
+                  <div class="d-flex align-items-center text-truncate">
+                    <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-1 me-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                      <i class="bi bi-fire fs-6"></i>
+                    </div>
+                    <div class="text-start text-truncate">
+                      <small class="text-muted d-block" style="font-size: 0.68rem;">Cozinha / Preparo:</small>
+                      <span class="fw-bold small">{{ order.kitchen_user ? order.kitchen_user.name : (order.kitchen_user_id ? 'Responsável Definido' : 'Cozinha Geral (Não atribuído)') }}</span>
+                    </div>
+                  </div>
+                  <span v-if="order.status !== 'concluido'" class="badge rounded-pill bg-danger bg-opacity-10 text-danger ms-2">
+                    {{ order.kitchen_user ? 'Alterar' : 'Escolher' }}
+                  </span>
+                  <span v-else class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary ms-2" title="Bloqueado para alterações">
+                    <i class="bi bi-lock-fill"></i>
+                  </span>
+                </button>
+              </div>
+
               <!-- Atribuição de Motoboy -->
               <div class="mb-3">
                 <!-- Se for pedido de retirada no estabelecimento -->
@@ -492,6 +518,86 @@
           </button>
         </div>
 
+      </div>
+    </div>
+
+    <!-- MODAL DE SELEÇÃO DE COZINHA / PREPARO COM BARRA DE BUSCA EM TEMPO REAL -->
+    <div v-if="showKitchenModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content shadow border-0 rounded-4 overflow-hidden">
+          
+          <div class="modal-header bg-danger text-white border-0 py-3">
+            <h6 class="modal-title fw-bold d-flex align-items-center">
+              <i class="bi bi-fire me-2 fs-5"></i> Selecionar Cozinha / Preparo
+            </h6>
+            <button type="button" class="btn-close btn-close-white shadow-none" @click="showKitchenModal = false"></button>
+          </div>
+
+          <div class="modal-body p-3 bg-light">
+            
+            <!-- Barra de Busca no Modal -->
+            <div class="input-group input-group-sm mb-3 shadow-sm rounded-pill overflow-hidden bg-white border">
+              <span class="input-group-text bg-white border-0 ps-3">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control border-0 shadow-none ps-2"
+                placeholder="Buscar por nome do cozinheiro..."
+                v-model="kitchenSearchTerm"
+              >
+            </div>
+
+            <!-- Botão para Enviar para a Cozinha Geral / Sem Operador Específico -->
+            <div class="mb-2">
+              <button
+                class="btn btn-outline-secondary btn-sm w-100 rounded-pill py-2 text-start px-3 d-flex align-items-center justify-content-between"
+                @click="assignSelectedKitchen(null)"
+              >
+                <span><i class="bi bi-fire me-1 text-danger"></i> Cozinha Geral (Sem operador específico)</span>
+                <i class="bi bi-chevron-right small text-muted"></i>
+              </button>
+            </div>
+
+            <hr class="my-2 opacity-25">
+
+            <!-- Lista de Usuários da Cozinha em Cards Clicáveis -->
+            <div class="d-flex flex-column gap-2" style="max-height: 260px; overflow-y: auto;">
+              <div v-if="filteredKitchenUsers.length === 0" class="text-center py-4 text-muted small">
+                Nenhum operador da cozinha encontrado com "{{ kitchenSearchTerm }}".
+              </div>
+
+              <div
+                v-for="k in filteredKitchenUsers"
+                :key="'sel-kit-' + k.id"
+                class="card border-0 shadow-sm rounded-3 p-2 bg-white cursor-pointer transition hover-card"
+                :class="selectedOrderForKitchen && selectedOrderForKitchen.kitchen_user_id === k.id ? 'border-danger border-2 bg-danger bg-opacity-10' : ''"
+                @click="assignSelectedKitchen(k.id)"
+              >
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2 min-w-0">
+                    <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                      👨‍🍳
+                    </div>
+                    <div class="min-w-0">
+                      <div class="fw-bold text-dark small text-truncate">{{ k.name }}</div>
+                      <small class="text-muted d-block" style="font-size: 0.68rem;">{{ k.email }}</small>
+                    </div>
+                  </div>
+                  <i class="bi bi-check-circle-fill text-danger fs-5" v-if="selectedOrderForKitchen && selectedOrderForKitchen.kitchen_user_id === k.id"></i>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="modal-footer border-0 p-2 bg-white text-center">
+            <button class="btn btn-light btn-sm rounded-pill w-100 text-muted" @click="showKitchenModal = false">
+              Fechar
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -818,8 +924,10 @@ export default {
       expandedOrderIds: [],
       printSettings: null,
       storeInfo: null,
-      selectedMsgTemplateId: null,
-      expandedOrderIds: [],
+      kitchenUsers: [],
+      showKitchenModal: false,
+      selectedOrderForKitchen: null,
+      kitchenSearchTerm: '',
 
       // Paginação
       currentPage: 1,
@@ -878,10 +986,19 @@ export default {
         (m.email && m.email.toLowerCase().includes(term))
       );
     },
+    filteredKitchenUsers() {
+      if (!this.kitchenSearchTerm.trim()) return this.kitchenUsers;
+      const term = this.kitchenSearchTerm.toLowerCase();
+      return this.kitchenUsers.filter(k =>
+        k.name.toLowerCase().includes(term) ||
+        (k.email && k.email.toLowerCase().includes(term))
+      );
+    },
   },
   mounted() {
     this.fetchOrders();
     this.fetchMotoboys();
+    this.fetchKitchenUsers();
     this.fetchWhatsAppTemplate();
     this.startPolling();
   },
@@ -975,6 +1092,14 @@ export default {
         console.error(err);
       }
     },
+    async fetchKitchenUsers() {
+      try {
+        const res = await axios.get('/api/admin/active-kitchen-users');
+        this.kitchenUsers = res.data || [];
+      } catch (err) {
+        console.error(err);
+      }
+    },
     async fetchWhatsAppTemplate() {
       try {
         const res = await axios.get('/api/admin/store-info');
@@ -1039,10 +1164,41 @@ export default {
         showError('Erro ao atribuir motoboy', err.response?.data?.message || 'Não foi possível atribuir o motoboy.');
       }
     },
+    openKitchenModal(order) {
+      this.selectedOrderForKitchen = order;
+      this.kitchenSearchTerm = '';
+      this.showKitchenModal = true;
+    },
+    async assignSelectedKitchen(kitchenUserId) {
+      if (!this.selectedOrderForKitchen) return;
+      const order = this.selectedOrderForKitchen;
+
+      try {
+        const payload = {
+          kitchen_user_id: kitchenUserId,
+          status: 'em_preparacao',
+        };
+
+        await axios.patch(`/api/admin/orders/${order.id}/assign-kitchen`, payload);
+        this.showKitchenModal = false;
+        order.status = 'em_preparacao';
+        order.kitchen_user_id = kitchenUserId;
+        await this.fetchOrders();
+        this.openWhatsAppPromptModal(order);
+      } catch (err) {
+        showError('Erro ao atribuir cozinha', err.response?.data?.message || 'Não foi possível atribuir o responsável da cozinha.');
+      }
+    },
     requestStatusChange(order, newStatus) {
       if (order.status === 'concluido') return;
 
       const isPickup = order.delivery_address && order.delivery_address.includes('RETIRADA');
+
+      // Ao mudar para Em Preparação, abre o seletor da Cozinha / Preparo
+      if (newStatus === 'em_preparacao') {
+        this.openKitchenModal(order);
+        return;
+      }
 
       // Regra Obrigatória: Pedidos de ENTREGA precisam de entregador para sair para entrega.
       // Pedidos de RETIRADA no balcão NÃO exigem motoboy e passam direto!

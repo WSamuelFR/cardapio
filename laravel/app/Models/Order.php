@@ -32,6 +32,7 @@ class Order extends Model
         'review_show_name',
         'reviewed_at',
         'motoboy_id',
+        'kitchen_user_id',
         'total',
         'notes',
         'payment_method',
@@ -87,6 +88,11 @@ class Order extends Model
     public function motoboy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'motoboy_id');
+    }
+
+    public function kitchenUser(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kitchen_user_id');
     }
 }
 

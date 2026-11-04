@@ -31,13 +31,21 @@ class AdminController extends Controller
         }
     }
 
+    private function checkKitchenOrStaff(): void
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'attendant', 'kitchen'])) {
+            abort(401, 'Acesso restrito para a equipe da cozinha e administração.');
+        }
+    }
+
     // --- PEDIDOS (Admin e Atendente) ---
 
     public function getOrders(Request $request): JsonResponse
     {
         $this->checkStaff();
 
-        $query = Order::with(['items', 'motoboy:id,name'])->orderBy('created_at', 'desc');
+        $query = Order::with(['items.product', 'motoboy:id,name', 'kitchenUser:id,name'])->orderBy('created_at', 'desc');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -510,6 +518,97 @@ class AdminController extends Controller
         ], 201);
     }
 
+    // --- COZINHA (Exclusivo Admin) ---
+
+    public function getKitchenUsers(): JsonResponse
+    {
+        $this->checkAdmin();
+        $users = User::where('role', 'kitchen')->orderBy('name', 'asc')->get();
+        return response()->json($users);
+    }
+
+    public function createKitchenUser(Request $request): JsonResponse
+    {
+        $this->checkAdmin();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:30',
+            'document' => 'nullable|string|max:30',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $cleanName = trim(mb_strtoupper(preg_replace('/[^\p{L}\s]/u', '', $validated['name'])));
+        if (empty($cleanName)) {
+            return response()->json(['message' => 'Nome completo inválido. Use apenas letras e espaços.'], 422);
+        }
+
+        if (!empty($validated['document']) && strlen(preg_replace('/\D/', '', $validated['document'])) === 11) {
+            if (!$this->isValidCpf($validated['document'])) {
+                return response()->json(['message' => 'O CPF informado é inválido. Verifique os números digitados.'], 422);
+            }
+        }
+
+        $kitchenUser = User::create([
+            'name' => $cleanName,
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'document' => $validated['document'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => 'kitchen',
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'Usuário da Cozinha cadastrado com sucesso.',
+            'user' => $kitchenUser,
+        ], 201);
+    }
+
+    public function getActiveKitchenUsers(): JsonResponse
+    {
+        $this->checkStaff();
+        $users = User::where('role', 'kitchen')
+            ->where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'email', 'phone']);
+        return response()->json($users);
+    }
+
+    public function assignKitchenUser(Request $request, int $id): JsonResponse
+    {
+        $this->checkStaff();
+
+        $validated = $request->validate([
+            'kitchen_user_id' => 'nullable|exists:users,id',
+            'status' => 'nullable|in:recebido,em_preparacao,saiu_para_entrega,concluido,cancelado',
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        if ($order->status === 'concluido') {
+            return response()->json([
+                'message' => 'Este pedido já foi concluído e não pode sofrer alterações de preparo.'
+            ], 422);
+        }
+
+        $order->kitchen_user_id = $validated['kitchen_user_id'] ?? null;
+
+        if (!empty($validated['status'])) {
+            $order->status = $validated['status'];
+        } elseif ($order->status === 'recebido') {
+            $order->status = 'em_preparacao';
+        }
+
+        $order->save();
+
+        return response()->json([
+            'message' => 'Responsável pela cozinha atualizado com sucesso.',
+            'order' => $order->load(['items.product', 'motoboy:id,name', 'kitchenUser:id,name']),
+        ]);
+    }
+
     // --- DADOS DA LANCHONETE & WHATSAPP (Exclusivo Admin) ---
 
     public function getStoreInfo(): JsonResponse
@@ -920,6 +1019,71 @@ class AdminController extends Controller
         return response()->json([
             'message' => 'Entrega confirmada pelo entregador com sucesso!',
             'order' => $order,
+        ]);
+    }
+
+    // --- PAINEL KDS DA COZINHA (TV / Monitor) ---
+
+    public function getKitchenOrders(Request $request): JsonResponse
+    {
+        $this->checkKitchenOrStaff();
+
+        // Pedidos em preparação (prioridade na TV KDS) ordenados por FIFO (mais antigos primeiro)
+        $query = Order::where('status', 'em_preparacao')
+            ->with(['items.product', 'kitchenUser:id,name'])
+            ->orderBy('created_at', 'asc');
+
+        if ($request->filled('kitchen_user_id')) {
+            if ($request->kitchen_user_id === 'unassigned') {
+                $query->whereNull('kitchen_user_id');
+            } else {
+                $query->where('kitchen_user_id', $request->kitchen_user_id);
+            }
+        }
+
+        $orders = $query->get();
+
+        // Últimos 6 pedidos prontos recentemente para acompanhamento na TV
+        $recentReady = Order::whereIn('status', ['saiu_para_entrega', 'concluido'])
+            ->with(['items.product', 'kitchenUser:id,name'])
+            ->where('updated_at', '>=', now()->subHours(2))
+            ->orderBy('updated_at', 'desc')
+            ->limit(6)
+            ->get();
+
+        // Operadores de cozinha ativos para filtros
+        $kitchenStaff = User::where('role', 'kitchen')
+            ->where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'preparing' => $orders,
+            'recent_ready' => $recentReady,
+            'kitchen_staff' => $kitchenStaff,
+            'count' => $orders->count(),
+        ]);
+    }
+
+    public function markKitchenOrderReady(Request $request, int $id): JsonResponse
+    {
+        $this->checkKitchenOrStaff();
+
+        $order = Order::findOrFail($id);
+        
+        if ($order->status === 'saiu_para_entrega' || $order->status === 'concluido') {
+            return response()->json([
+                'message' => 'Este pedido já foi finalizado na cozinha.',
+                'order' => $order->load('items'),
+            ]);
+        }
+
+        $order->status = 'saiu_para_entrega';
+        $order->save();
+
+        return response()->json([
+            'message' => 'Pedido marcado como pronto pela cozinha!',
+            'order' => $order->load('items'),
         ]);
     }
 

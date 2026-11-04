@@ -1,0 +1,739 @@
+================================================================================
+                    AKY LANCHES - DOCUMENTAÇÃO DO SISTEMA
+                     SISTEMA DE GESTÃO, CARDÁPIO DIGITAL,
+                     COZINHA (KDS), ENTREGAS E DESKTOP POS
+================================================================================
+Versão do Documento: 1.0.0
+Data da Última Atualização: 04/11/2026
+Autor / Mantenedor: Equipe de Desenvolvimento AKY Lanches
+Ambiente: Web, Nuvem (Docker / VPS / Hostinger) e Desktop (Windows x64)
+
+--------------------------------------------------------------------------------
+SUMÁRIO GERAL
+--------------------------------------------------------------------------------
+1. VISÃO GERAL DO PROJETO
+2. ARQUITETURA E TECNOLOGIAS UTILIZADAS
+3. ESTRUTURA DE DIRETÓRIOS E ARQUIVOS
+4. PERFIS DE USUÁRIO E CONTROLE DE ACESSO
+5. MÓDULOS E FUNCIONALIDADES DO SISTEMA
+   5.1. Cardápio Digital Público & Experiência do Cliente
+   5.2. Gestão Administrativa de Pedidos (Admin / Atendimento)
+   5.3. Painel da Cozinha (KDS / Modo TV)
+   5.4. Painel de Entregas do Motoboy
+   5.5. Gestão de Produtos, Promoções e Sincronização de Pizzas
+   5.6. Gestão de Equipe e Usuários
+   5.7. Configurações Globais e Impressão Térmica
+6. FLUXO COMPLETO DO CICLO DE VIDA DO PEDIDO
+7. BANCO DE DADOS E RELACIONAMENTOS (MODELAGEM)
+8. CATÁLOGO DE ROTAS E ENDPOINTS DA API
+9. SISTEMA DE IMPRESSÃO TÉRMICA DE CUPONS
+10. ESPELHAMENTO E BACKUP AUTOMÁTICO EM SQLITE
+11. APLICAÇÃO DESKTOP ELECTRON
+12. INSTALADOR WINDOWS (INNO SETUP)
+13. GUIA DE INSTALAÇÃO, CONFIGURAÇÃO E EXECUÇÃO
+14. SEEDERS E DADOS INICIAIS
+15. MANUTENÇÃO, LOGS E RESOLUÇÃO DE PROBLEMAS
+16. HISTÓRICO DE MUDANÇAS RECENTES
+
+================================================================================
+1. VISÃO GERAL DO PROJETO
+================================================================================
+O AKY Lanches é uma solução completa desenvolvida para restaurantes, hamburguerias,
+pizzarias e lanchonetes de atendimento presencial e delivery. 
+
+O sistema integra em uma única plataforma:
+- Cardápio digital interativo de alta conversão para clientes (mobile e desktop).
+- Carrinho de compras com personalização rica de itens (sabores de pizzas,
+  recheios de pastéis, adicionais, escolha de ponto e complementos).
+- Checkout inteligente com cálculo de troco, opções de entrega e retirada,
+  integração direta via WhatsApp e rastreamento de pedidos em tempo real.
+- Painel Administrativo de Atendimento para controle dos pedidos recebidos.
+- Sistema de KDS (Kitchen Display System) para visualização na cozinha, com
+  destaque para ingredientes, filtros por cozinheiro e modo TV para telas grandes.
+- Painel dedicado para motoboys gerenciarem suas entregas e coletarem confirmação.
+- Sistema de avaliação e reputação com controle de privacidade dos comentários.
+- Impressão configurável de cupons térmicos para a cozinha e expedição.
+- Arquitetura Híbrida: Roda tanto na web (Docker / Cloud / MySQL) quanto como
+  aplicativo desktop empacotado em Electron com PHP portátil embutido e
+  espelhamento automático de backup para banco de dados local SQLite.
+
+================================================================================
+2. ARQUITETURA E TECNOLOGIAS UTILIZADAS
+================================================================================
+2.1. BACKEND & API:
+- Framework: Laravel 11 / 13 (PHP 8.5+ x64)
+- Padrão de Arquitetura: MVC com Controllers RESTful, Eloquent ORM e Service Layer
+- Sessão / Autenticação: Sessões Laravel seguras, hash Bcrypt e CSRF Protection
+- Conexões de Banco de Dados:
+  * Principal: MySQL 8.0+ / MariaDB (charset utf8mb4_unicode_ci)
+  * Espelho de Backup: SQLite 3 com Journal Mode WAL e modo de transação Deferred
+
+2.2. FRONTEND:
+- Framework: Vue.js 3 (Composition API / Options API hibridizadas)
+- Build Tool: Vite 8 com Rollup/Rolldown e Hot Module Replacement
+- Estilização & UI: Bootstrap 5.3+, Bootstrap Icons 1.13+, CSS Custom Properties
+- Notificações & Diálogos: SweetAlert2 customizado com identidade visual Aky
+- Utilitários: Axios, Máscaras customizadas para moeda/telefone/CEP/documento
+
+2.3. DESKTOP & DEPLOY:
+- Containerização: Docker & Docker Compose com Nginx/PHP Alpine
+- Runtime Desktop: Electron 34+
+- Empacotador: Electron Builder 25+ (Win-Unpacked x64)
+- PHP Embutido: PHP 8.5 NTS x64 com extensões pdo_sqlite, pdo_mysql, curl, mbstring
+- Criador de Instalador: Inno Setup 6 (Script Pascal / ISS automatizado)
+
+================================================================================
+3. ESTRUTURA DE DIRETÓRIOS E ARQUIVOS
+================================================================================
+d:\cardapio\
+├── docker-compose.yml              # Orquestração de containers de produção
+├── DOCUMENTACAO_AKY_LANCHES.txt    # Este documento técnico detalhado
+├── laravel\                        # Núcleo da Aplicação Web e API Laravel
+│   ├── app\
+│   │   ├── Console\Commands\
+│   │   │   └── SyncSqliteBackupCommand.php # Comando 'php artisan backup:sqlite'
+│   │   ├── Http\Controllers\
+│   │   │   ├── AdminController.php         # Gestão de pedidos, produtos, equipe, configs
+│   │   │   ├── AuthController.php          # Login, logout, perfil e autenticação
+│   │   │   ├── Controller.php              # Base Controller
+│   │   │   └── MenuController.php          # Cardápio público, pedidos e rastreio
+│   │   ├── Models\
+│   │   │   ├── Category.php                # Categorias do cardápio
+│   │   │   ├── Order.php                   # Pedidos, vínculos com motoboy e cozinheiro
+│   │   │   ├── OrderItem.php               # Itens do pedido com personalizações
+│   │   │   ├── Product.php                 # Produtos, preços, combos e promoções
+│   │   │   ├── SystemSetting.php           # Configurações dinâmicas de funcionamento
+│   │   │   └── User.php                    # Usuários (admin, attendant, motoboy, kitchen)
+│   │   ├── Providers\
+│   │   │   └── AppServiceProvider.php      # Hooks de espelhamento em tempo real do SQLite
+│   │   └── Services\
+│   │       └── SqliteBackupService.php     # Mecanismo de sincronia e replicação SQLite
+│   ├── config\
+│   │   ├── database.php            # Configurações de conexões MySQL e sqlite_backup
+│   │   └── ...
+│   ├── database\
+│   │   ├── backup\
+│   │   │   └── aky_backup.sqlite   # Banco local SQLite de backup e espelho
+│   │   ├── migrations\             # 20 migrations versionando o esquema completo
+│   │   └── seeders\                # Seeders do catálogo original de produtos Aky
+│   ├── public\
+│   │   ├── build\                  # Assets compilados do Vite (JS, CSS, Fontes)
+│   │   ├── index.php               # Ponto de entrada HTTP do Laravel
+│   │   └── uploads\                # Fotos dos produtos enviadas pelo admin
+│   ├── resources\
+│   │   ├── js\
+│   │   │   ├── App.vue             # Componente raiz com navegação e roteamento por abas
+│   │   │   ├── app.js              # Inicializador da instância Vue
+│   │   │   ├── components\
+│   │   │   │   ├── AdminAttendants.vue     # CRUD de funcionários e papéis
+│   │   │   │   ├── AdminOrders.vue         # Painel de atendimento e atribuição
+│   │   │   │   ├── AdminProducts.vue       # Gestão de cardápio e preços
+│   │   │   │   ├── AdminSettings.vue       # Ajustes da loja e cupom térmico
+│   │   │   │   ├── CartModal.vue           # Modal do carrinho e finalização
+│   │   │   │   ├── Home.vue                # Feed inicial, destaques e promoções
+│   │   │   │   ├── KitchenOrders.vue       # KDS da cozinha (Flex, filtros e modo TV)
+│   │   │   │   ├── LoginModal.vue          # Modal de acesso ao sistema
+│   │   │   │   ├── Menu.vue                # Catálogo completo por categorias
+│   │   │   │   ├── MotoboyOrders.vue       # Painel de entregas do entregador
+│   │   │   │   ├── OrderSuccessModal.vue   # Modal de confirmação pós-pedido
+│   │   │   │   ├── OrderTracker.vue        # Rastreamento público com avaliação
+│   │   │   │   ├── ProductDetailView.vue   # Customização profunda de produtos
+│   │   │   │   ├── ProfileModal.vue        # Edição de senha e dados do usuário
+│   │   │   │   └── SectionView.vue         # Visualização filtrada de categorias
+│   │   │   └── utils\
+│   │   │       ├── masks.js        # Utilitários de formatação de valores e docs
+│   │   │       ├── printer.js      # Script de impressão do cupom térmico
+│   │   │       └── swal.js         # Configurações pré-definidas de alertas
+│   │   └── views\
+│   │       └── app.blade.php       # Layout HTML base com montagem do Vue
+│   ├── routes\
+│   │   └── web.php                 # Definição de rotas da API e da interface
+│   └── package.json                # Dependências frontend do Laravel
+└── desktop\                        # Aplicação Desktop Electron e Instalador
+    ├── package.json                # Configuração do Electron e Electron Builder
+    ├── main.js                     # Ciclo de vida Electron, spawn PHP e janelas
+    ├── preload.js                  # Context bridge seguro para o Electron
+    ├── splash.html                 # Tela de inicialização (Splash Screen Aky)
+    ├── resources\
+    │   └── php\                    # PHP 8.5 portátil completo com extensões e dlls
+    ├── dist\
+    │   └── win-unpacked\           # Executável compilado (AKY Lanches.exe)
+    └── installer\
+        └── aky-lanches.iss         # Script do Inno Setup para geração do instalador
+
+================================================================================
+4. PERFIS DE USUÁRIO E CONTROLE DE ACESSO
+================================================================================
+O sistema opera com 4 papéis de usuários autenticados mais o acesso público:
+
+1. ADMIN (Administrador Geral):
+   - Acesso irrestrito a todas as áreas do sistema.
+   - Gestão completa de pedidos: mudança de status, cancelamento, atribuição
+     de cozinheiro e de motoboy, reimpressão de cupons térmicos.
+   - Gerenciamento de cardápio: criar, editar, pausar produtos, definir promoções,
+     ajustar fotos e sincronizar tabelas de preços de pizzas.
+   - Gestão de equipe: cadastrar, editar, desativar usuários e redefinir senhas.
+   - Configurações do estabelecimento e parâmetros da impressora térmica.
+
+2. ATTENDANT (Atendente / Caixa):
+   - Acesso focado no fluxo operacional diário.
+   - Visualização e avanço de status dos pedidos em tempo real.
+   - Atribuição do pedido a um cozinheiro específico ao mover para "Em Preparação".
+   - Atribuição do pedido a um motoboy ao mover para "Saiu para Entrega".
+   - Impressão de cupom térmico descritivo para a cozinha.
+
+3. KITCHEN (Cozinheiro / Operador da Cozinha):
+   - Acesso dedicado ao painel KDS (`KitchenOrders.vue`).
+   - Interface otimizada em visual claro/flex com suporte a Modo TV (texto ampliado).
+   - Visualização com destaque máximo para nome do item, ingredientes padrão
+     da descrição, personalizações (sabores/recheios/tamanhos) e observações.
+   - Filtros por operador: "Todos", "Cozinha Geral" ou tarefas do próprio usuário.
+   - Ação de concluir o preparo (movendo o pedido de "Em Preparação" para "Pronto").
+
+4. MOTOBOY (Entregador):
+   - Acesso restrito ao painel de entregas (`MotoboyOrders.vue`).
+   - Visualiza pedidos atribuídos a ele com endereço, complemento, ponto de
+     referência e telefone do cliente com botão direto para WhatsApp e GPS.
+   - Ação de confirmação de entrega presencial.
+
+5. CLIENTE (Público / Não Autenticado):
+   - Navega pelo cardápio, adiciona itens ao carrinho e finaliza pedidos.
+   - Acompanha o rastreamento em tempo real usando o código do pedido (Ex: AKY-20261104-ABCD).
+   - Confirma o recebimento e avalia o pedido (nota para a comida, nota para a entrega
+     e comentário com opção de privacidade).
+
+================================================================================
+5. MÓDULOS E FUNCIONALIDADES DO SISTEMA
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1. CARDÁPIO DIGITAL PÚBLICO & EXPERIÊNCIA DO CLIENTE
+--------------------------------------------------------------------------------
+- Home / Feed Principal:
+  * Carrossel de banners de novidades.
+  * Seção especial "Itens Mais Pedidos" com destaque visual e troféu roxo.
+  * Cards de Promoções e Ofertas do Dia destacados com efeitos de cor dinâmicos.
+  * Busca instantânea por nome ou descrição de produtos.
+  * Pílulas de categorias com rolagem horizontal suave.
+- Detalhes e Personalização do Produto (`ProductDetailView.vue`):
+  * Seleção de tamanhos (Ex: Pizza Média, Grande, Família).
+  * Seleção múltipla de sabores de pizzas com divisão proporcional do valor.
+  * Seleção de bordas recheadas (Catupiry, Cheddar, Chocolate, etc.).
+  * Seleção de recheios múltiplos para pastéis especiais.
+  * Seleção de adicionais (bacon extra, queijo, ovo, hambúrguer artesanal extra).
+  * Campo de observação detalhada por item.
+  * Seção "Você Também Pode Gostar" integrada com cards padronizados do sistema.
+- Carrinho de Compras Inteligente (`CartModal.vue`):
+  * Seleção do tipo de pedido: "Entrega" ou "Retirada no Local".
+  * Validação de campos obrigatórios com máscaras brasileiras (Telefone, CEP).
+  * Opções de Pagamento: Dinheiro, Cartão de Crédito/Débito, Pix.
+  * Calculadora de troco inteligente para pagamentos em dinheiro.
+  * Finalização via API com persistência no banco e geração de link formatado
+    para envio automático dos detalhes ao WhatsApp da loja.
+
+--------------------------------------------------------------------------------
+5.2. GESTÃO ADMINISTRATIVA DE PEDIDOS (`AdminOrders.vue`)
+--------------------------------------------------------------------------------
+- Visualização em colunas ou lista flexível categorizada por status:
+  * Recebido (Novo) -> Em Preparação -> Pronto -> Saiu para Entrega -> Concluído / Cancelado.
+- Contadores em tempo real para novos pedidos.
+- Botão "Cozinha / Preparo" com modal dedicado para seleção do cozinheiro
+  responsável pelo pedido (com busca em tempo real e opção de Cozinha Geral).
+- Botão "Motoboy / Entrega" com modal de busca e vinculação de entregador.
+- Botão discreto para impressão térmica do cupom descritivo da cozinha.
+- Expansão detalhada do pedido exibindo valores, itens, adicionais e troco.
+
+--------------------------------------------------------------------------------
+5.3. PAINEL DA COZINHA - KDS (`KitchenOrders.vue`)
+--------------------------------------------------------------------------------
+- Totalmente reformulado seguindo o design system limpo do AKY Lanches (`bg-light`,
+  cards brancos, cantos arredondados `rounded-4`, sombras suaves e bordas coloridas).
+- Segmentação em abas: "Em Preparo" (ativos) e "Prontos Recentemente".
+- Filtro por Cozinheiro no Topo: Pílulas dinâmicas que permitem ao cozinheiro ver
+  apenas os pedidos sob sua responsabilidade ou os pedidos gerais da cozinha.
+- Cards de Preparo Otimizados:
+  * Código do pedido em tamanho grande e tempo decorrido em minutos.
+  * Badge de Entrega vs. Retirada.
+  * Destaque para o Responsável pelo Preparo com botão rápido para alterar.
+  * Lista de itens com badges de quantidade (Ex: "2x"), nome do produto em negrito,
+    e a descrição completa contendo os ingredientes do catálogo.
+  * Destaque com badges para personalizações (sabores, recheios, adicionais).
+  * Caixa de alerta destacada para observações de preparo ("Sem cebola", "Mal passado").
+- Modo TV: Botão alternador no cabeçalho que aumenta a escala da fonte para
+  leitura confortável em monitores e televisores instalados na parede da cozinha.
+
+--------------------------------------------------------------------------------
+5.4. PAINEL DE ENTREGAS DO MOTOBOY (`MotoboyOrders.vue`)
+--------------------------------------------------------------------------------
+- Interface focada em dispositivos móveis para entregadores.
+- Exibe apenas os pedidos atribuídos ao motoboy logado com status "Saiu para Entrega".
+- Botão com link direto para rota no Google Maps e link para chamar o cliente no WhatsApp.
+- Botão de confirmação de entrega que registra o timestamp `motoboy_confirmed_at`.
+
+--------------------------------------------------------------------------------
+5.5. GESTÃO DE PRODUTOS E PREÇOS (`AdminProducts.vue`)
+--------------------------------------------------------------------------------
+- Cadastro completo de produtos com upload de fotos (armazenadas em `public/uploads`).
+- Edição de preços normais e promocionais com flag de produto em promoção.
+- Flag de Combo (`is_combo`) para diferenciação de ofertas.
+- Switch rápido para pausar/ativar produto em caso de falta de estoque.
+- Ferramenta de sincronização em lote de preços de pizzas: atualiza preços por
+  tamanho e sabores de forma unificada.
+
+--------------------------------------------------------------------------------
+5.6. GESTÃO DE EQUIPE E USUÁRIOS (`AdminAttendants.vue`)
+--------------------------------------------------------------------------------
+- Cadastro e gerenciamento de todos os colaboradores do sistema:
+  * Administradores, Atendentes, Motoboys e Cozinheiros.
+- Campos: Nome, E-mail, Telefone, CPF/Documento e Papel (`role`).
+- Ação para redefinir senha do usuário de forma imediata.
+- Ativação / Desativação com trava de segurança para impedir desativação do
+  último administrador do sistema.
+
+--------------------------------------------------------------------------------
+5.7. CONFIGURAÇÕES GLOBAIS E IMPRESSÃO (`AdminSettings.vue`)
+--------------------------------------------------------------------------------
+- Dados da Loja: Nome, CNPJ, Telefone, WhatsApp de atendimento, Endereço.
+- Horários de Funcionamento: Horário de abertura, fechamento e dias de operação.
+- Valores de Entrega: Taxa padrão de entrega e raio de atendimento.
+- Aba de Configurações de Impressão Térmica:
+  * Seleção da largura do papel (80mm padrão ou 58mm mini).
+  * Tamanho base da fonte do cupom (pequena, média, grande).
+  * Exibição de cabeçalho e rodapé personalizados.
+  * Script/Template do cupom com pré-visualização em tempo real.
+
+================================================================================
+6. FLUXO COMPLETO DO CICLO DE VIDA DO PEDIDO
+================================================================================
+Abaixo é apresentado o diagrama em texto do ciclo operacional do pedido:
+
+   [ CLIENTE / CARDÁPIO ]
+             │
+             ▼
+   Montagem no Carrinho (Sabores, Adicionais, Endereço, Forma de Pagamento)
+             │
+             ▼
+   Envio para API (POST /api/orders) ──► Replicado no SQLite Backup
+             │
+             ▼
+   STATUS: "recebido" (Visível para Atendente e Cozinha)
+             │
+             ├────────────────────────────────────────┐
+             ▼                                        ▼
+   Atendente clica em "Preparo"               Cozinha Geral vê pedido
+   Abre Seletor de Cozinheiro                 na aba "Em Preparo"
+   (Escolhe Cozinheiro ou Geral)                      │
+             │                                        │
+             ▼                                        │
+   STATUS: "em_preparacao" ◄──────────────────────────┘
+   (Registra kitchen_user_id)
+             │
+             ▼
+   Cozinheiro prepara o pedido lendo itens e ingredientes
+   Cozinheiro clica em "Concluir Preparo"
+             │
+             ▼
+   STATUS: "pronto"
+             │
+             ├────────────────────────────────────────┐
+             │ (Se for Retirada no Local)             │ (Se for Entrega)
+             ▼                                        ▼
+   Cliente retira no balcão                 Atendente clica em "Entrega"
+   Atendente move para "concluido"          Abre Seletor de Motoboy
+                                            (Escolhe o Motoboy responsável)
+                                                      │
+                                                      ▼
+                                            STATUS: "saiu_para_entrega"
+                                            (Registra motoboy_id)
+                                                      │
+                                                      ▼
+                                            Motoboy visualiza no seu painel
+                                            Realiza o transporte até o endereço
+                                            Motoboy clica em "Entregue"
+                                                      │
+                                                      ▼
+                                            STATUS: "concluido"
+                                            (Registra motoboy_confirmed_at)
+                                                      │
+                                                      ▼
+                                            Cliente confirma no rastreamento
+                                            (Registra customer_confirmed_at)
+                                            Cliente avalia Comida e Entrega
+
+================================================================================
+7. BANCO DE DADOS E RELACIONAMENTOS (MODELAGEM)
+================================================================================
+O banco de dados é estruturado em tabelas relacionais com índices otimizados:
+
+1. TABELA `users`:
+   - `id`: Chave primária auto-increment.
+   - `name`: Nome completo do usuário.
+   - `email`: E-mail único de acesso.
+   - `phone`: Telefone com máscara brasileira.
+   - `document`: CPF / Documento do colaborador.
+   - `password`: Hash Bcrypt da senha.
+   - `role`: Enum ('admin', 'attendant', 'motoboy', 'kitchen').
+   - `is_active`: Booleano indicando se o acesso está habilitado.
+   - `created_at`, `updated_at`.
+
+2. TABELA `categories`:
+   - `id`: Chave primária.
+   - `name`: Nome da categoria (Ex: Sanduíches Artesanais, Pastéis, Pizzas).
+   - `order`: Ordem de exibição no menu.
+   - `is_active`: Booleano de visibilidade.
+
+3. TABELA `products`:
+   - `id`: Chave primária.
+   - `category_id`: Foreign key referenciando `categories(id)`.
+   - `name`: Nome do produto.
+   - `description`: Ingredientes e detalhes de composição do item.
+   - `photo_path`: Caminho da imagem salva em `uploads/`.
+   - `price`: Preço de venda padrão (decimal 10,2).
+   - `promotional_price`: Preço especial de oferta (nullable).
+   - `is_promotion`: Booleano ativador da promoção.
+   - `is_combo`: Booleano que sinaliza combo especial.
+   - `is_available`: Booleano que permite pausar o item se acabar o estoque.
+
+4. TABELA `orders`:
+   - `id`: Chave primária.
+   - `uuid`: Identificador universal único (v4) para espelhamento e sync.
+   - `order_number`: Código legível exibido ao cliente (Ex: AKY-20261104-ABCD).
+   - `origin`: Origem do pedido ('web', 'desktop', 'balcao').
+   - `sync_status`: Status de sincronia ('synced', 'pending').
+   - `customer_name`: Nome do cliente.
+   - `customer_phone`: Telefone de contato.
+   - `customer_document_encrypted`: CPF criptografado para privacidade.
+   - `delivery_cep`, `delivery_address`, `delivery_complement`, `delivery_reference`.
+   - `status`: Enum ('recebido', 'em_preparacao', 'pronto', 'saiu_para_entrega',
+     'concluido', 'cancelado').
+   - `motoboy_id`: Foreign key nullable referenciando `users(id)`.
+   - `kitchen_user_id`: Foreign key nullable referenciando `users(id)` (Cozinheiro).
+   - `payment_method`: 'dinheiro', 'cartao_credito', 'cartao_debito', 'pix'.
+   - `needs_change`: Booleano de necessidade de troco.
+   - `change_for`: Valor informado para cálculo do troco em espécie.
+   - `total`: Valor final do pedido incluindo itens e taxa de entrega.
+   - `notes`: Observações gerais do cliente sobre a entrega ou preparo.
+   - `motoboy_confirmed_at`: Data e hora da confirmação pelo entregador.
+   - `customer_confirmed_at`: Data e hora da confirmação pelo cliente.
+   - `food_rating`, `delivery_rating`: Notas de 1 a 5 estrelas.
+   - `review_comment`: Texto de feedback do cliente.
+   - `allow_public_review`: Booleano autorizando exibição pública da avaliação.
+   - `review_show_name`: Booleano autorizando exibição do nome do cliente.
+   - `reviewed_at`: Timestamp da avaliação.
+
+5. TABELA `order_items`:
+   - `id`: Chave primária.
+   - `uuid`: Identificador universal único do item.
+   - `order_id`: Foreign key referenciando `orders(id)`.
+   - `product_id`: Foreign key referenciando `products(id)` (nullable).
+   - `product_name_snapshot`: Cópia estática do nome do produto no ato da compra.
+   - `quantity`: Quantidade do item.
+   - `unit_price`, `subtotal`: Valores monetários no momento do pedido.
+   - `customizations`: JSON contendo adicionais, sabores múltiplos, recheios e bordas.
+   - `notes`: Observações específicas daquele item.
+
+6. TABELA `system_settings`:
+   - `id`: Chave primária.
+   - `key`: Chave identificadora única (Ex: `printer_settings`, `store_info`).
+   - `value`: Valor serializado em texto / JSON.
+
+================================================================================
+8. CATÁLOGO DE ROTAS E ENDPOINTS DA API
+================================================================================
+
+8.1. ROTAS PÚBLICAS DO CARDÁPIO E CLIENTE:
+- `GET  /api/menu`
+  Retorna todas as categorias ativas e seus produtos correspondentes.
+- `POST /api/orders`
+  Cria um novo pedido com validação de itens, cálculo de totais e persistência.
+- `GET  /api/orders/{orderNumber}`
+  Rastreia a situação atual, linha do tempo e detalhes do pedido pelo código.
+- `POST /api/orders/{orderNumber}/confirm-and-rate`
+  Registra a confirmação de recebimento pelo cliente e sua nota/avaliação.
+
+8.2. ROTAS DE AUTENTICAÇÃO:
+- `POST /api/auth/login`
+  Autentica e-mail e senha, abrindo a sessão com privilégios de seu papel.
+- `POST /api/auth/logout`
+  Destrói a sessão ativa do usuário.
+- `GET  /api/auth/me`
+  Retorna o perfil do usuário logado na sessão atual.
+- `PUT  /api/auth/profile`
+  Atualiza dados pessoais e permite alteração de senha do usuário conectado.
+
+8.3. ROTAS DE GESTÃO E OPERAÇÃO (ADMIN, ATENDIMENTO, COZINHA E MOTOBOY):
+- `GET   /api/admin/orders`
+  Lista os pedidos com filtros por data, status e relacionamentos.
+- `PATCH /api/admin/orders/{id}/status`
+  Altera o status do pedido ('recebido', 'em_preparacao', 'pronto', etc.).
+- `GET   /api/admin/active-kitchen-users`
+  Retorna a lista de cozinheiros ativos cadastrados para a modal de atribuição.
+- `PATCH /api/admin/orders/{id}/assign-kitchen`
+  Atribui o pedido a um cozinheiro e muda o status para "em_preparacao".
+- `GET   /api/admin/active-motoboys`
+  Retorna a lista de entregadores ativos cadastrados para atribuição.
+- `PATCH /api/admin/orders/{id}/assign-motoboy`
+  Atribui o pedido a um motoboy e avança o status para "saiu_para_entrega".
+- `GET   /api/admin/kitchen-orders`
+  Retorna pedidos para o KDS da cozinha com filtro por cozinheiro e lista de equipe.
+- `GET   /api/admin/motoboy-orders`
+  Retorna a fila de entregas sob responsabilidade do motoboy conectado.
+- `POST  /api/admin/motoboy-orders/{id}/confirm`
+  Confirmação de entrega física pelo motoboy.
+- `GET   /api/admin/products`
+  Lista todos os produtos para a tela administrativa de cardápio.
+- `POST  /api/admin/products`
+  Criação de novos produtos com upload de imagem.
+- `PUT   /api/admin/products/{id}`
+  Edição de preços, descrições e status de produtos.
+- `POST  /api/admin/sync-pizza-prices`
+  Sincronização em massa de preços de pizzas por tamanho.
+- `GET   /api/admin/attendants`
+  Lista colaboradores e funcionários da equipe.
+- `POST  /api/admin/attendants`
+  Cadastra novo colaborador com papel definido.
+- `PUT   /api/admin/attendants/{id}`
+  Edita dados e papel de um colaborador.
+- `POST  /api/admin/attendants/{id}/reset-password`
+  Redefinição expressa de senha de acesso.
+- `GET   /api/admin/settings`
+  Retorna configurações da loja e parâmetros de impressão.
+- `POST  /api/admin/settings`
+  Salva configurações da loja e parâmetros de impressão.
+
+================================================================================
+9. SISTEMA DE IMPRESSÃO TÉRMICA DE CUPONS
+================================================================================
+O sistema possui gerador de cupons térmicos para impressoras de 80mm e 58mm:
+- Implementado em: `laravel/resources/js/utils/printer.js`
+- Localização dos Botões de Impressão:
+  * No card expandido de cada pedido em `AdminOrders.vue`.
+  * No cabeçalho e rodapé do card de preparo em `KitchenOrders.vue`.
+- Conteúdo Formatado no Cupom:
+  * Cabeçalho com o nome do estabelecimento (AKY LANCHES) e dados de contato.
+  * Código do pedido, data/hora e tipo de pedido (ENTREGA ou RETIRADA NO BALCÃO).
+  * Nome do cozinheiro atribuído ao preparo.
+  * Tabela de Itens com quantidades, nomes dos produtos e descrições dos ingredientes.
+  * Lista de Adicionais e Personalizações destacadas em maiúsculo.
+  * Observações importantes do cliente (Ex: "Alergia a camarão", "Sem salada").
+  * Dados de entrega (endereço completo e ponto de referência).
+  * Valor total e forma de pagamento com cálculo de troco (quando aplicável).
+- Configuração do Cupom:
+  * Acessível em Administração -> Configurações -> Aba "Impressão Térmica".
+  * Permite ajustar largura do papel, tamanho da tipografia e texto de cabeçalho.
+  * Utiliza comando de janela oculta com CSS `@media print` otimizado para bobinas.
+
+================================================================================
+10. ESPELHAMENTO E BACKUP AUTOMÁTICO EM SQLITE
+================================================================================
+Para assegurar a resiliência operacional contra perdas de dados e manter uma
+cópia local pronta para recuperação imediata, o sistema possui um espelhamento
+completo para SQLite:
+
+10.1. CONEXÃO E ARMAZENAMENTO:
+- Configurada em `laravel/config/database.php` sob o nome `sqlite_backup`.
+- Arquivo de destino: `laravel/database/backup/aky_backup.sqlite`.
+- O modo WAL (Write-Ahead Logging) e transações assíncronas garantem que a
+  operação de gravação seja ultra rápida sem travar o MySQL principal.
+
+10.2. ESPELHAMENTO EM TEMPO REAL (MODEL HOOKS):
+- Registrado em `laravel/app/Providers/AppServiceProvider.php`.
+- Monitora os eventos `saved` e `deleted` nos modelos:
+  * `Order`, `OrderItem`, `Product`, `Category`, `User`, `SystemSetting`.
+- Toda inserção, alteração ou exclusão é espelhada de forma isolada em bloco
+  `try/catch` pelo `SqliteBackupService.php`. Se o SQLite estiver bloqueado ou
+  indisponível, a operação do MySQL NUNCA é interrompida.
+
+10.3. COMANDO DE SINCRONIZAÇÃO COMPLETA:
+- Comando de console: `php artisan backup:sqlite`
+- Comportamento:
+  * Cria o arquivo e pastas caso não existam.
+  * Executa automaticamente as migrations na base SQLite com adaptação dinâmica
+    de tipos para compatibilidade SQLite / MySQL.
+  * Copia todas as linhas de todas as tabelas em transação protegida por upsert de ID.
+  * Exibe resumo tabular com as contagens de registros sincronizados.
+
+================================================================================
+11. APLICAÇÃO DESKTOP ELECTRON
+================================================================================
+O projeto conta com um aplicativo desktop nativo para Windows em `d:\cardapio\desktop`:
+
+11.1. ARQUITETURA DO EXECUTÁVEL:
+- O Electron empacota o runtime do Chromium, o código do Laravel compilado e um
+  interpretador PHP 8.5 portátil completo dentro de `dist/win-unpacked/`.
+- Não requer instalação prévia de PHP, Node ou Apache na máquina do cliente.
+
+11.2. FLUXO DE INICIALIZAÇÃO (`desktop/main.js`):
+1. Trava de Instância Única: Garante que apenas um processo do sistema rode por vez.
+2. Splash Screen: Exibe imediatamente a janela de carregamento personalizada Aky
+   Lanches enquanto os serviços sobem.
+3. Subida do Backend Portátil:
+   * Localiza o PHP embutido em `resources/php/php.exe`.
+   * Inicializa o servidor web local do Laravel na porta `8765` com os parâmetros:
+     `artisan serve --host=127.0.0.1 --port=8765 --no-reload`.
+   * Injeta os caminhos de ambiente `PATH` e `PHP_BINARY` para que os subprocessos
+     do Laravel encontrem as extensões do PHP portátil.
+   * Aplica proteção de flags `-d opcache.enable=0 -d opcache.enable_cli=0` para
+     eliminar conflitos de memória ASLR no Windows.
+4. Verificação de Saúde HTTP:
+   * Realiza polling na porta `8765`.
+   * Assim que a rota `/api/menu` responde HTTP 200, a janela principal é maximizada,
+     a splash screen é fechada suavemente e o cardápio/atendimento entra no ar.
+5. Backup de Fundo:
+   * Dispara o comando `artisan backup:sqlite` em segundo plano de forma assíncrona,
+     garantindo que o banco de backup local esteja sempre atualizado.
+6. Encerramento Seguro:
+   * Ao fechar a janela, o Electron mata de forma forçada o processo do PHP
+     utilizando `taskkill /pid ... /T /F`, liberando a porta e a memória RAM.
+
+11.3. ARQUIVO DE LOG:
+- Registrado em: `%LOCALAPPDATA%\AKY Lanches\app.log` ou na pasta do executável.
+
+================================================================================
+12. INSTALADOR WINDOWS (INNO SETUP)
+================================================================================
+O instalador de nível empresarial do sistema é gerado via Inno Setup 6:
+- Script localizado em: `d:\cardapio\desktop\installer\aky-lanches.iss`.
+
+12.1. CARACTERÍSTICAS DO INSTALADOR:
+- Destino Padrão: `C:\Program Files\AKY Lanches`.
+- Permissões de Pastas (`Permissions: users-full`):
+  * O Inno Setup concede permissão irrestrita de leitura/escrita para as pastas:
+    - `{app}\resources\laravel\database\backup` (onde fica o SQLite).
+    - `{app}\resources\laravel\storage` (sessões, logs e uploads).
+    - `{app}\resources\laravel\bootstrap\cache`.
+  * Isso elimina completamente o erro comum do Windows "Acesso Negado" em Program Files.
+- Atalhos: Cria atalho na Área de Trabalho e no Menu Iniciar.
+- Desinstalador: Remove o aplicativo e faz a limpeza dos caches temporários.
+- Como Compilar o Instalador Final:
+  1. Instale o Inno Setup 6 (disponível gratuitamente em jrsoftware.org).
+  2. Clique com botão direito sobre `desktop/installer/aky-lanches.iss` e selecione
+     "Compile with Inno Setup" (ou via CLI: `ISCC.exe desktop/installer/aky-lanches.iss`).
+  3. O executável instalador final será gerado em:
+     `desktop\dist\installer\AKY-Lanches-Instalador-v1.0.0.exe`.
+
+================================================================================
+13. GUIA DE INSTALAÇÃO, CONFIGURAÇÃO E EXECUÇÃO
+================================================================================
+
+13.1. REQUISITOS DO SISTEMA (AMBIENTE DE DESENVOLVIMENTO):
+- PHP 8.2 ou superior (com extensões pdo, pdo_mysql, pdo_sqlite, mbstring, curl, openssl).
+- Composer 2+.
+- Node.js 18+ e NPM.
+- Servidor MySQL 8.0+ ou MariaDB.
+
+13.2. PASSO A PASSO PARA RODAR O PROJETO LOCALMENTE:
+1. Navegue até o diretório do backend:
+   `cd d:\cardapio\laravel`
+2. Instale as dependências PHP:
+   `composer install`
+3. Instale as dependências Frontend:
+   `npm install`
+4. Configure o arquivo `.env`:
+   Copie `.env.example` para `.env` e configure:
+   ```env
+   APP_NAME="AKY Lanches"
+   APP_ENV=local
+   APP_KEY=base64:...
+   APP_DEBUG=true
+   APP_URL=http://localhost:8000
+
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=cardapio
+   DB_USERNAME=root
+   DB_PASSWORD=sua_senha
+
+   SQLITE_BACKUP_ENABLED=true
+   DB_SQLITE_BACKUP_PATH=database/backup/aky_backup.sqlite
+   ```
+5. Execute as migrations e alimente o banco de dados inicial:
+   `php artisan migrate --seed`
+6. Execute o espelhamento inicial do banco para o backup SQLite:
+   `php artisan backup:sqlite`
+7. Compile os assets do frontend:
+   `npm run build`  (ou `npm run dev` para desenvolvimento contínuo)
+8. Inicie o servidor Laravel:
+   `php artisan serve`
+
+13.3. COMO RODAR COM DOCKER (PRODUÇÃO / VPS):
+1. Na raiz do projeto:
+   `docker compose up -d --build`
+2. A aplicação subirá mapeada na porta configurada (padrão 8008 -> 8080).
+
+13.4. COMO TESTAR OU COMPILAR O APLICATIVO DESKTOP:
+1. Navegue até a pasta desktop:
+   `cd d:\cardapio\desktop`
+2. Para compilar a pasta de distribuição unpacked:
+   `npm run build`
+3. O executável estará pronto em `d:\cardapio\desktop\dist\win-unpacked\AKY Lanches.exe`.
+
+================================================================================
+14. SEEDERS E DADOS INICIAIS
+================================================================================
+O sistema possui seeders completos que populam todo o cardápio e os dados padrão:
+- `AdminUserSeeder`: Cria o usuário administrador inicial padrão do sistema.
+- `SystemSettingsSeeder`: Define valores padrão para horários, taxas e impressora.
+- Seeders de Categorias e Produtos:
+  * `SanduichesClassicosSeeder`: X-Burger, Americano, Misto Quente, Bauru, etc.
+  * `SanduichesArtesanaisSeeder`: Burgers premium com pão brioche e molhos especiais.
+  * `PasteloesSeeder`: Pastéis especiais fritos de 20cm e 30cm com recheios ricos.
+  * `PizzasTradicionaisSeeder`: Calabresa, Mussarela, Frango com Catupiry, etc.
+  * `PizzasDocesSeeder`: Chocolate com Morango, Romeu e Julieta, Prestígio.
+  * `CombosEspeciaisSeeder`: Combos com batata frita e refrigerante.
+  * `BebidasSeeder`, `SucosSeeder`, `PetiscosSeeder`, `AdicionaisSeeder`.
+
+Para resetar e repopular a base com dados de fábrica:
+`php artisan migrate:fresh --seed`
+`php artisan backup:sqlite`
+
+================================================================================
+15. MANUTENÇÃO, LOGS E RESOLUÇÃO DE PROBLEMAS
+================================================================================
+
+15.1. LOGS DO SISTEMA:
+- Logs do Laravel (erros de API, SQL, exceções):
+  `laravel/storage/logs/laravel.log`
+- Logs do Aplicativo Desktop Electron:
+  `%LOCALAPPDATA%\AKY Lanches\app.log`
+
+15.2. O FRONTEND NÃO ATUALIZA APÓS ALTERAÇÃO NO CÓDIGO VUE:
+- Causa: Arquivo `laravel/public/hot` gerado pelo comando `npm run dev` que faz
+  o Laravel buscar os assets no servidor do Vite em vez dos arquivos compilados.
+- Solução:
+  Remova o arquivo temporário caso exista e recompile:
+  `Remove-Item d:\cardapio\laravel\public\hot -Force -ErrorAction SilentlyContinue`
+  `cd d:\cardapio\laravel && npm run build`
+
+15.3. ERRO DE OPCACHE / ASLR AO INICIAR O PHP NO ELECTRON:
+- Mensagem: "Fatal Error Opcode handlers are unusable due to ASLR".
+- Solução: O script `desktop/main.js` e o `desktop/resources/php/php.ini` já possuem
+  as diretivas `opcache.enable=0` e `opcache.enable_cli=0` injetadas para garantir
+  estabilidade no Windows.
+
+15.4. PERMISSÕES DE ESCRITA NO BANCO SQLITE APÓS INSTALADOR:
+- Caso o banco não consiga gravar dados ao instalar em Program Files, verifique se
+  a instalação foi feita como Administrador, garantindo que as diretivas do arquivo
+  `desktop/installer/aky-lanches.iss` tenham aplicado `Permissions: users-full`.
+
+================================================================================
+16. HISTÓRICO DE MUDANÇAS RECENTES
+================================================================================
+- [Nov/2026] Adicionado papel de usuário 'kitchen' (Cozinha) no banco e na equipe.
+- [Nov/2026] Adicionado relacionamento e coluna `kitchen_user_id` na tabela `orders`.
+- [Nov/2026] Implementado modal seletor de cozinheiro em `AdminOrders.vue` idêntico
+  ao fluxo do motoboy, com busca em tempo real e opção de Cozinha Geral.
+- [Nov/2026] Reformulação completa do Painel da Cozinha (`KitchenOrders.vue`):
+  layout flexível moderno, pílulas de filtro por cozinheiro, destaque para os
+  ingredientes cadastrados na descrição dos produtos e modo TV com tipografia ampliada.
+- [Nov/2026] Adicionado botão e script de impressão térmica de cupom para a cozinha.
+- [Nov/2026] Remoção total do módulo legado `desktop-pos` e de seus controllers.
+- [Nov/2026] Criação do serviço de espelhamento e backup em SQLite (`SqliteBackupService`).
+- [Nov/2026] Desenvolvimento do aplicativo Desktop Electron com PHP portátil embutido
+  e build funcional em `desktop/dist/win-unpacked`.
+- [Nov/2026] Criação do script de instalação oficial Inno Setup 6 (`aky-lanches.iss`).
+================================================================================
+                        FIM DO DOCUMENTO TÉCNICO
+================================================================================
+

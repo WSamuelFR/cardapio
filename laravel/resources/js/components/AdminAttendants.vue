@@ -7,17 +7,17 @@
         <h4 class="fw-bold mb-1 text-dark">
           <i class="bi bi-people-fill me-2 text-aky-primary"></i> Gestão da Equipe
         </h4>
-        <small class="text-muted">Cadastre e gerencie o acesso de atendentes e entregadores (motoboys)</small>
+        <small class="text-muted">Cadastre e gerencie o acesso de atendentes, entregadores (motoboys) e equipe da cozinha (TV)</small>
       </div>
 
       <button class="btn btn-aky-primary rounded-pill btn-sm px-3 fw-semibold shadow-sm" @click="openCreateModal">
-        <i :class="currentTab === 'attendants' ? 'bi-person-plus' : 'bi-bicycle'" class="bi me-1"></i>
-        <span>{{ currentTab === 'attendants' ? 'Novo Atendente' : 'Novo Motoboy' }}</span>
+        <i :class="currentTab === 'attendants' ? 'bi-person-plus' : (currentTab === 'motoboys' ? 'bi-bicycle' : 'bi-fire')" class="bi me-1"></i>
+        <span>{{ currentTab === 'attendants' ? 'Novo Atendente' : (currentTab === 'motoboys' ? 'Novo Motoboy' : 'Novo Usuário Cozinha') }}</span>
       </button>
     </div>
 
-    <!-- ABAS DA EQUIPE (ATENDENTES / MOTOBOYS - SEGMENTED CONTROL) -->
-    <div class="bg-white p-1 rounded-4 shadow-sm border mb-4 d-flex gap-1 w-100" style="max-width: 440px;">
+    <!-- ABAS DA EQUIPE (ATENDENTES / MOTOBOYS / COZINHA - SEGMENTED CONTROL) -->
+    <div class="bg-white p-1 rounded-4 shadow-sm border mb-4 d-flex gap-1 w-100" style="max-width: 640px;">
       <button
         :class="['btn flex-fill rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'attendants' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
         @click="currentTab = 'attendants'"
@@ -30,6 +30,13 @@
         @click="currentTab = 'motoboys'"
       >
         <i class="bi bi-bicycle me-1"></i> Motoboys ({{ motoboys.length }})
+      </button>
+
+      <button
+        :class="['btn flex-fill rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'kitchen' ? 'btn-danger text-white shadow-sm' : 'btn-light text-dark']"
+        @click="currentTab = 'kitchen'"
+      >
+        <i class="bi bi-fire me-1"></i> Cozinha / TV ({{ kitchenUsers.length }})
       </button>
     </div>
 
@@ -181,6 +188,81 @@
       </div>
     </div>
 
+    <!-- ABA 3: COZINHA (MONITOR TV / KDS) -->
+    <div v-else-if="currentTab === 'kitchen'">
+      <div v-if="kitchenUsers.length === 0" class="text-center py-5 bg-white rounded-4 shadow-sm p-4">
+        <i class="bi bi-fire fs-1 text-danger d-block mb-2"></i>
+        <h6 class="text-muted fw-semibold">Nenhum operador da cozinha cadastrado no momento</h6>
+        <p class="text-muted small mb-3">Cadastre um usuário para login na TV ou terminal da cozinha.</p>
+        <button class="btn btn-danger rounded-pill btn-sm px-3 shadow-sm" @click="openCreateModal">
+          <i class="bi bi-fire me-1"></i> Cadastrar Operador da Cozinha
+        </button>
+      </div>
+
+      <div v-else class="row g-3">
+        <div
+          v-for="user in kitchenUsers"
+          :key="'kitchen-' + user.id"
+          class="col-12 col-md-6 col-lg-4"
+        >
+          <div :class="['card border-0 border-start border-3 border-danger shadow-sm rounded-4 h-100 bg-white p-3 d-flex flex-column justify-content-between', !user.is_active ? 'opacity-75' : '']">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-3 flex-shrink-0 d-flex align-items-center justify-content-center border" style="width: 52px; height: 52px;">
+                <i class="bi bi-fire fs-4"></i>
+              </div>
+
+              <div class="flex-grow-1 min-w-0">
+                <h6 class="fw-bold text-dark mb-0 text-truncate">{{ user.name }}</h6>
+                <small class="text-muted text-truncate d-block">{{ user.email }}</small>
+                <span class="badge bg-danger rounded-pill mt-1" style="font-size: 0.68rem;">Equipe da Cozinha (TV)</span>
+              </div>
+
+              <!-- Botão Editar -->
+              <button
+                class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-muted shadow-sm flex-shrink-0"
+                @click="openEditModal(user)"
+                title="Editar dados do operador"
+              >
+                <i class="bi bi-pencil-square text-dark"></i>
+              </button>
+            </div>
+
+            <!-- Dados extras: Telefone e Documento -->
+            <div class="bg-light rounded-3 p-2 small mb-3 d-flex flex-column gap-1">
+              <div class="d-flex justify-content-between text-muted">
+                <span><i class="bi bi-telephone text-aky-primary me-1"></i> Telefone:</span>
+                <span class="fw-semibold text-dark">{{ user.phone || 'Não informado' }}</span>
+              </div>
+              <div class="d-flex justify-content-between text-muted">
+                <span><i class="bi bi-person-vcard text-aky-primary me-1"></i> Documento:</span>
+                <span class="fw-semibold text-dark">{{ user.document || 'Não informado' }}</span>
+              </div>
+              <div class="d-flex justify-content-between text-muted border-top pt-1 mt-1">
+                <span>Cadastrado em:</span>
+                <span class="fw-semibold text-dark">{{ formatDate(user.created_at) }}</span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <span class="small fw-semibold text-muted">Acesso à Cozinha / TV:</span>
+              <div class="form-check form-switch mb-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  :id="'kitchen-act-' + user.id"
+                  :checked="user.is_active"
+                  @change="toggleActive(user)"
+                >
+                <label class="form-check-label small fw-semibold" :class="user.is_active ? 'text-success' : 'text-danger'" :for="'kitchen-act-' + user.id">
+                  {{ user.is_active ? 'Liberado' : 'Bloqueado' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL DE CRIAR USUÁRIO (ATENDENTE OU MOTOBOY - MODERNO & MOBILE-FIRST) -->
     <div v-if="showModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
       <div class="modal-dialog modal-dialog-centered">
@@ -191,16 +273,16 @@
             class="modal-header text-white border-0 py-3 px-3 px-sm-4"
             :style="currentTab === 'attendants'
               ? 'background: linear-gradient(135deg, #e50914 0%, #b20710 100%);'
-              : 'background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);'"
+              : (currentTab === 'motoboys' ? 'background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);' : 'background: linear-gradient(135deg, #fd7e14 0%, #dc3545 100%);')"
           >
             <div class="d-flex align-items-center gap-3">
               <img src="/images/aky_lanches_icon.svg" alt="Aky Lanches" class="rounded-circle bg-white p-1 shadow-sm flex-shrink-0" style="width: 44px; height: 44px; object-fit: contain;">
               <div>
                 <h5 class="modal-title fw-bold text-white mb-0">
-                  {{ currentTab === 'attendants' ? 'Novo Atendente' : 'Novo Motoboy' }}
+                  {{ currentTab === 'attendants' ? 'Novo Atendente' : (currentTab === 'motoboys' ? 'Novo Motoboy' : 'Novo Operador da Cozinha') }}
                 </h5>
                 <small class="text-white-50" style="font-size: 0.78rem;">
-                  {{ currentTab === 'attendants' ? 'Acesso ao gerenciamento de pedidos e atendimento' : 'Acesso à lista de entregas e mapas de rota' }}
+                  {{ currentTab === 'attendants' ? 'Acesso ao gerenciamento de pedidos e atendimento' : (currentTab === 'motoboys' ? 'Acesso à lista de entregas e mapas de rota' : 'Acesso ao monitor TV e fila de produção KDS') }}
                 </small>
               </div>
             </div>
@@ -360,14 +442,14 @@
             class="modal-header text-white border-0 py-3 px-3 px-sm-4 d-flex align-items-center justify-content-between"
             :style="currentTab === 'attendants'
               ? 'background: linear-gradient(135deg, #e50914 0%, #b20710 100%);'
-              : 'background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);'"
+              : (currentTab === 'motoboys' ? 'background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);' : 'background: linear-gradient(135deg, #fd7e14 0%, #dc3545 100%);')"
           >
             <!-- Título com Logo e Subtítulo -->
             <div class="d-flex align-items-center gap-2 min-w-0 me-2">
               <img src="/images/aky_lanches_icon.svg" alt="Aky Lanches" class="rounded-circle bg-white p-1 shadow-sm flex-shrink-0" style="width: 44px; height: 44px; object-fit: contain;">
               <div class="min-w-0">
                 <h5 class="modal-title fw-bold text-white mb-0 text-truncate">
-                  {{ currentTab === 'attendants' ? 'Editar Atendente' : 'Editar Motoboy' }}
+                  {{ currentTab === 'attendants' ? 'Editar Atendente' : (currentTab === 'motoboys' ? 'Editar Motoboy' : 'Editar Operador da Cozinha') }}
                 </h5>
                 <small class="text-white-50 d-block text-truncate" style="font-size: 0.78rem;">
                   Atualize dados cadastrais e credenciais
@@ -562,7 +644,7 @@
               <button
                 type="submit"
                 class="btn rounded-pill px-4 py-2 fw-bold shadow-sm w-100 w-sm-auto"
-                :class="currentTab === 'attendants' ? 'btn-aky-primary' : 'btn-primary'"
+                :class="currentTab === 'attendants' ? 'btn-aky-primary' : (currentTab === 'motoboys' ? 'btn-primary' : 'btn-danger')"
                 :disabled="savingEdit"
               >
                 <span v-if="savingEdit" class="spinner-border spinner-border-sm me-1"></span>
@@ -587,9 +669,10 @@ import { showError } from '../utils/swal';
 export default {
   data() {
     return {
-      currentTab: 'attendants', // 'attendants' ou 'motoboys'
+      currentTab: 'attendants', // 'attendants', 'motoboys' ou 'kitchen'
       attendants: [],
       motoboys: [],
+      kitchenUsers: [],
       showModal: false,
       saving: false,
       error: null,
@@ -618,7 +701,9 @@ export default {
   },
   computed: {
     currentTeamList() {
-      return this.currentTab === 'attendants' ? this.attendants : this.motoboys;
+      if (this.currentTab === 'attendants') return this.attendants;
+      if (this.currentTab === 'motoboys') return this.motoboys;
+      return this.kitchenUsers;
     },
     isFormCpfValid() {
       if (!this.form.document) return null;
@@ -668,12 +753,14 @@ export default {
     },
     async fetchData() {
       try {
-        const [attRes, motoRes] = await Promise.all([
+        const [attRes, motoRes, kitRes] = await Promise.all([
           axios.get('/api/admin/attendants'),
           axios.get('/api/admin/all-motoboys'),
+          axios.get('/api/admin/kitchen-users'),
         ]);
         this.attendants = attRes.data;
         this.motoboys = motoRes.data;
+        this.kitchenUsers = kitRes.data;
       } catch (err) {
         console.error(err);
       }
@@ -791,7 +878,10 @@ export default {
           return;
         }
 
-        const endpoint = this.currentTab === 'attendants' ? '/api/admin/attendants' : '/api/admin/motoboys';
+        let endpoint = '/api/admin/attendants';
+        if (this.currentTab === 'motoboys') endpoint = '/api/admin/motoboys';
+        else if (this.currentTab === 'kitchen') endpoint = '/api/admin/kitchen-users';
+
         await axios.post(endpoint, this.form);
         this.showModal = false;
         this.fetchData();

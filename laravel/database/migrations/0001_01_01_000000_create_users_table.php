@@ -17,7 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'attendant'])->default('attendant');
+            if (DB::connection()->getDriverName() === 'sqlite') {
+                $table->string('role', 30)->default('attendant');
+            } else {
+                $table->enum('role', ['admin', 'attendant'])->default('attendant');
+            }
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();

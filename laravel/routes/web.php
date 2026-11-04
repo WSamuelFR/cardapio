@@ -3,7 +3,6 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MenuController;
-use App\Http\Controllers\SyncController;
 use Illuminate\Support\Facades\Route;
 
 // --- API PÚBLICA ---
@@ -12,13 +11,6 @@ Route::prefix('api')->group(function () {
     Route::post('/orders', [MenuController::class, 'createOrder']);
     Route::get('/orders/{orderNumber}', [MenuController::class, 'trackOrder']);
     Route::post('/orders/{orderNumber}/confirm-and-rate', [MenuController::class, 'confirmAndRateOrder']);
-
-    // Sincronização Offline-First para Terminal Desktop Electron
-    Route::prefix('sync')->group(function () {
-        Route::get('/catalog', [SyncController::class, 'getCatalog']);
-        Route::post('/orders', [SyncController::class, 'syncOrders']);
-        Route::get('/orders-delta', [SyncController::class, 'getOrdersDelta']);
-    });
 
     // Autenticação
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -53,10 +45,14 @@ Route::prefix('api')->group(function () {
         Route::post('/menu-settings', [AdminController::class, 'saveMenuSettings']);
         Route::post('/sync-pizza-prices', [AdminController::class, 'syncPizzaPrices']);
 
-        // Gestão de Atendentes e Administradores
+        // Gestão de Atendentes, Cozinha e Administradores
         Route::get('/attendants', [AdminController::class, 'getAttendants']);
         Route::post('/attendants', [AdminController::class, 'createAttendant']);
         Route::patch('/attendants/{id}/toggle', [AdminController::class, 'toggleAttendantActive']);
+        Route::get('/kitchen-users', [AdminController::class, 'getKitchenUsers']);
+        Route::get('/active-kitchen-users', [AdminController::class, 'getActiveKitchenUsers']);
+        Route::post('/kitchen-users', [AdminController::class, 'createKitchenUser']);
+        Route::patch('/orders/{id}/assign-kitchen', [AdminController::class, 'assignKitchenUser']);
         Route::get('/admins', [AdminController::class, 'getAdmins']);
         Route::post('/admins', [AdminController::class, 'createAdmin']);
         Route::get('/store-info', [AdminController::class, 'getStoreInfo']);
@@ -68,6 +64,12 @@ Route::prefix('api')->group(function () {
         Route::get('/all-motoboys', [AdminController::class, 'getAllMotoboys']);
         Route::post('/motoboys', [AdminController::class, 'createMotoboy']);
         Route::patch('/orders/{id}/assign-motoboy', [AdminController::class, 'assignMotoboy']);
+    });
+
+    // Painel KDS da Cozinha (TV / Monitor)
+    Route::prefix('kitchen')->group(function () {
+        Route::get('/orders', [AdminController::class, 'getKitchenOrders']);
+        Route::patch('/orders/{id}/ready', [AdminController::class, 'markKitchenOrderReady']);
     });
 
     // Painel do Entregador (Motoboy)
