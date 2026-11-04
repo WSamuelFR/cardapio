@@ -6,7 +6,7 @@
       <div class="container d-flex align-items-center justify-content-between">
         
         <!-- Logo Oficial e Nome da Loja (Protegido contra quebra de linha no PC e Celular) -->
-        <div class="d-flex align-items-center cursor-pointer flex-shrink-0 text-nowrap" @click="currentView = 'home'">
+        <div class="d-flex align-items-center cursor-pointer flex-shrink-0 text-nowrap" @click="currentView = 'menu'">
           <!-- Imagem da Logo com fundo e tamanho ideais para visibilidade perfeita -->
           <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches Logo" class="me-2 flex-shrink-0" style="height: 50px; width: auto; object-fit: contain;">
           <div class="text-nowrap flex-shrink-0">
@@ -26,18 +26,10 @@
         <!-- MENU DE NAVEGAÇÃO DESKTOP COM OS MESMOS ÍCONES DO MODO CELULAR -->
         <nav class="d-none d-md-flex align-items-center gap-1 mx-2 flex-wrap justify-content-center">
           <button
-            :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'home' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
-            @click="currentView = 'home'"
-          >
-            <i class="bi bi-house-door-fill fs-6" :class="currentView === 'home' ? 'text-white' : 'text-danger'"></i>
-            <span>Início</span>
-          </button>
-
-          <button
-            :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'menu' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
+            :class="['btn btn-sm rounded-pill px-3 py-2 fw-semibold d-flex align-items-center gap-2 border-0 transition', currentView === 'menu' || currentView === 'home' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentView = 'menu'"
           >
-            <i class="bi bi-book-half fs-6" :class="currentView === 'menu' ? 'text-white' : 'text-warning'"></i>
+            <i class="bi bi-book-half fs-6" :class="currentView === 'menu' || currentView === 'home' ? 'text-white' : 'text-danger'"></i>
             <span>Cardápio</span>
           </button>
 
@@ -183,18 +175,10 @@
       <div class="d-md-none bg-light border-top mt-1 py-2">
         <div class="container-fluid px-1 d-flex justify-content-between text-center overflow-x-auto text-nowrap no-scrollbar gap-1">
           <button
-            :class="['btn btn-sm rounded-pill px-2 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'home' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
-            @click="currentView = 'home'"
-          >
-            <i class="bi bi-house-door-fill d-block fs-6" :class="currentView === 'home' ? 'text-white' : 'text-danger'"></i>
-            <span style="font-size: 0.72rem;">Início</span>
-          </button>
-
-          <button
-            :class="['btn btn-sm rounded-pill px-2 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'menu' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
+            :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'menu' || currentView === 'home' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentView = 'menu'"
           >
-            <i class="bi bi-book-half d-block fs-6" :class="currentView === 'menu' ? 'text-white' : 'text-warning'"></i>
+            <i class="bi bi-book-half d-block fs-6" :class="currentView === 'menu' || currentView === 'home' ? 'text-white' : 'text-danger'"></i>
             <span style="font-size: 0.72rem;">Cardápio</span>
           </button>
 
@@ -298,40 +282,13 @@
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-grow-1 container py-4">
       
-      <!-- TELA HOME: Banner, Busca, Promoções, Combos do Dia e Mais Pedidos -->
-      <Home
-        v-if="currentView === 'home'"
+      <!-- TELA CARDÁPIO UNIFICADO (Busca + Filtros por Categoria + Lista em Linhas) -->
+      <UnifiedMenu
+        v-if="currentView === 'home' || currentView === 'menu'"
         :categories="menuData.categories"
         :promotions="menuData.promotions"
         :combos="menuData.combos"
         :popular="menuData.popular"
-        @add-to-cart="addToCart"
-        @go-to-menu="currentView = 'menu'"
-        @go-to-tracker="currentView = 'tracker'"
-        @open-section="openSection"
-        @select-product="openProductDetail"
-      />
-
-      <!-- TELA CARDÁPIO: Seções de Categorias com Rolagem Horizontal -->
-      <Menu
-        v-else-if="currentView === 'menu'"
-        :categories="menuData.categories"
-        @add-to-cart="addToCart"
-        @open-section="openSection"
-        @select-product="openProductDetail"
-      />
-
-      <!-- TELA DEDICADA DE SEÇÃO / CATEGORIA (Com Barra de Pesquisa no Topo) -->
-      <SectionView
-        v-else-if="currentView === 'section'"
-        :title="sectionData.title"
-        :subtitle="sectionData.subtitle"
-        :icon="sectionData.icon"
-        :theme-color="sectionData.themeColor"
-        :badge-text="sectionData.badgeText"
-        :items="sectionData.items"
-        :back-to="sectionData.backTo"
-        @back="closeSection"
         @add-to-cart="addToCart"
         @select-product="openProductDetail"
       />
@@ -462,6 +419,7 @@
 
 <script>
 import axios from 'axios';
+import UnifiedMenu from './components/UnifiedMenu.vue';
 import Home from './components/Home.vue';
 import Menu from './components/Menu.vue';
 import SectionView from './components/SectionView.vue';
@@ -480,6 +438,7 @@ import KitchenOrders from './components/KitchenOrders.vue';
 
 export default {
   components: {
+    UnifiedMenu,
     Home,
     Menu,
     SectionView,
@@ -498,7 +457,7 @@ export default {
   },
   data() {
     return {
-      currentView: 'home',
+      currentView: 'menu',
       currentUser: null,
       showCart: false,
       showLogin: false,
@@ -507,7 +466,7 @@ export default {
       trackerCode: '',
       cart: [],
       selectedProduct: null,
-      productBackView: 'home',
+      productBackView: 'menu',
       sectionData: {
         title: '',
         subtitle: '',
@@ -710,7 +669,7 @@ export default {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     closeProductDetail() {
-      this.currentView = this.productBackView || 'home';
+      this.currentView = this.productBackView || 'menu';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     updateCartQty({ cart_item_id, id, qty }) {
