@@ -45,7 +45,7 @@
         <button
           type="button"
           :class="[
-            'btn btn-sm rounded-pill px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
+            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
             activeFilter === 'all'
               ? 'btn-aky-primary text-white shadow-sm'
               : 'btn-white bg-white text-dark border'
@@ -54,7 +54,7 @@
         >
           <i class="bi bi-grid-fill"></i>
           <span>Todos</span>
-          <span :class="['badge rounded-pill', activeFilter === 'all' ? 'bg-white text-aky-primary' : 'bg-light text-muted']" style="font-size: 0.68rem;">
+          <span :class="['badge rounded-2', activeFilter === 'all' ? 'bg-white text-aky-primary' : 'bg-light text-muted']" style="font-size: 0.68rem;">
             {{ totalProductsCount }}
           </span>
         </button>
@@ -64,7 +64,7 @@
           v-if="promotions && promotions.length > 0"
           type="button"
           :class="[
-            'btn btn-sm rounded-pill px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
+            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
             activeFilter === 'promotions'
               ? 'btn-danger text-white shadow-sm'
               : 'btn-white bg-white text-danger border border-danger-subtle'
@@ -73,7 +73,7 @@
         >
           <i class="bi bi-fire"></i>
           <span>Promoções</span>
-          <span :class="['badge rounded-pill', activeFilter === 'promotions' ? 'bg-white text-danger' : 'bg-danger bg-opacity-10 text-danger']" style="font-size: 0.68rem;">
+          <span :class="['badge rounded-2', activeFilter === 'promotions' ? 'bg-white text-danger' : 'bg-danger bg-opacity-10 text-danger']" style="font-size: 0.68rem;">
             {{ promotions.length }}
           </span>
         </button>
@@ -83,16 +83,16 @@
           v-if="popular && popular.length > 0"
           type="button"
           :class="[
-            'btn btn-sm rounded-pill px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
+            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
             activeFilter === 'popular'
-              ? 'btn-warning text-dark shadow-sm'
+              ? 'btn-purple text-white shadow-sm'
               : 'btn-white bg-white text-dark border'
           ]"
           @click="selectFilter('popular')"
         >
           <i class="bi bi-star-fill text-warning"></i>
           <span>Mais Pedidos</span>
-          <span :class="['badge rounded-pill', activeFilter === 'popular' ? 'bg-dark text-white' : 'bg-light text-muted']" style="font-size: 0.68rem;">
+          <span :class="['badge rounded-2', activeFilter === 'popular' ? 'bg-white text-purple' : 'bg-light text-muted']" style="font-size: 0.68rem;">
             {{ popular.length }}
           </span>
         </button>
@@ -102,7 +102,7 @@
           v-if="combos && combos.length > 0"
           type="button"
           :class="[
-            'btn btn-sm rounded-pill px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
+            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
             activeFilter === 'combos'
               ? 'btn-success text-white shadow-sm'
               : 'btn-white bg-white text-success border border-success-subtle'
@@ -111,7 +111,7 @@
         >
           <i class="bi bi-gift-fill"></i>
           <span>Combos</span>
-          <span :class="['badge rounded-pill', activeFilter === 'combos' ? 'bg-white text-success' : 'bg-success bg-opacity-10 text-success']" style="font-size: 0.68rem;">
+          <span :class="['badge rounded-2', activeFilter === 'combos' ? 'bg-white text-success' : 'bg-success bg-opacity-10 text-success']" style="font-size: 0.68rem;">
             {{ combos.length }}
           </span>
         </button>
@@ -122,7 +122,7 @@
           :key="'chip-cat-' + cat.id"
           type="button"
           :class="[
-            'btn btn-sm rounded-pill px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
+            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
             activeFilter === 'cat_' + cat.id
               ? 'btn-dark text-white shadow-sm'
               : 'btn-white bg-white text-dark border'
@@ -131,7 +131,7 @@
         >
           <i :class="['bi', getCategoryIcon(cat.slug)]"></i>
           <span>{{ cat.name }}</span>
-          <span :class="['badge rounded-pill', activeFilter === 'cat_' + cat.id ? 'bg-white text-dark' : 'bg-light text-muted']" style="font-size: 0.68rem;">
+          <span :class="['badge rounded-2', activeFilter === 'cat_' + cat.id ? 'bg-white text-dark' : 'bg-light text-muted']" style="font-size: 0.68rem;">
             {{ cat.products ? cat.products.length : 0 }}
           </span>
         </button>
@@ -194,7 +194,7 @@
             ]"
             @click="onRowClick(product)"
           >
-            <div class="d-flex align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-stretch gap-3">
               
               <!-- Miniatura da Foto com fallback moderno e dimensões ampliadas -->
               <div
@@ -221,60 +221,66 @@
                 </span>
               </div>
 
-              <!-- Informações Principais (Nome, Descrição e Preço) -->
-              <div class="flex-grow-1 min-w-0 py-0.5">
-                <div class="d-flex align-items-center gap-1.5 flex-wrap mb-1">
-                  <h6 class="fw-bold text-dark mb-0 text-truncate" :title="product.name" style="font-size: 1.02rem; letter-spacing: -0.2px;">
-                    {{ product.name }}
-                  </h6>
-                  <span v-if="!product.is_available" class="badge bg-secondary rounded-pill" style="font-size: 0.65rem;">
-                    Esgotado
-                  </span>
-                </div>
-
-                <!-- Descrição em 2 linhas com ellipsis -->
-                <p class="text-secondary small mb-2 line-clamp-2" style="font-size: 0.82rem; line-height: 1.35;" :title="product.description">
-                  {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
-                </p>
-
-                <!-- Área de Preço & Tag Dinâmica -->
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1.5">
-                    <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;">
-                      R$ {{ formatPrice(product.price) }}
-                    </span>
-                    <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
-                      R$ {{ formatPrice(product.promotional_price) }}
-                    </span>
-                  </div>
-                  <div v-else>
-                    <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
-                      R$ {{ formatPrice(product.effective_price || product.price) }}
+              <!-- Informações Principais (Nome, Descrição e Linha Inferior com Preço e Botão) -->
+              <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between py-0.5">
+                <div>
+                  <div class="d-flex align-items-start justify-content-between gap-1 mb-1">
+                    <h6 class="fw-bold text-dark mb-0 line-clamp-1" :title="product.name" style="font-size: 1.02rem; letter-spacing: -0.2px;">
+                      {{ product.name }}
+                    </h6>
+                    <span v-if="!product.is_available" class="badge bg-secondary rounded-pill flex-shrink-0" style="font-size: 0.65rem;">
+                      Esgotado
                     </span>
                   </div>
 
-                  <!-- Tag discreta se for montador -->
-                  <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.68rem;">
-                    <i class="bi bi-sliders me-0.5"></i> Opções
-                  </span>
+                  <!-- Descrição em 2 linhas com ellipsis -->
+                  <p class="text-secondary small mb-2 line-clamp-2" style="font-size: 0.82rem; line-height: 1.35;" :title="product.description">
+                    {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
+                  </p>
                 </div>
-              </div>
 
-              <!-- Botão Ação [+] Ergonômico e Temático -->
-              <div class="flex-shrink-0 ps-1" @click.stop>
-                <button
-                  type="button"
-                  :class="[
-                    'btn rounded-pill d-inline-flex align-items-center justify-content-center shadow-sm transition fw-bold px-3 py-2 btn-sm',
-                    getItemTheme(product, section).btnClass
-                  ]"
-                  :disabled="!product.is_available"
-                  :title="isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho'"
-                  @click="handleQuickAdd(product)"
-                >
-                  <i :class="isCustomizable(product) ? 'bi-sliders me-1' : 'bi-plus-lg me-1'"></i>
-                  <span>{{ isCustomizable(product) ? 'Montar' : 'Adicionar' }}</span>
-                </button>
+                <!-- Linha Inferior: Preço à Esquerda e Botão de Ação à Direita (Sem Quebras!) -->
+                <div class="d-flex align-items-center justify-content-between pt-1 gap-2 border-top border-light-subtle flex-wrap flex-sm-nowrap">
+                  <!-- Área de Preço -->
+                  <div class="d-flex align-items-baseline gap-1.5">
+                    <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1.5">
+                      <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;">
+                        R$ {{ formatPrice(product.price) }}
+                      </span>
+                      <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
+                        R$ {{ formatPrice(product.promotional_price) }}
+                      </span>
+                    </div>
+                    <div v-else>
+                      <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
+                        R$ {{ formatPrice(product.effective_price || product.price) }}
+                      </span>
+                    </div>
+
+                    <!-- Tag discreta se for montador -->
+                    <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold ms-1" style="font-size: 0.68rem;">
+                      <i class="bi bi-sliders me-0.5"></i> Opções
+                    </span>
+                  </div>
+
+                  <!-- Botão Ação [+] Ergonômico e Temático -->
+                  <div class="flex-shrink-0" @click.stop>
+                    <button
+                      type="button"
+                      :class="[
+                        'btn rounded-pill d-inline-flex align-items-center justify-content-center shadow-sm transition fw-bold px-3 py-1.5 btn-sm',
+                        getItemTheme(product, section).btnClass
+                      ]"
+                      :disabled="!product.is_available"
+                      :title="isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho'"
+                      @click="handleQuickAdd(product)"
+                    >
+                      <i :class="isCustomizable(product) ? 'bi-sliders me-1' : 'bi-plus-lg me-1'"></i>
+                      <span>{{ isCustomizable(product) ? 'Montar' : 'Adicionar' }}</span>
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
             </div>
@@ -575,6 +581,12 @@ export default {
 .hover-lift:hover {
   transform: translateY(-2px);
   box-shadow: 0 0.35rem 0.95rem rgba(0, 0, 0, 0.08) !important;
+}
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .line-clamp-2 {
   display: -webkit-box;

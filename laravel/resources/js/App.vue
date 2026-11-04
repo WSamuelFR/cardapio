@@ -173,7 +173,7 @@
 
       <!-- BARRA DE NAVEGAÇÃO EXCLUSIVA PARA CELULAR (ABAIXO DO HEADER) -->
       <div class="d-md-none bg-light border-top mt-1 py-2">
-        <div class="container-fluid px-1 d-flex justify-content-between text-center overflow-x-auto text-nowrap no-scrollbar gap-1">
+        <div :class="['container-fluid px-2 d-flex align-items-center text-center overflow-x-auto text-nowrap no-scrollbar gap-2', !currentUser ? 'justify-content-center' : 'justify-content-start']">
           <button
             :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'menu' || currentView === 'home' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentView = 'menu'"
@@ -183,7 +183,7 @@
           </button>
 
           <button
-            :class="['btn btn-sm rounded-pill px-2 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'tracker' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
+            :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold border-0 transition flex-shrink-0', currentView === 'tracker' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentView = 'tracker'"
           >
             <i class="bi bi-search d-block fs-6" :class="currentView === 'tracker' ? 'text-white' : 'text-primary'"></i>
