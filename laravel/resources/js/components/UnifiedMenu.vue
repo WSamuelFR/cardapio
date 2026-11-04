@@ -182,24 +182,23 @@
         </div>
 
         <!-- LISTA DE PRODUTOS SEPARADOS POR LINHAS (ROWS) -->
-        <div class="products-list d-flex flex-column gap-2">
+        <div class="products-list d-flex flex-column gap-2.5">
           
           <div
             v-for="product in section.items"
             :key="'prod-' + product.id"
-            class="product-row card border-0 shadow-sm rounded-4 p-2.5 p-sm-3 bg-white transition cursor-pointer"
+            class="product-row card border-0 shadow-sm rounded-4 p-3 bg-white transition cursor-pointer border-start border-4"
             :class="[
               !product.is_available ? 'opacity-75 bg-light' : 'hover-lift',
-              product.is_promotion ? 'border-start border-3 border-danger' : ''
+              getItemTheme(product, section).borderClass
             ]"
             @click="onRowClick(product)"
           >
-            <div class="d-flex align-items-center justify-content-between gap-2.5 gap-sm-3">
+            <div class="d-flex align-items-center justify-content-between gap-3">
               
-              <!-- Miniatura da Foto com fallback moderno -->
+              <!-- Miniatura da Foto com fallback moderno e dimensões ampliadas -->
               <div
-                class="product-thumb rounded-3 overflow-hidden bg-light d-flex align-items-center justify-content-center flex-shrink-0 border position-relative"
-                style="width: 72px; height: 72px;"
+                class="product-thumb rounded-4 overflow-hidden bg-light d-flex align-items-center justify-content-center flex-shrink-0 border position-relative"
               >
                 <img
                   v-if="product.photo_path"
@@ -209,23 +208,23 @@
                   loading="lazy"
                 >
                 <div v-else class="text-center text-muted">
-                  <i :class="['bi', getCategoryIcon(product.category?.slug), 'fs-2 opacity-75 text-aky-primary']"></i>
+                  <i :class="['bi', getCategoryIcon(product.category?.slug), getItemTheme(product, section).iconClass, 'fs-1 opacity-75']"></i>
                 </div>
 
-                <!-- Badge de Promoção flutuante na foto -->
+                <!-- Badge Temática Flutuante sobre a Foto -->
                 <span
-                  v-if="product.is_promotion"
-                  class="badge bg-danger position-absolute top-0 start-0 m-1 px-1.5 py-0.5 rounded-pill shadow-sm"
-                  style="font-size: 0.6rem;"
+                  v-if="getItemTheme(product, section).badgeText"
+                  :class="['badge position-absolute top-0 start-0 m-1.5 px-2 py-0.5 rounded-pill shadow-sm fw-bold', getItemTheme(product, section).badgeClass]"
+                  style="font-size: 0.62rem;"
                 >
-                  PROMO
+                  {{ getItemTheme(product, section).badgeText }}
                 </span>
               </div>
 
               <!-- Informações Principais (Nome, Descrição e Preço) -->
               <div class="flex-grow-1 min-w-0 py-0.5">
-                <div class="d-flex align-items-center gap-1.5 flex-wrap">
-                  <h6 class="fw-bold text-dark mb-0 text-truncate" :title="product.name" style="font-size: 0.95rem;">
+                <div class="d-flex align-items-center gap-1.5 flex-wrap mb-1">
+                  <h6 class="fw-bold text-dark mb-0 text-truncate" :title="product.name" style="font-size: 1.02rem; letter-spacing: -0.2px;">
                     {{ product.name }}
                   </h6>
                   <span v-if="!product.is_available" class="badge bg-secondary rounded-pill" style="font-size: 0.65rem;">
@@ -234,49 +233,47 @@
                 </div>
 
                 <!-- Descrição em 2 linhas com ellipsis -->
-                <p class="text-muted small mb-1 line-clamp-2 mt-0.5" style="font-size: 0.78rem; line-height: 1.3;" :title="product.description">
+                <p class="text-secondary small mb-2 line-clamp-2" style="font-size: 0.82rem; line-height: 1.35;" :title="product.description">
                   {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
                 </p>
 
-                <!-- Preço Formatado -->
-                <div class="d-flex align-items-center gap-2">
+                <!-- Área de Preço & Tag Dinâmica -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                   <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1.5">
-                    <span class="text-muted text-decoration-line-through small" style="font-size: 0.72rem;">
+                    <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;">
                       R$ {{ formatPrice(product.price) }}
                     </span>
-                    <span class="fw-bold text-danger fs-6">
+                    <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
                       R$ {{ formatPrice(product.promotional_price) }}
                     </span>
                   </div>
                   <div v-else>
-                    <span class="fw-bold text-dark fs-6">
+                    <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
                       R$ {{ formatPrice(product.effective_price || product.price) }}
                     </span>
                   </div>
 
                   <!-- Tag discreta se for montador -->
-                  <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.65rem;">
-                    <i class="bi bi-sliders me-0.5"></i> Personalizável
+                  <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.68rem;">
+                    <i class="bi bi-sliders me-0.5"></i> Opções
                   </span>
                 </div>
               </div>
 
-              <!-- Botão Ação [+] Direto / Montar -->
+              <!-- Botão Ação [+] Ergonômico e Temático -->
               <div class="flex-shrink-0 ps-1" @click.stop>
                 <button
                   type="button"
                   :class="[
-                    'btn rounded-pill d-flex align-items-center justify-content-center shadow-sm transition fw-bold px-3 py-1.5',
-                    isCustomizable(product)
-                      ? 'btn-outline-primary btn-sm'
-                      : 'btn-aky-primary text-white btn-sm'
+                    'btn rounded-pill d-inline-flex align-items-center justify-content-center shadow-sm transition fw-bold px-3 py-2 btn-sm',
+                    getItemTheme(product, section).btnClass
                   ]"
                   :disabled="!product.is_available"
                   :title="isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho'"
                   @click="handleQuickAdd(product)"
                 >
                   <i :class="isCustomizable(product) ? 'bi-sliders me-1' : 'bi-plus-lg me-1'"></i>
-                  <span class="d-none d-sm-inline">{{ isCustomizable(product) ? 'Montar' : 'Adicionar' }}</span>
+                  <span>{{ isCustomizable(product) ? 'Montar' : 'Adicionar' }}</span>
                 </button>
               </div>
 
@@ -381,14 +378,15 @@ export default {
 
       // 4. Categorias Reais do Cardápio
       this.availableCategories.forEach(cat => {
+        const theme = this.getCategoryThemeClasses(cat.slug);
         sections.push({
           key: 'cat_' + cat.id,
           filterKey: 'cat_' + cat.id,
           title: cat.name,
           subtitle: '',
           icon: this.getCategoryIcon(cat.slug),
-          iconColorClass: 'text-dark',
-          iconBgClass: 'bg-light',
+          iconColorClass: theme.iconColorClass,
+          iconBgClass: theme.iconBgClass,
           items: cat.products || [],
         });
       });
@@ -461,6 +459,75 @@ export default {
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       return false;
     },
+    isDrink(product, section = null) {
+      const catSlug = (section?.key || product?.category?.slug || '').toLowerCase();
+      const catName = (section?.title || product?.category?.name || '').toLowerCase();
+      const prodName = (product?.name || '').toLowerCase();
+      const terms = ['bebida', 'suco', 'refrigerante', 'refrig', 'cerveja', 'agua', 'água', 'drink', 'coca', 'guaraná', 'guarana', 'fanta', 'sprite'];
+      return terms.some(t => catSlug.includes(t) || catName.includes(t) || prodName.includes(t));
+    },
+    getItemTheme(product, section = null) {
+      if (product?.is_promotion) {
+        return {
+          borderClass: 'card-promo-rgb',
+          badgeClass: 'badge-rgb',
+          badgeText: '🔥 PROMO',
+          priceClass: 'text-rgb',
+          btnClass: 'btn-rgb',
+          iconClass: 'text-danger',
+        };
+      }
+      const isCombo = product?.is_combo || (section && section.key === 'combos') || (product?.category?.slug === 'combos-especiais') || ((product?.category?.name || '').toLowerCase().includes('combo'));
+      if (isCombo) {
+        return {
+          borderClass: 'border-success',
+          badgeClass: 'bg-success text-white',
+          badgeText: '🎁 COMBO',
+          priceClass: 'text-success',
+          btnClass: 'btn-success text-white',
+          iconClass: 'text-success',
+        };
+      }
+      const isPopular = (section && section.key === 'popular');
+      if (isPopular) {
+        return {
+          borderClass: 'border-purple',
+          badgeClass: 'bg-purple text-white',
+          badgeText: '⭐ MAIS PEDIDO',
+          priceClass: 'text-purple',
+          btnClass: 'btn-purple text-white',
+          iconClass: 'text-purple',
+        };
+      }
+      if (this.isDrink(product, section)) {
+        return {
+          borderClass: 'border-warning',
+          badgeClass: 'bg-warning text-dark',
+          badgeText: '',
+          priceClass: 'text-warning-emphasis',
+          btnClass: 'btn-warning text-dark fw-bold',
+          iconClass: 'text-warning',
+        };
+      }
+      if (this.isCustomizable(product)) {
+        return {
+          borderClass: 'border-primary',
+          badgeClass: 'bg-primary text-white',
+          badgeText: '🍕 MONTE',
+          priceClass: 'text-primary',
+          btnClass: 'btn-primary text-white',
+          iconClass: 'text-primary',
+        };
+      }
+      return {
+        borderClass: 'border-danger',
+        badgeClass: '',
+        badgeText: '',
+        priceClass: 'text-danger',
+        btnClass: 'btn-aky-primary text-white',
+        iconClass: 'text-danger',
+      };
+    },
     getCategoryIcon(slug) {
       if (!slug) return 'bi-tag-fill';
       if (slug.includes('pastel') || slug.includes('pasteis')) return 'bi-circle-half';
@@ -470,6 +537,19 @@ export default {
       if (slug.includes('doce') || slug.includes('sobremesa')) return 'bi-cake2';
       if (slug.includes('sanduiche') || slug.includes('artesanal') || slug.includes('classico')) return 'bi-flower1';
       return 'bi-bag-heart-fill';
+    },
+    getCategoryThemeClasses(slug) {
+      const s = (slug || '').toLowerCase();
+      if (s.includes('bebida') || s.includes('suco') || s.includes('refrig')) {
+        return { iconColorClass: 'text-warning', iconBgClass: 'bg-warning bg-opacity-15' };
+      }
+      if (s.includes('combo')) {
+        return { iconColorClass: 'text-success', iconBgClass: 'bg-success bg-opacity-15' };
+      }
+      if (s.includes('pizza') || s.includes('monte') || s.includes('tapioca') || s.includes('cuscuz')) {
+        return { iconColorClass: 'text-primary', iconBgClass: 'bg-primary bg-opacity-15' };
+      }
+      return { iconColorClass: 'text-danger', iconBgClass: 'bg-danger bg-opacity-10' };
     },
     onRowClick(product) {
       this.$emit('select-product', product, 'menu');
@@ -494,7 +574,7 @@ export default {
 }
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0.35rem 0.95rem rgba(0, 0, 0, 0.08) !important;
 }
 .line-clamp-2 {
   display: -webkit-box;
@@ -512,7 +592,48 @@ export default {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Dimensões ampliadas da miniatura do produto */
+.product-thumb {
+  width: 88px;
+  height: 88px;
+  min-width: 88px;
+}
+@media (min-width: 576px) {
+  .product-thumb {
+    width: 96px;
+    height: 96px;
+    min-width: 96px;
+  }
+}
+
+/* Cores e temas utilitários */
+.bg-purple {
+  background-color: #7c3aed !important;
+}
+.text-purple {
+  color: #7c3aed !important;
+}
+.border-purple {
+  border-left-color: #7c3aed !important;
+}
+.btn-purple {
+  background-color: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+.btn-purple:hover, .btn-purple:focus {
+  background-color: #6d28d9 !important;
+  border-color: #6d28d9 !important;
+  color: #ffffff !important;
+}
+
+.text-warning-emphasis {
+  color: #b45309 !important;
+}
+
 .product-row {
-  border: 1px solid rgba(0,0,0,0.06) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
 }
 </style>
+
