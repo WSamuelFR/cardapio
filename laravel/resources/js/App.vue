@@ -11,7 +11,15 @@
           <img src="/images/aky_lanches_icon.svg" alt="AKY Lanches Logo" class="me-2 flex-shrink-0" style="height: 50px; width: auto; object-fit: contain;">
           <div class="text-nowrap flex-shrink-0">
             <span class="fw-bold fs-5 tracking-tight d-block leading-none text-dark text-nowrap">AKY LANCHES</span>
-            <small class="text-aky-primary fw-semibold text-nowrap d-block" style="font-size: 0.75rem;">Cardápio Digital & Pedidos</small>
+            <div class="d-flex align-items-center gap-1.5">
+              <small class="text-aky-primary fw-semibold text-nowrap d-block" style="font-size: 0.75rem;">Cardápio Digital & Pedidos</small>
+              <span v-if="storeStatus && storeStatus.is_open" class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.65rem;">
+                ● Aberto
+              </span>
+              <span v-else-if="storeStatus" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.65rem;">
+                ● Fechado
+              </span>
+            </div>
           </div>
         </div>
 
@@ -258,6 +266,35 @@
       </div>
     </header>
 
+    <!-- BANNER DE STATUS OPERACIONAL DO ESTABELECIMENTO -->
+    <div
+      v-if="storeStatus && !storeStatus.is_open"
+      class="bg-danger text-white py-2 px-3 shadow-sm border-bottom text-center small fw-semibold"
+    >
+      <div class="container d-flex align-items-center justify-content-center gap-2 flex-wrap">
+        <i class="bi bi-moon-stars-fill"></i>
+        <span>Estamos FECHADOS no momento (Horário de Atendimento: {{ storeStatus.open_time }} às {{ storeStatus.close_time }}). Você pode navegar pelo cardápio!</span>
+      </div>
+    </div>
+    <div
+      v-else-if="storeStatus && storeStatus.only_pickup_mode"
+      class="bg-warning text-dark py-2 px-3 shadow-sm border-bottom text-center small fw-bold"
+    >
+      <div class="container d-flex align-items-center justify-content-center gap-2 flex-wrap">
+        <i class="bi bi-exclamation-triangle-fill text-danger fs-6"></i>
+        <span>MODO SÓ RETIRADA ATIVO: Hoje estamos atendendo exclusivamente com retirada no balcão da loja!</span>
+      </div>
+    </div>
+    <div
+      v-else-if="storeStatus && !storeStatus.can_delivery"
+      class="bg-warning bg-opacity-25 text-dark py-2 px-3 shadow-sm border-bottom text-center small fw-semibold"
+    >
+      <div class="container d-flex align-items-center justify-content-center gap-2 flex-wrap">
+        <i class="bi bi-bicycle text-danger"></i>
+        <span>Entregas temporariamente pausadas. Pedidos disponíveis para retirada no balcão!</span>
+      </div>
+    </div>
+
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-grow-1 container py-4">
       
@@ -369,6 +406,7 @@
       :show="showCart"
       :cart="cart"
       :store-info="menuData.menu_settings ? menuData.menu_settings.store_info : null"
+      :store-status="storeStatus"
       @close="showCart = false"
       @update-qty="updateCartQty"
       @remove-item="removeFromCart"
@@ -502,6 +540,9 @@ export default {
     },
   },
   computed: {
+    storeStatus() {
+      return this.menuData && this.menuData.menu_settings ? this.menuData.menu_settings.store_status : null;
+    },
     cartCount() {
       return this.cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
     },

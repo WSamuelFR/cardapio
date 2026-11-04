@@ -611,9 +611,143 @@ class AdminController extends Controller
 
     // --- DADOS DA LANCHONETE & WHATSAPP (Exclusivo Admin) ---
 
+    public function defaultStoreHours(): array
+    {
+        return [
+            'general' => [
+                'status' => 'auto', // 'auto', 'open', 'closed'
+                'open_time' => '18:00',
+                'close_time' => '23:30',
+                'closed_message' => 'Estamos fechados no momento. Nosso horário de atendimento é das 18h00 às 23h30.',
+            ],
+            'delivery' => [
+                'enabled' => true,
+                'status' => 'auto', // 'auto', 'enabled', 'disabled'
+                'open_time' => '18:00',
+                'close_time' => '23:00',
+                'disabled_message' => 'O serviço de entrega está pausado no momento. Atendimento disponível apenas para retirada no balcão!',
+            ],
+            'pickup' => [
+                'enabled' => true,
+                'status' => 'auto', // 'auto', 'enabled', 'disabled'
+                'open_time' => '18:00',
+                'close_time' => '23:30',
+                'disabled_message' => 'A opção de retirada no balcão está temporariamente indisponível.',
+            ],
+            'only_pickup_mode' => false,
+        ];
+    }
+
+    public static function calculateStoreStatus(?array $hours = null): array
+    {
+        if (empty($hours)) {
+            $hours = (new self)->defaultStoreHours();
+        }
+
+        // Fuso horário oficial de Teixeira - PB / Paraíba
+        $now = now()->setTimezone('America/Fortaleza');
+        $currentTime = $now->format('H:i');
+
+        $isWithinHours = function ($open, $close, $current) {
+            if (empty($open) || empty($close)) {
+                return true;
+            }
+            if ($open <= $close) {
+                return $current >= $open && $current <= $close;
+            } else {
+                // Vira a meia-noite (ex: 18:00 às 01:00)
+                return $current >= $open || $current <= $close;
+            }
+        };
+
+        // 1. Status Geral da Loja
+        $genConfig = $hours['general'] ?? [];
+        $genStatus = $genConfig['status'] ?? 'auto';
+        $genOpenTime = $genConfig['open_time'] ?? '18:00';
+        $genCloseTime = $genConfig['close_time'] ?? '23:30';
+
+        $isOpen = false;
+        if ($genStatus === 'open') {
+            $isOpen = true;
+        } elseif ($genStatus === 'closed') {
+            $isOpen = false;
+        } else {
+            $isOpen = $isWithinHours($genOpenTime, $genCloseTime, $currentTime);
+        }
+
+        // 2. Modo Só Retirada
+        $onlyPickupMode = !empty($hours['only_pickup_mode']);
+
+        // 3. Status de Entrega (Delivery)
+        $delConfig = $hours['delivery'] ?? [];
+        $delEnabled = $delConfig['enabled'] ?? true;
+        $delStatus = $delConfig['status'] ?? 'auto';
+        $delOpenTime = $delConfig['open_time'] ?? '18:00';
+        $delCloseTime = $delConfig['close_time'] ?? '23:00';
+
+        $canDelivery = false;
+        if ($isOpen && !$onlyPickupMode && $delEnabled) {
+            if ($delStatus === 'enabled') {
+                $canDelivery = true;
+            } elseif ($delStatus === 'disabled') {
+                $canDelivery = false;
+            } else {
+                $canDelivery = $isWithinHours($delOpenTime, $delCloseTime, $currentTime);
+            }
+        }
+
+        // 4. Status de Retirada (Pickup)
+        $pickConfig = $hours['pickup'] ?? [];
+        $pickEnabled = $pickConfig['enabled'] ?? true;
+        $pickStatus = $pickConfig['status'] ?? 'auto';
+        $pickOpenTime = $pickConfig['open_time'] ?? '18:00';
+        $pickCloseTime = $pickConfig['close_time'] ?? '23:30';
+
+        $canPickup = false;
+        if ($isOpen && $pickEnabled) {
+            if ($pickStatus === 'enabled') {
+                $canPickup = true;
+            } elseif ($pickStatus === 'disabled') {
+                $canPickup = false;
+            } else {
+                $canPickup = $isWithinHours($pickOpenTime, $pickCloseTime, $currentTime);
+            }
+        }
+
+        // Mensagens explicativas
+        $noticeMessage = null;
+        if (!$isOpen) {
+            $noticeMessage = $genConfig['closed_message'] ?? "Estamos fechados no momento. Horário de atendimento: {$genOpenTime} às {$genCloseTime}.";
+        } elseif ($onlyPickupMode) {
+            $noticeMessage = 'Hoje estamos atendendo exclusivamente para Retirada no Balcão!';
+        } elseif (!$canDelivery && $canPickup) {
+            $noticeMessage = $delConfig['disabled_message'] ?? 'Entregas encerradas para este horário. Disponível apenas para retirada no balcão!';
+        } elseif (!$canPickup && $canDelivery) {
+            $noticeMessage = $pickConfig['disabled_message'] ?? 'Opção de retirada no balcão indisponível no momento.';
+        } elseif (!$canDelivery && !$canPickup) {
+            $noticeMessage = 'Todos os canais de pedido estão temporariamente indisponíveis.';
+            $isOpen = false;
+        }
+
+        return [
+            'is_open' => $isOpen,
+            'can_delivery' => $canDelivery,
+            'can_pickup' => $canPickup,
+            'only_pickup_mode' => $onlyPickupMode,
+            'current_time' => $currentTime,
+            'general_status' => $genStatus,
+            'general_label' => $isOpen ? 'Aberto' : 'Fechado',
+            'delivery_label' => $canDelivery ? 'Entrega Ativa' : 'Entrega Fechada',
+            'pickup_label' => $canPickup ? 'Retirada Ativa' : 'Retirada Fechada',
+            'notice_message' => $noticeMessage,
+        ];
+    }
+
     public function getStoreInfo(): JsonResponse
     {
         $this->checkAdmin();
+        $storeHours = SystemSetting::getSetting('store_hours', $this->defaultStoreHours());
+
         return response()->json([
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
             'require_motoboy_confirmation' => (bool) SystemSetting::getSetting('require_motoboy_confirmation', true),
@@ -624,6 +758,8 @@ class AdminController extends Controller
                 'hours' => 'Todos os dias, das 18h00 às 23h30',
                 'document' => '',
             ]),
+            'store_hours' => $storeHours,
+            'store_status' => self::calculateStoreStatus($storeHours),
             'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
             'print_settings' => SystemSetting::getSetting('print_settings', $this->defaultPrintSettings()),
         ]);
@@ -637,6 +773,7 @@ class AdminController extends Controller
             'store_whatsapp' => 'nullable|string|max:30',
             'require_motoboy_confirmation' => 'nullable|boolean',
             'store_info' => 'nullable|array',
+            'store_hours' => 'nullable|array',
             'whatsapp_messages' => 'nullable|array',
             'print_settings' => 'nullable|array',
         ]);
@@ -668,6 +805,10 @@ class AdminController extends Controller
             SystemSetting::setSetting('store_info', $validated['store_info'], 'Dados gerais da AKY Lanches');
         }
 
+        if (isset($validated['store_hours'])) {
+            SystemSetting::setSetting('store_hours', $validated['store_hours'], 'Regras operacionais e horários de abertura, entrega e retirada');
+        }
+
         if (isset($validated['whatsapp_messages'])) {
             SystemSetting::setSetting('whatsapp_messages', $validated['whatsapp_messages'], 'Modelos de mensagens do WhatsApp de pedidos');
         }
@@ -676,11 +817,15 @@ class AdminController extends Controller
             SystemSetting::setSetting('print_settings', $validated['print_settings'], 'Configurações de impressão do cupom da cozinha');
         }
 
+        $storeHours = SystemSetting::getSetting('store_hours', $this->defaultStoreHours());
+
         return response()->json([
             'message' => 'Configurações atualizadas globalmente com sucesso.',
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
             'require_motoboy_confirmation' => (bool) SystemSetting::getSetting('require_motoboy_confirmation', true),
             'store_info' => SystemSetting::getSetting('store_info', []),
+            'store_hours' => $storeHours,
+            'store_status' => self::calculateStoreStatus($storeHours),
             'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
             'print_settings' => SystemSetting::getSetting('print_settings', $this->defaultPrintSettings()),
         ]);

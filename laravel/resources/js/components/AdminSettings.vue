@@ -95,6 +95,217 @@
     <!-- ======================================================== -->
     <div v-if="currentTab === 'store'">
       
+      <!-- Card Gestão de Horários & Status em Tempo Real -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3 pb-3 border-bottom">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-aky-primary fs-4"></i>
+                <span>Status & Horários de Funcionamento</span>
+              </h5>
+              <span v-if="storeSettings.store_status && storeSettings.store_status.is_open" class="badge bg-success rounded-pill px-3 py-1.5 fw-bold">
+                <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i> Loja Aberta Agora
+              </span>
+              <span v-else-if="storeSettings.store_status" class="badge bg-danger rounded-pill px-3 py-1.5 fw-bold">
+                <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i> Loja Fechada Agora
+              </span>
+            </div>
+            <small class="text-muted">
+              Configure os horários em que a loja aceita pedidos, os horários de entrega (delivery) e pedidos apenas de retirada no balcão
+              <span v-if="storeSettings.store_status && storeSettings.store_status.server_time" class="ms-1 fw-semibold text-dark">
+                • Hora local: {{ storeSettings.store_status.server_time }}
+              </span>
+            </small>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span v-if="storeSettings.store_status && storeSettings.store_status.can_delivery" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1.5 fw-semibold small">
+              <i class="bi bi-bicycle me-1"></i> Delivery Ativo
+            </span>
+            <span v-else class="badge bg-warning bg-opacity-25 text-dark rounded-pill px-3 py-1.5 fw-bold small">
+              <i class="bi bi-pause-circle-fill text-danger me-1"></i> Delivery Pausado
+            </span>
+
+            <span v-if="storeSettings.store_status && storeSettings.store_status.can_pickup" class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1.5 fw-semibold small">
+              <i class="bi bi-shop me-1"></i> Retirada Ativa
+            </span>
+            <span v-else class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-3 py-1.5 fw-bold small">
+              <i class="bi bi-x-circle me-1"></i> Retirada Fechada
+            </span>
+          </div>
+        </div>
+
+        <!-- MODO SÓ RETIRADA NO BALCÃO (AÇÃO RÁPIDA DE 1 CLIQUE) -->
+        <div class="p-3 mb-4 rounded-4 border transition" :class="storeSettings.store_hours.only_pickup_mode ? 'bg-warning bg-opacity-10 border-warning' : 'bg-light border-light-subtle'">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle p-2.5 d-flex align-items-center justify-content-center flex-shrink-0" :class="storeSettings.store_hours.only_pickup_mode ? 'bg-warning text-dark shadow-sm' : 'bg-white border text-secondary'" style="width: 48px; height: 48px;">
+                <i class="bi bi-bag-check-fill fs-4"></i>
+              </div>
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <h6 class="fw-bold mb-0 text-dark">Modo "Só Retirada no Balcão"</h6>
+                  <span v-if="storeSettings.store_hours.only_pickup_mode" class="badge bg-warning text-dark fw-bold rounded-pill px-2.5">ATIVADO</span>
+                </div>
+                <small class="text-muted d-block mt-0.5" style="font-size: 0.78rem;">
+                  Ative em dias de chuva forte, alta demanda ou falta de motoboy. O cardápio suspende automaticamente todas as entregas e direciona os clientes exclusivamente para retirada no balcão.
+                </small>
+              </div>
+            </div>
+
+            <div class="form-check form-switch mb-0 fs-4 flex-shrink-0">
+              <input
+                class="form-check-input cursor-pointer"
+                type="checkbox"
+                id="only-pickup-switch"
+                v-model="storeSettings.store_hours.only_pickup_mode"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- GRADE DE CONFIGURAÇÃO DETALHADA: GERAL, ENTREGA E RETIRADA -->
+        <div class="row g-3">
+          
+          <!-- 1. HORÁRIO GERAL DA LOJA (ABERTO / FECHADO) -->
+          <div class="col-12 col-lg-4">
+            <div class="card h-100 border rounded-4 p-3 bg-light shadow-2xs">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-shop text-aky-primary fs-5"></i>
+                  <h6 class="fw-bold mb-0 text-dark">Loja (Geral)</h6>
+                </div>
+                <span class="badge rounded-pill px-2.5 py-1" :class="storeSettings.store_hours.general.status === 'open' ? 'bg-success' : (storeSettings.store_hours.general.status === 'closed' ? 'bg-danger' : 'bg-primary')">
+                  {{ storeSettings.store_hours.general.status === 'open' ? 'Forçado Aberto' : (storeSettings.store_hours.general.status === 'closed' ? 'Forçado Fechado' : 'Automático') }}
+                </span>
+              </div>
+              <small class="text-muted d-block mb-3" style="font-size: 0.74rem;">Controla a abertura geral do cardápio para receber qualquer pedido</small>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark mb-1">Modo de Funcionamento:</label>
+                <select class="form-select form-select-sm rounded-3 fw-semibold" v-model="storeSettings.store_hours.general.status">
+                  <option value="auto">Automático (Pelo Horário)</option>
+                  <option value="open">Forçar Aberto Agora</option>
+                  <option value="closed">Forçar Fechado Agora</option>
+                </select>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Abre às:</label>
+                  <input type="time" class="form-control form-control-sm rounded-3 fw-bold text-dark" v-model="storeSettings.store_hours.general.open_time">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Fecha às:</label>
+                  <input type="time" class="form-control form-control-sm rounded-3 fw-bold text-dark" v-model="storeSettings.store_hours.general.close_time">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Mensagem quando a loja estiver fechada:</label>
+                <input type="text" class="form-control form-control-sm rounded-3" v-model="storeSettings.store_hours.general.closed_message" placeholder="Ex: Estamos fechados. Abriremos às 18:00!">
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. HORÁRIO E DISPONIBILIDADE DE ENTREGAS (DELIVERY) -->
+          <div class="col-12 col-lg-4">
+            <div class="card h-100 border rounded-4 p-3 bg-light shadow-2xs">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-bicycle text-primary fs-5"></i>
+                  <h6 class="fw-bold mb-0 text-dark">Entregas (Delivery)</h6>
+                </div>
+                <span class="badge rounded-pill px-2.5 py-1" :class="storeSettings.store_hours.delivery.status === 'enabled' ? 'bg-success' : (storeSettings.store_hours.delivery.status === 'disabled' ? 'bg-danger' : 'bg-primary')">
+                  {{ storeSettings.store_hours.delivery.status === 'enabled' ? 'Sempre Liberado' : (storeSettings.store_hours.delivery.status === 'disabled' ? 'Desativado' : 'Automático') }}
+                </span>
+              </div>
+              <small class="text-muted d-block mb-3" style="font-size: 0.74rem;">Controla a aceitação de pedidos com entrega por motoboy</small>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark mb-1">Modo de Entrega:</label>
+                <select class="form-select form-select-sm rounded-3 fw-semibold" v-model="storeSettings.store_hours.delivery.status">
+                  <option value="auto">Automático (Pelo Horário de Entrega)</option>
+                  <option value="enabled">Sempre Permitir Entregas</option>
+                  <option value="disabled">Pausar Entregas (Sem Delivery)</option>
+                </select>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Início entregas:</label>
+                  <input type="time" class="form-control form-control-sm rounded-3 fw-bold text-dark" v-model="storeSettings.store_hours.delivery.open_time">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Término entregas:</label>
+                  <input type="time" class="form-control form-control-sm rounded-3 fw-bold text-dark" v-model="storeSettings.store_hours.delivery.close_time">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Mensagem quando entregas pausadas:</label>
+                <input type="text" class="form-control form-control-sm rounded-3" v-model="storeSettings.store_hours.delivery.disabled_message" placeholder="Ex: Entregas indisponíveis hoje. Apenas retirada no balcão!">
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. HORÁRIO E DISPONIBILIDADE DE RETIRADA (BALCÃO) -->
+          <div class="col-12 col-lg-4">
+            <div class="card h-100 border rounded-4 p-3 bg-light shadow-2xs">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-shop-window text-success fs-5"></i>
+                  <h6 class="fw-bold mb-0 text-dark">Retirada no Balcão</h6>
+                </div>
+                <span class="badge rounded-pill px-2.5 py-1" :class="storeSettings.store_hours.pickup.status === 'enabled' ? 'bg-success' : (storeSettings.store_hours.pickup.status === 'disabled' ? 'bg-danger' : 'bg-primary')">
+                  {{ storeSettings.store_hours.pickup.status === 'enabled' ? 'Sempre Liberado' : (storeSettings.store_hours.pickup.status === 'disabled' ? 'Desativado' : 'Automático') }}
+                </span>
+              </div>
+              <small class="text-muted d-block mb-3" style="font-size: 0.74rem;">Controla a opção do cliente buscar o pedido na lanchonete</small>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-dark mb-1">Modo de Retirada:</label>
+                <select class="form-select form-select-sm rounded-3 fw-semibold" v-model="storeSettings.store_hours.pickup.status">
+                  <option value="auto">Automático (Pelo Horário de Retirada)</option>
+                  <option value="enabled">Sempre Permitir Retirada</option>
+                  <option value="disabled">Desativar Retirada</option>
+                </select>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Início retiradas:</label>
+                  <input type="time" class="form-control form-control-sm rounded-3 fw-bold text-dark" v-model="storeSettings.store_hours.pickup.open_time">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Término retiradas:</label>
+                  <input type="time" class="form-control form-control-sm rounded-3 fw-bold text-dark" v-model="storeSettings.store_hours.pickup.close_time">
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Mensagem quando retirada indisponível:</label>
+                <input type="text" class="form-control form-control-sm rounded-3" v-model="storeSettings.store_hours.pickup.disabled_message" placeholder="Ex: Retirada no balcão pausada. Disponível via entrega!">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="text-end mt-4 pt-3 border-top">
+          <button
+            class="btn btn-aky-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+            @click="saveStoreSettings"
+            :disabled="savingStore"
+          >
+            <span v-if="savingStore" class="spinner-border spinner-border-sm"></span>
+            <i v-else class="bi bi-floppy-fill"></i>
+            <span>Salvar Horários & Regras de Abertura</span>
+          </button>
+        </div>
+      </div>
+      
       <!-- Card WhatsApp Comercial (Destino de Pedidos) -->
       <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
@@ -1305,6 +1516,28 @@ export default {
           hours: 'Todos os dias, das 18h00 às 23h30',
           document: '',
         },
+        store_hours: {
+          general: {
+            status: 'auto',
+            open_time: '18:00',
+            close_time: '23:30',
+            closed_message: 'Estamos fechados no momento. Abriremos em breve!',
+          },
+          delivery: {
+            status: 'auto',
+            open_time: '18:00',
+            close_time: '23:30',
+            disabled_message: 'Entregas temporariamente pausadas. Disponível apenas para retirada!',
+          },
+          pickup: {
+            status: 'auto',
+            open_time: '18:00',
+            close_time: '23:30',
+            disabled_message: 'Retiradas no balcão indisponíveis no momento.',
+          },
+          only_pickup_mode: false,
+        },
+        store_status: null,
       },
 
       // Configurações de Impressão & Cupom da Cozinha
@@ -1731,6 +1964,27 @@ export default {
               ...res.data.store_info,
             };
           }
+          if (res.data.store_hours) {
+            this.storeSettings.store_hours = {
+              ...this.storeSettings.store_hours,
+              ...res.data.store_hours,
+              general: {
+                ...this.storeSettings.store_hours.general,
+                ...(res.data.store_hours.general || {}),
+              },
+              delivery: {
+                ...this.storeSettings.store_hours.delivery,
+                ...(res.data.store_hours.delivery || {}),
+              },
+              pickup: {
+                ...this.storeSettings.store_hours.pickup,
+                ...(res.data.store_hours.pickup || {}),
+              },
+            };
+          }
+          if (res.data.store_status) {
+            this.storeSettings.store_status = res.data.store_status;
+          }
           if (res.data.print_settings) {
             this.printSettings = {
               ...defaultPrintSettings,
@@ -1766,6 +2020,27 @@ export default {
           if (res.data.require_motoboy_confirmation !== undefined) {
             this.storeSettings.require_motoboy_confirmation = !!res.data.require_motoboy_confirmation;
           }
+          if (res.data.store_hours) {
+            this.storeSettings.store_hours = {
+              ...this.storeSettings.store_hours,
+              ...res.data.store_hours,
+              general: {
+                ...this.storeSettings.store_hours.general,
+                ...(res.data.store_hours.general || {}),
+              },
+              delivery: {
+                ...this.storeSettings.store_hours.delivery,
+                ...(res.data.store_hours.delivery || {}),
+              },
+              pickup: {
+                ...this.storeSettings.store_hours.pickup,
+                ...(res.data.store_hours.pickup || {}),
+              },
+            };
+          }
+          if (res.data.store_status) {
+            this.storeSettings.store_status = res.data.store_status;
+          }
           if (res.data.whatsapp_messages && Array.isArray(res.data.whatsapp_messages)) {
             this.whatsappMessages = res.data.whatsapp_messages;
           }
@@ -1777,7 +2052,7 @@ export default {
           }
         }
         this.$emit('menu-updated');
-        this.openFeedback('Dados Salvos!', 'As informações da lanchonete, WhatsApp e configurações de impressão foram salvas com sucesso.', 'success');
+        this.openFeedback('Dados Salvos!', 'As informações da lanchonete, horários, WhatsApp e configurações de impressão foram salvas com sucesso.', 'success');
       } catch (err) {
         this.openFeedback('Erro ao Salvar', err.response?.data?.message || 'Não foi possível salvar os dados da lanchonete.', 'danger');
       } finally {

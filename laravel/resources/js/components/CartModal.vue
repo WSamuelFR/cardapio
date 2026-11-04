@@ -20,6 +20,34 @@
         <!-- Body com Scroll Fluido -->
         <div class="modal-body p-3 p-md-4 bg-light">
           
+          <!-- Alerta de Estabelecimento Fechado -->
+          <div v-if="storeStatus && !storeStatus.is_open" class="alert alert-danger rounded-4 border-0 shadow-sm p-3 mb-3 d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-danger text-white p-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+              <i class="bi bi-moon-stars-fill fs-5"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-0.5 text-danger">Estabelecimento Fechado no Momento</h6>
+              <div class="small text-dark">{{ storeStatus.closed_message || 'Estamos fechados no momento. Abriremos em breve!' }}</div>
+              <small v-if="storeStatus.open_time && storeStatus.close_time" class="text-muted fw-semibold d-block mt-0.5" style="font-size: 0.72rem;">
+                <i class="bi bi-clock-fill me-1 text-danger"></i> Horário de funcionamento: {{ storeStatus.open_time }} às {{ storeStatus.close_time }}
+              </small>
+            </div>
+          </div>
+
+          <!-- Alerta de Entrega Pausada / Modo Só Retirada -->
+          <div v-else-if="storeStatus && !storeStatus.can_delivery" class="alert alert-warning rounded-4 border-0 shadow-sm p-3 mb-3 d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-warning text-dark p-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+              <i class="bi bi-bicycle fs-5"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-0.5 text-dark">Entregas Temporariamente Pausadas</h6>
+              <div class="small text-dark">{{ storeStatus.delivery_disabled_message || 'Entregas indisponíveis no momento. Pedidos apenas para retirada no balcão!' }}</div>
+              <small class="text-muted fw-semibold d-block mt-0.5" style="font-size: 0.72rem;">
+                <i class="bi bi-info-circle-fill me-1 text-warning"></i> Seu pedido foi ajustado para retirada no local.
+              </small>
+            </div>
+          </div>
+
           <!-- Estado de Carrinho Vazio -->
           <div v-if="cart.length === 0" class="text-center py-5 bg-white rounded-4 shadow-sm p-4">
             <div class="mb-3">
@@ -117,21 +145,33 @@
                 <div class="col-6">
                   <button
                     type="button"
-                    :class="['btn w-100 rounded-3 py-2.5 btn-sm fw-bold border-0 transition d-flex align-items-center justify-content-center gap-1.5', orderType === 'entrega' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
+                    :class="[
+                      'btn w-100 rounded-3 py-2.5 btn-sm fw-bold border-0 transition d-flex align-items-center justify-content-center gap-1.5',
+                      orderType === 'entrega' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark',
+                      storeStatus && !storeStatus.can_delivery ? 'opacity-50 text-decoration-line-through' : ''
+                    ]"
+                    :disabled="storeStatus && !storeStatus.can_delivery"
                     @click="orderType = 'entrega'"
                   >
                     <i class="bi bi-bicycle fs-5"></i>
                     <span>Entrega</span>
+                    <span v-if="storeStatus && !storeStatus.can_delivery" class="badge bg-danger rounded-pill ms-1" style="font-size: 0.65rem;">Pausada</span>
                   </button>
                 </div>
                 <div class="col-6">
                   <button
                     type="button"
-                    :class="['btn w-100 rounded-3 py-2.5 btn-sm fw-bold border-0 transition d-flex align-items-center justify-content-center gap-1.5', orderType === 'retirada' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
+                    :class="[
+                      'btn w-100 rounded-3 py-2.5 btn-sm fw-bold border-0 transition d-flex align-items-center justify-content-center gap-1.5',
+                      orderType === 'retirada' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark',
+                      storeStatus && !storeStatus.can_pickup ? 'opacity-50 text-decoration-line-through' : ''
+                    ]"
+                    :disabled="storeStatus && !storeStatus.can_pickup"
                     @click="orderType = 'retirada'"
                   >
                     <i class="bi bi-shop fs-5"></i>
                     <span>Retirar no Local</span>
+                    <span v-if="storeStatus && !storeStatus.can_pickup" class="badge bg-secondary rounded-pill ms-1" style="font-size: 0.65rem;">Fechada</span>
                   </button>
                 </div>
               </div>
@@ -471,12 +511,14 @@
           <button
             type="button"
             class="btn btn-aky-primary rounded-pill px-4 py-2 fw-bold d-flex align-items-center justify-content-center shadow-sm order-1 order-sm-2 flex-grow-1 flex-sm-grow-0"
-            :disabled="loading"
+            :disabled="loading || (storeStatus && !storeStatus.is_open)"
             @click="submitOrder"
           >
             <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <i v-else-if="storeStatus && !storeStatus.is_open" class="bi bi-x-circle fs-5 me-2"></i>
             <i v-else class="bi bi-check2-circle fs-5 me-2"></i>
-            <span>Confirmar Pedido (R$ {{ formatPrice(cartTotal) }})</span>
+            <span v-if="storeStatus && !storeStatus.is_open">Estabelecimento Fechado</span>
+            <span v-else>Confirmar Pedido (R$ {{ formatPrice(cartTotal) }})</span>
           </button>
         </div>
 
@@ -553,6 +595,23 @@ export default {
     storeInfo: {
       type: Object,
       default: null,
+    },
+    storeStatus: {
+      type: Object,
+      default: null,
+    },
+  },
+  watch: {
+    show(val) {
+      if (val) {
+        this.checkAndAdjustOrderType();
+      }
+    },
+    storeStatus: {
+      immediate: true,
+      handler() {
+        this.checkAndAdjustOrderType();
+      },
     },
   },
   data() {
@@ -766,11 +825,35 @@ export default {
         this.removeItem(item);
       }
     },
+    checkAndAdjustOrderType() {
+      if (!this.storeStatus) return;
+      if (!this.storeStatus.can_delivery && this.storeStatus.can_pickup) {
+        this.orderType = 'retirada';
+      } else if (this.storeStatus.can_delivery && !this.storeStatus.can_pickup) {
+        this.orderType = 'entrega';
+      }
+    },
     removeItem(item) {
       this.$emit('remove-item', (item && item.cart_item_id) ? item.cart_item_id : Number(item && item.id ? item.id : item));
     },
     async submitOrder() {
       this.errorMessage = null;
+
+      // Validação estrita de status e horários da loja
+      if (this.storeStatus) {
+        if (!this.storeStatus.is_open) {
+          this.errorMessage = this.storeStatus.closed_message || 'Estamos fechados no momento. Não é possível enviar pedidos agora.';
+          return;
+        }
+        if (this.orderType === 'entrega' && !this.storeStatus.can_delivery) {
+          this.errorMessage = this.storeStatus.delivery_disabled_message || 'Entregas indisponíveis no momento. Por favor, selecione "Retirar no Local".';
+          return;
+        }
+        if (this.orderType === 'retirada' && !this.storeStatus.can_pickup) {
+          this.errorMessage = this.storeStatus.pickup_disabled_message || 'Retirada no balcão indisponível no momento.';
+          return;
+        }
+      }
 
       // Sincroniza diretamente com os elementos do DOM caso tenha havido descompasso
       const nameEl = this.$refs.nameInput || (this.$el ? this.$el.querySelector('input[placeholder="DIGITE SEU NOME"]') : null);

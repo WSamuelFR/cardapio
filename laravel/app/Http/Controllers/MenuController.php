@@ -146,6 +146,8 @@ class MenuController extends Controller
                     'hours' => 'Todos os dias, das 18h00 às 23h30',
                     'document' => '',
                 ]),
+                'store_hours' => \App\Models\SystemSetting::getSetting('store_hours', (new AdminController)->defaultStoreHours()),
+                'store_status' => AdminController::calculateStoreStatus(\App\Models\SystemSetting::getSetting('store_hours', (new AdminController)->defaultStoreHours())),
                 'whatsapp_messages' => \App\Models\SystemSetting::getSetting('whatsapp_messages', []),
                 'print_settings' => \App\Models\SystemSetting::getSetting('print_settings', (new AdminController)->defaultPrintSettings()),
             ],
@@ -191,7 +193,28 @@ class MenuController extends Controller
         }
         $validated['customer_name'] = $cleanCustomerName;
 
+        // Validação de horário de funcionamento, entrega e retirada
+        $adminCtrl = new AdminController();
+        $storeHours = \App\Models\SystemSetting::getSetting('store_hours', $adminCtrl->defaultStoreHours());
+        $storeStatus = AdminController::calculateStoreStatus($storeHours);
+
+        if (!$storeStatus['is_open']) {
+            $msg = $storeStatus['notice_message'] ?? 'Estamos fechados no momento para novos pedidos.';
+            return response()->json(['message' => $msg], 422);
+        }
+
         $isPickup = ($validated['order_type'] ?? 'entrega') === 'retirada';
+
+        if (!$isPickup && !$storeStatus['can_delivery']) {
+            $msg = $storeStatus['notice_message'] ?? 'O serviço de entrega está pausado no momento. Por favor, escolha a opção de Retirada no Balcão!';
+            return response()->json(['message' => $msg], 422);
+        }
+
+        if ($isPickup && !$storeStatus['can_pickup']) {
+            $msg = $storeStatus['notice_message'] ?? 'A opção de retirada no balcão não está disponível no momento.';
+            return response()->json(['message' => $msg], 422);
+        }
+
         $storeInfo = \App\Models\SystemSetting::getSetting('store_info', []);
         $storeAddress = !empty($storeInfo['address']) ? trim($storeInfo['address']) : 'Rua Principal, Centro - Teixeira - PB';
 
