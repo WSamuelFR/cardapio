@@ -63,62 +63,110 @@
           <!-- Conteúdo Mobile-First -->
           <div v-else>
             
-            <!-- LISTA DE ITENS EM FORMATO DE CARDS MOBILE-FRIENDLY (SEM TABELA) -->
-            <div class="d-flex flex-column gap-2 mb-3">
+            <!-- LISTA DE ITENS EM FORMATO DE CARDS MOBILE-FRIENDLY -->
+            <div class="d-flex flex-column gap-2.5 mb-3 cart-items-list">
               <div
                 v-for="item in cart"
                 :key="'cart-item-' + (item.cart_item_id || item.id)"
-                class="card border-0 shadow-sm rounded-3 p-3 bg-white"
+                class="card border border-light-subtle shadow-sm rounded-4 p-3 bg-white"
               >
-                <div class="d-flex align-items-center gap-3">
+                <!-- Bloco Superior: Foto Ampliada (80x80px) + Detalhes + Botão Remover -->
+                <div class="d-flex align-items-start gap-3">
                   
-                  <!-- Foto do Produto -->
-                  <div class="rounded-3 overflow-hidden bg-light border flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 58px; height: 58px;">
-                    <img v-if="item.photo_path" :src="item.photo_path" :alt="item.name" class="w-100 h-100 object-fit-cover">
-                    <i v-else class="bi bi-bag-heart text-muted fs-4"></i>
+                  <!-- Foto do Produto Ampliada e Nítida -->
+                  <div
+                    class="cart-item-thumb rounded-3 overflow-hidden bg-light border flex-shrink-0 position-relative d-flex align-items-center justify-content-center"
+                  >
+                    <img
+                      v-if="item.photo_path"
+                      :src="item.photo_path"
+                      :alt="item.name"
+                      class="w-100 h-100 object-fit-cover"
+                      loading="lazy"
+                    >
+                    <div v-else class="text-center text-muted">
+                      <i class="bi bi-bag-heart fs-3 opacity-75"></i>
+                    </div>
+
+                    <!-- Badge de Promoção Flutuante -->
+                    <span
+                      v-if="item.is_promotion"
+                      class="badge bg-danger position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
+                      style="font-size: 0.58rem; padding: 2px 5px;"
+                    >
+                      PROMO
+                    </span>
                   </div>
 
                   <!-- Detalhes do Produto -->
                   <div class="flex-grow-1 min-w-0">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 180px;">{{ item.name }}</h6>
-                      <button class="btn btn-link text-danger p-0 ms-2" title="Remover" @click="removeItem(item)">
-                        <i class="bi bi-trash fs-5"></i>
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                      <h6 class="fw-bold text-dark mb-1 line-clamp-2" style="font-size: 0.98rem; line-height: 1.3;">
+                        {{ item.name }}
+                      </h6>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-light text-danger rounded-circle p-0 d-flex align-items-center justify-content-center flex-shrink-0 shadow-2xs hover-danger"
+                        style="width: 32px; height: 32px;"
+                        title="Remover do carrinho"
+                        aria-label="Remover item"
+                        @click="removeItem(item)"
+                      >
+                        <i class="bi bi-trash fs-6"></i>
                       </button>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2 my-1">
-                      <span class="text-muted small">R$ {{ formatPrice(itemPrice(item)) }} cada</span>
-                      <span v-if="item.is_promotion" class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">Promoção</span>
+                    <!-- Preço unitário e badges -->
+                    <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
+                      <span class="text-secondary small fw-medium" style="font-size: 0.82rem;">
+                        R$ {{ formatPrice(itemPrice(item)) }} <span class="text-muted fw-normal">cada</span>
+                      </span>
                     </div>
 
-                    <div v-if="item.notes" class="small text-danger fst-italic mb-1" style="font-size: 0.72rem;">
+                    <!-- Observações de preparo ou personalização -->
+                    <div v-if="item.notes" class="small text-danger fst-italic bg-danger bg-opacity-10 rounded-2 px-2 py-1 mb-1 d-inline-block" style="font-size: 0.74rem;">
                       <i class="bi bi-chat-left-dots me-1"></i> Obs: {{ item.notes }}
                     </div>
-
-                    <!-- Controles de Quantidade e Subtotal Móvel -->
-                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                      <!-- Seletor de Quantidade Ergonômico -->
-                      <div class="d-flex align-items-center bg-light rounded-pill p-1 border">
-                        <button class="btn btn-sm btn-white rounded-circle shadow-none p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" @click="decreaseQty(item)" :disabled="loading">
-                          <i class="bi bi-dash fs-6"></i>
-                        </button>
-                        <span class="px-3 fw-bold text-dark small">{{ item.quantity }}</span>
-                        <button class="btn btn-sm btn-white rounded-circle shadow-none p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" @click="increaseQty(item)" :disabled="loading">
-                          <i class="bi bi-plus fs-6"></i>
-                        </button>
-                      </div>
-
-                      <!-- Subtotal do Item -->
-                      <div class="text-end">
-                        <small class="text-muted d-block" style="font-size: 0.7rem;">Subtotal</small>
-                        <span class="fw-bold text-dark fs-6">R$ {{ formatPrice(itemSubtotal(item)) }}</span>
-                      </div>
-                    </div>
-
                   </div>
 
                 </div>
+
+                <!-- Bloco Inferior: Quantidade Ergonômica à Esquerda e Subtotal em Destaque à Direita -->
+                <div class="d-flex justify-content-between align-items-center mt-2.5 pt-2 border-top border-light-subtle">
+                  <!-- Seletor de Quantidade Touch-friendly -->
+                  <div class="d-flex align-items-center bg-light rounded-pill p-1 border">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-white rounded-circle shadow-xs p-0 d-flex align-items-center justify-content-center text-dark"
+                      style="width: 30px; height: 30px;"
+                      @click="decreaseQty(item)"
+                      :disabled="loading"
+                      aria-label="Diminuir quantidade"
+                    >
+                      <i class="bi bi-dash fs-5"></i>
+                    </button>
+                    <span class="px-3 fw-bold text-dark" style="min-width: 34px; text-align: center; font-size: 0.92rem;">
+                      {{ item.quantity }}
+                    </span>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-white rounded-circle shadow-xs p-0 d-flex align-items-center justify-content-center text-dark"
+                      style="width: 30px; height: 30px;"
+                      @click="increaseQty(item)"
+                      :disabled="loading"
+                      aria-label="Aumentar quantidade"
+                    >
+                      <i class="bi bi-plus fs-5"></i>
+                    </button>
+                  </div>
+
+                  <!-- Subtotal do Item -->
+                  <div class="text-end">
+                    <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Subtotal</small>
+                    <span class="fw-bold text-dark fs-5">R$ {{ formatPrice(itemSubtotal(item)) }}</span>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -958,6 +1006,43 @@ export default {
 .cart-modal-backdrop {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Miniatura ampliada do item no carrinho */
+.cart-item-thumb {
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+}
+@media (max-width: 380px) {
+  .cart-item-thumb {
+    width: 74px;
+    height: 74px;
+    min-width: 74px;
+  }
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hover-danger:hover {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+.cart-items-list {
+  row-gap: 0.85rem !important;
+}
+
+.shadow-xs {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.shadow-2xs {
+  box-shadow: 0 1px 1px rgba(0,0,0,0.03);
 }
 
 @media (max-width: 576px) {

@@ -182,12 +182,12 @@
         </div>
 
         <!-- LISTA DE PRODUTOS SEPARADOS POR LINHAS (ROWS) -->
-        <div class="products-list d-flex flex-column gap-2.5">
+        <div class="products-list d-flex flex-column gap-3">
           
           <div
             v-for="product in section.items"
             :key="'prod-' + product.id"
-            class="product-row card border-0 shadow-sm rounded-4 p-3 bg-white transition cursor-pointer border-start border-4"
+            class="product-row card shadow-sm rounded-4 p-3 bg-white transition cursor-pointer"
             :class="[
               !product.is_available ? 'opacity-75 bg-light' : 'hover-lift',
               getItemTheme(product, section).borderClass
@@ -239,7 +239,7 @@
                   </p>
                 </div>
 
-                <!-- Linha Inferior: Preço à Esquerda e Botão de Ação à Direita (Sem Quebras!) -->
+                <!-- Linha Inferior: Preço à Esquerda e Botão de Ação Redondo à Direita -->
                 <div class="d-flex align-items-center justify-content-between pt-1 gap-2 border-top border-light-subtle flex-wrap flex-sm-nowrap">
                   <!-- Área de Preço -->
                   <div class="d-flex align-items-baseline gap-1.5">
@@ -263,20 +263,23 @@
                     </span>
                   </div>
 
-                  <!-- Botão Ação [+] Ergonômico e Temático -->
+                  <!-- Botão de Ação Ergonômico Apenas com Ícone -->
                   <div class="flex-shrink-0" @click.stop>
                     <button
                       type="button"
                       :class="[
-                        'btn rounded-pill d-inline-flex align-items-center justify-content-center shadow-sm transition fw-bold px-3 py-1.5 btn-sm',
+                        'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0 flex-shrink-0',
                         getItemTheme(product, section).btnClass
                       ]"
+                      style="width: 38px; height: 38px;"
                       :disabled="!product.is_available"
-                      :title="isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho'"
+                      :title="!product.is_available ? 'Produto esgotado' : (isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho')"
+                      :aria-label="isCustomizable(product) ? 'Montar item' : 'Adicionar ao carrinho'"
                       @click="handleQuickAdd(product)"
                     >
-                      <i :class="isCustomizable(product) ? 'bi-sliders me-1' : 'bi-plus-lg me-1'"></i>
-                      <span>{{ isCustomizable(product) ? 'Montar' : 'Adicionar' }}</span>
+                      <i v-if="!product.is_available" class="bi bi-slash-circle fs-6"></i>
+                      <i v-else-if="isCustomizable(product)" class="bi bi-sliders fs-6"></i>
+                      <i v-else class="bi bi-plus-lg fs-5"></i>
                     </button>
                   </div>
                 </div>
@@ -475,7 +478,7 @@ export default {
     getItemTheme(product, section = null) {
       if (product?.is_promotion) {
         return {
-          borderClass: 'card-promo-rgb',
+          borderClass: 'card-theme-promo',
           badgeClass: 'badge-rgb',
           badgeText: '🔥 PROMO',
           priceClass: 'text-rgb',
@@ -486,7 +489,7 @@ export default {
       const isCombo = product?.is_combo || (section && section.key === 'combos') || (product?.category?.slug === 'combos-especiais') || ((product?.category?.name || '').toLowerCase().includes('combo'));
       if (isCombo) {
         return {
-          borderClass: 'border-success',
+          borderClass: 'card-theme-combo',
           badgeClass: 'bg-success text-white',
           badgeText: '🎁 COMBO',
           priceClass: 'text-success',
@@ -497,7 +500,7 @@ export default {
       const isPopular = (section && section.key === 'popular');
       if (isPopular) {
         return {
-          borderClass: 'border-purple',
+          borderClass: 'card-theme-popular',
           badgeClass: 'bg-purple text-white',
           badgeText: '⭐ MAIS PEDIDO',
           priceClass: 'text-purple',
@@ -507,7 +510,7 @@ export default {
       }
       if (this.isDrink(product, section)) {
         return {
-          borderClass: 'border-warning',
+          borderClass: 'card-theme-drink',
           badgeClass: 'bg-warning text-dark',
           badgeText: '',
           priceClass: 'text-warning-emphasis',
@@ -517,7 +520,7 @@ export default {
       }
       if (this.isCustomizable(product)) {
         return {
-          borderClass: 'border-primary',
+          borderClass: 'card-theme-custom',
           badgeClass: 'bg-primary text-white',
           badgeText: '🍕 MONTE',
           priceClass: 'text-primary',
@@ -526,7 +529,7 @@ export default {
         };
       }
       return {
-        borderClass: 'border-danger',
+        borderClass: 'card-theme-default',
         badgeClass: '',
         badgeText: '',
         priceClass: 'text-danger',
@@ -626,9 +629,6 @@ export default {
 .text-purple {
   color: #7c3aed !important;
 }
-.border-purple {
-  border-left-color: #7c3aed !important;
-}
 .btn-purple {
   background-color: #7c3aed !important;
   border-color: #7c3aed !important;
@@ -644,8 +644,47 @@ export default {
   color: #b45309 !important;
 }
 
-.product-row {
-  border: 1px solid rgba(0,0,0,0.08) !important;
+/* Espaçamento elegante entre os cards de produto */
+.products-list {
+  row-gap: 0.85rem !important;
+}
+
+/* Bordas coloridas completas dos cards conforme a regra do sistema */
+.card-theme-promo {
+  border: 1.5px solid #ff007f !important;
+  border-left: 5px solid #ff007f !important;
+  animation: rgbBorderFull 4s linear infinite !important;
+}
+@keyframes rgbBorderFull {
+  0% { border-color: #ff0055; border-left-color: #ff0055; box-shadow: 0 4px 14px rgba(255, 0, 85, 0.15); }
+  33% { border-color: #ffaa00; border-left-color: #ffaa00; box-shadow: 0 4px 14px rgba(255, 170, 0, 0.15); }
+  66% { border-color: #00e5ff; border-left-color: #00e5ff; box-shadow: 0 4px 14px rgba(0, 229, 255, 0.15); }
+  100% { border-color: #ff0055; border-left-color: #ff0055; box-shadow: 0 4px 14px rgba(255, 0, 85, 0.15); }
+}
+
+.card-theme-combo {
+  border: 1.5px solid #198754 !important;
+  border-left: 5px solid #198754 !important;
+}
+
+.card-theme-popular {
+  border: 1.5px solid #7c3aed !important;
+  border-left: 5px solid #7c3aed !important;
+}
+
+.card-theme-drink {
+  border: 1.5px solid #f59e0b !important;
+  border-left: 5px solid #f59e0b !important;
+}
+
+.card-theme-custom {
+  border: 1.5px solid #0d6efd !important;
+  border-left: 5px solid #0d6efd !important;
+}
+
+.card-theme-default {
+  border: 1.5px solid #dc3545 !important;
+  border-left: 5px solid #dc3545 !important;
 }
 </style>
 
