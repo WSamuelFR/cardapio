@@ -181,40 +181,6 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
-    getCardTheme(idx) {
-      const i = Math.abs(idx) % 3;
-      if (i === 0) {
-        return {
-          themeName: 'danger',
-          borderClass: 'border-danger',
-          btnClass: 'btn-danger text-white',
-          outlineBtnClass: 'btn-outline-danger',
-          priceClass: 'text-danger',
-          iconClass: 'text-danger',
-          badgeClass: 'bg-danger bg-opacity-10 text-danger border border-danger',
-        };
-      } else if (i === 1) {
-        return {
-          themeName: 'warning',
-          borderClass: 'border-warning',
-          btnClass: 'btn-warning text-dark fw-bold',
-          outlineBtnClass: 'btn-outline-dark',
-          priceClass: 'text-warning-emphasis fw-bold',
-          iconClass: 'text-warning',
-          badgeClass: 'bg-warning bg-opacity-25 text-dark border border-warning',
-        };
-      } else {
-        return {
-          themeName: 'success',
-          borderClass: 'border-success',
-          btnClass: 'btn-success text-white',
-          outlineBtnClass: 'btn-outline-success',
-          priceClass: 'text-success fw-bold',
-          iconClass: 'text-success',
-          badgeClass: 'bg-success bg-opacity-10 text-success border border-success',
-        };
-      }
-    },
     isCustomizable(product) {
       if (!product) return false;
       const name = (product.name || '').toLowerCase();
@@ -225,7 +191,30 @@ export default {
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       return false;
     },
+    isDrink(product, cat = null) {
+      const catSlug = (cat?.slug || product?.category?.slug || '').toLowerCase();
+      const catName = (cat?.name || product?.category?.name || '').toLowerCase();
+      const prodName = (product?.name || '').toLowerCase();
+      const terms = ['bebida', 'suco', 'refrigerante', 'refrig', 'cerveja', 'agua', 'água', 'drink', 'coca', 'guaraná', 'guarana', 'fanta', 'sprite'];
+      return terms.some(t => catSlug.includes(t) || catName.includes(t) || prodName.includes(t));
+    },
     getItemTheme(product, cat = null) {
+      if (product?.is_promotion) {
+        return {
+          borderClass: 'card-promo-rgb',
+          btnClass: 'btn-rgb text-white shadow-sm',
+          priceClass: 'text-rgb',
+          iconClass: 'text-danger',
+        };
+      }
+      if (this.isDrink(product, cat)) {
+        return {
+          borderClass: 'border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          priceClass: 'text-warning-emphasis fw-bold',
+          iconClass: 'text-warning',
+        };
+      }
       const isCombo = product?.is_combo || cat?.slug === 'combos-especiais' || (cat?.name && cat.name.toLowerCase().includes('combo'));
       if (isCombo) {
         return {
@@ -252,6 +241,15 @@ export default {
       };
     },
     getCategoryTheme(cat) {
+      if (this.isDrink(null, cat)) {
+        return {
+          color: 'warning',
+          headerIcon: 'bg-warning text-dark',
+          badge: 'bg-warning bg-opacity-25 text-dark border border-warning',
+          btnOutline: 'btn-outline-dark',
+          borderDashed: 'border-warning',
+        };
+      }
       const slug = (cat?.slug || '').toLowerCase();
       const name = (cat?.name || '').toLowerCase();
       if (slug.includes('combo') || name.includes('combo')) {

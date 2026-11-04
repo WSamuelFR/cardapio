@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\SyncController;
 use Illuminate\Support\Facades\Route;
 
 // --- API PÚBLICA ---
@@ -12,10 +13,18 @@ Route::prefix('api')->group(function () {
     Route::get('/orders/{orderNumber}', [MenuController::class, 'trackOrder']);
     Route::post('/orders/{orderNumber}/confirm-and-rate', [MenuController::class, 'confirmAndRateOrder']);
 
+    // Sincronização Offline-First para Terminal Desktop Electron
+    Route::prefix('sync')->group(function () {
+        Route::get('/catalog', [SyncController::class, 'getCatalog']);
+        Route::post('/orders', [SyncController::class, 'syncOrders']);
+        Route::get('/orders-delta', [SyncController::class, 'getOrdersDelta']);
+    });
+
     // Autenticação
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
 
     // Gestão Administrativa e Atendimento
     Route::prefix('admin')->group(function () {

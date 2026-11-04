@@ -114,7 +114,7 @@
       <div v-else class="row g-3">
         <div v-for="(product, idx) in searchResults" :key="'search-' + product.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-4 border-dark shadow-sm rounded-4 cursor-pointer transition"
+            :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition', getProductTheme(product).borderClass]"
             @click="$emit('select-product', product, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -134,17 +134,20 @@
 
               <div class="flex-grow-1 d-flex flex-column justify-content-between">
                 <div>
-                  <h6 class="fw-bold text-dark mb-1 text-truncate" style="font-size: 0.92rem; max-width: 175px;">{{ product.name }}</h6>
+                  <div class="d-flex justify-content-between align-items-start gap-1">
+                    <h6 class="fw-bold text-dark mb-1 text-truncate" style="font-size: 0.92rem; max-width: 175px;">{{ product.name }}</h6>
+                    <span v-if="!product.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
+                  </div>
                   <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 175px;">
                     {{ product.description || 'Delicioso e feito na hora.' }}
                   </p>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mt-2">
-                  <span class="fw-bold fs-6 text-dark">
-                    R$ {{ formatPrice(product.effective_price) }}
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
+                  <span :class="['fw-bold fs-6', getProductTheme(product).priceClass]">
+                    R$ {{ formatPrice(product.effective_price || product.price) }}
                   </span>
                   <button
-                    class="btn btn-sm btn-dark text-white rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
+                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getProductTheme(product).btnClass]"
                     style="width: 36px; height: 36px;"
                     :disabled="!product.is_available"
                     :title="isCustomizable(product) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
@@ -167,7 +170,7 @@
           <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
             <i class="bi bi-fire text-danger me-2 fs-4"></i> Promoções Imperdíveis
           </h5>
-          <span class="badge bg-danger rounded-pill px-3 py-1 d-none d-sm-inline">Tempo Limitado</span>
+          <span class="badge badge-rgb rounded-pill px-3 py-1 d-none d-sm-inline">Tempo Limitado</span>
         </div>
 
         <!-- Botão Ver Tudo das Promoções (Abre tela dedicada) -->
@@ -177,7 +180,7 @@
             title: 'Promoções Imperdíveis',
             subtitle: 'Todas as ofertas especiais por tempo limitado',
             icon: 'bi-fire',
-            themeColor: 'danger',
+            themeColor: 'rgb',
             badgeText: 'Tempo Limitado',
             items: promotions,
             backTo: 'home'
@@ -191,7 +194,7 @@
       <div class="row g-3">
         <div v-for="(item, idx) in displayedPromotions" :key="'promo-' + item.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-4 border-danger shadow-sm rounded-4 cursor-pointer transition"
+            class="card aky-card h-100 bg-white border-start border-4 card-promo-rgb shadow-sm rounded-4 cursor-pointer transition"
             @click="$emit('select-product', item, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -203,34 +206,35 @@
                   :alt="item.name"
                   class="w-100 h-100 object-fit-cover"
                 >
-                <div v-else class="text-center text-danger">
-                  <i class="bi bi-tag-fill fs-2 opacity-75 d-block text-danger"></i>
-                  <span style="font-size: 0.65rem;" class="fw-semibold text-danger">Promoção</span>
+                <div v-else class="text-center">
+                  <i class="bi bi-tag-fill fs-2 opacity-75 d-block text-rgb"></i>
+                  <span style="font-size: 0.65rem;" class="fw-semibold text-rgb">Promoção</span>
                 </div>
               </div>
 
               <div class="flex-grow-1 d-flex flex-column justify-content-between">
                 <div>
-                  <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex justify-content-between align-items-start gap-1">
                     <h6 class="fw-bold text-dark mb-1 text-truncate" style="font-size: 0.92rem; max-width: 170px;">{{ item.name }}</h6>
+                    <span v-if="!item.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
                   </div>
                   <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 170px;">
                     {{ item.description || 'Aproveite nosso preço promocional.' }}
                   </p>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-1">
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
                   <div>
                     <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                       R$ {{ formatPrice(item.price) }}
                     </span>
-                    <span class="fw-bold fs-6 text-danger">
+                    <span class="fw-bold fs-6 text-rgb">
                       R$ {{ formatPrice(item.promotional_price) }}
                     </span>
                   </div>
 
                   <button
-                    class="btn btn-sm btn-danger text-white rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
+                    class="btn btn-sm btn-rgb text-white rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
                     style="width: 36px; height: 36px;"
                     :disabled="!item.is_available"
                     :title="isCustomizable(item) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
@@ -300,15 +304,16 @@
               <!-- Informações do Combo -->
               <div class="flex-grow-1 d-flex flex-column justify-content-between">
                 <div>
-                  <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex justify-content-between align-items-start gap-1">
                     <h6 class="fw-bold text-dark mb-1 text-truncate" style="font-size: 0.92rem; max-width: 170px;">{{ item.name }}</h6>
+                    <span v-if="!item.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
                   </div>
                   <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 170px;" :title="item.description">
                     {{ item.description || 'Itens selecionados com super desconto.' }}
                   </p>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-1">
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
                   <div>
                     <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                       R$ {{ formatPrice(item.price) }}
@@ -335,26 +340,26 @@
       </div>
     </div>
 
-    <!-- 3. SEÇÃO DE MAIS PEDIDOS (AMARELO) -->
+    <!-- 3. SEÇÃO DE MAIS PEDIDOS (ROXO NO FEED PRINCIPAL) -->
     <div v-if="!searchTerm.trim() && popular.length > 0" class="mb-5">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
           <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
-            <i class="bi bi-trophy-fill text-warning me-2 fs-4"></i> Mais Pedidos
+            <i class="bi bi-trophy-fill text-purple me-2 fs-4"></i> Mais Pedidos
           </h5>
-          <span class="badge bg-warning bg-opacity-25 text-dark rounded-pill px-3 py-1 fw-semibold d-none d-sm-inline">
-            <i class="bi bi-star-fill text-warning me-1"></i> Favoritos do Site
+          <span class="badge bg-purple-subtle rounded-pill px-3 py-1 fw-semibold d-none d-sm-inline">
+            <i class="bi bi-star-fill text-purple me-1"></i> Favoritos do Site
           </span>
         </div>
 
         <!-- Botão Ver Tudo dos Mais Pedidos (Abre tela dedicada) -->
         <button
-          class="btn btn-sm btn-outline-warning text-dark rounded-pill px-3 py-1 fw-semibold shadow-sm transition d-flex align-items-center gap-1 flex-shrink-0"
+          class="btn btn-sm btn-outline-purple rounded-pill px-3 py-1 fw-semibold shadow-sm transition d-flex align-items-center gap-1 flex-shrink-0"
           @click="$emit('open-section', {
             title: 'Mais Pedidos',
             subtitle: 'Os lanches favoritos e mais vendidos de todo o site',
             icon: 'bi-trophy-fill',
-            themeColor: 'warning',
+            themeColor: 'purple',
             badgeText: 'Favoritos do Site',
             items: popular,
             backTo: 'home'
@@ -368,7 +373,7 @@
       <div class="row g-3">
         <div v-for="(item, idx) in displayedPopular" :key="'pop-' + item.id" class="col-12 col-md-6 col-lg-4">
           <div
-            class="card aky-card h-100 bg-white border-start border-4 border-warning shadow-sm rounded-4 cursor-pointer transition"
+            class="card aky-card h-100 bg-white border-start border-4 border-purple shadow-sm rounded-4 cursor-pointer transition"
             @click="$emit('select-product', item, 'home')"
           >
             <div class="d-flex p-3 gap-3">
@@ -380,42 +385,43 @@
                   :alt="item.name"
                   class="w-100 h-100 object-fit-cover"
                 >
-                <div v-else class="text-center text-warning">
-                  <i class="bi bi-trophy-fill fs-2 opacity-75 d-block text-warning"></i>
-                  <span style="font-size: 0.65rem;" class="fw-semibold text-warning">Favorito</span>
+                <div v-else class="text-center text-purple">
+                  <i class="bi bi-trophy-fill fs-2 opacity-75 d-block text-purple"></i>
+                  <span style="font-size: 0.65rem;" class="fw-semibold text-purple">Favorito</span>
                 </div>
               </div>
 
               <!-- Informações e Ação do Produto -->
               <div class="flex-grow-1 d-flex flex-column justify-content-between">
                 <div>
-                  <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex justify-content-between align-items-start gap-1">
                     <h6 class="fw-bold text-dark mb-1 text-truncate" style="font-size: 0.92rem; max-width: 170px;">{{ item.name }}</h6>
+                    <span v-if="!item.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
                   </div>
                   <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 170px;">
                     {{ item.description || 'Delicioso e preparado na hora com muito carinho.' }}
                   </p>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-1">
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
                   <div>
                     <div v-if="item.is_promotion">
                       <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
                         R$ {{ formatPrice(item.price) }}
                       </span>
-                      <span class="fw-bold fs-6 text-warning-emphasis">
+                      <span class="fw-bold fs-6 text-purple">
                         R$ {{ formatPrice(item.promotional_price) }}
                       </span>
                     </div>
                     <div v-else>
-                      <span class="fw-bold fs-6 text-warning-emphasis">
+                      <span class="fw-bold fs-6 text-purple">
                         R$ {{ formatPrice(item.effective_price) }}
                       </span>
                     </div>
                   </div>
 
                   <button
-                    class="btn btn-sm btn-warning text-dark fw-bold rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
+                    class="btn btn-sm btn-purple text-white rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0"
                     style="width: 36px; height: 36px;"
                     :disabled="!item.is_available"
                     :title="isCustomizable(item) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
@@ -485,15 +491,16 @@
               <!-- Informações e Ação do Item de Montar -->
               <div class="flex-grow-1 d-flex flex-column justify-content-between">
                 <div>
-                  <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex justify-content-between align-items-start gap-1">
                     <h6 class="fw-bold text-dark mb-1 text-truncate" style="font-size: 0.92rem; max-width: 170px;">{{ item.name }}</h6>
+                    <span v-if="!item.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
                   </div>
                   <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 170px;">
                     {{ item.description || 'Escolha seus ingredientes favoritos e monte do seu jeito.' }}
                   </p>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-1">
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
                   <div>
                     <span class="text-muted small d-block" style="font-size: 0.70rem;">A partir de</span>
                     <span class="fw-bold fs-6 text-primary">
@@ -717,31 +724,6 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
-    getCardTheme(idx) {
-      const i = Math.abs(idx) % 3;
-      if (i === 0) {
-        return {
-          borderClass: 'border-danger',
-          btnClass: 'btn-danger text-white',
-          priceClass: 'text-danger',
-          iconClass: 'text-danger',
-        };
-      } else if (i === 1) {
-        return {
-          borderClass: 'border-warning',
-          btnClass: 'btn-warning text-dark fw-bold',
-          priceClass: 'text-warning-emphasis',
-          iconClass: 'text-warning',
-        };
-      } else {
-        return {
-          borderClass: 'border-success',
-          btnClass: 'btn-success text-white',
-          priceClass: 'text-success',
-          iconClass: 'text-success',
-        };
-      }
-    },
     isCustomizable(product) {
       if (!product) return false;
       const name = (product.name || '').toLowerCase();
@@ -751,6 +733,30 @@ export default {
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       return false;
+    },
+    isDrink(product) {
+      if (!product) return false;
+      const catSlug = (product.category && product.category.slug) ? product.category.slug.toLowerCase() : '';
+      const catName = (product.category && product.category.name) ? product.category.name.toLowerCase() : '';
+      const name = (product.name || '').toLowerCase();
+      const keywords = ['bebida', 'suco', 'refrigerante', 'refrig', 'cerveja', 'agua', 'água', 'drink', 'coca', 'guaraná', 'guarana', 'fanta', 'sprite'];
+      return keywords.some(k => catSlug.includes(k) || catName.includes(k) || name.includes(k));
+    },
+    getProductTheme(item) {
+      if (!item) return { borderClass: 'border-danger border-start border-4', btnClass: 'btn-danger text-white', priceClass: 'text-danger' };
+      if (item.is_promotion) {
+        return { borderClass: 'card-promo-rgb', btnClass: 'btn-rgb text-white', priceClass: 'text-rgb' };
+      }
+      if (this.isDrink(item)) {
+        return { borderClass: 'border-warning border-start border-4', btnClass: 'btn-warning text-dark fw-bold', priceClass: 'text-warning-emphasis fw-bold' };
+      }
+      if (item.is_combo || (item.category && item.category.slug && item.category.slug.includes('combo'))) {
+        return { borderClass: 'border-success border-start border-4', btnClass: 'btn-success text-white', priceClass: 'text-success' };
+      }
+      if (this.isCustomizable(item)) {
+        return { borderClass: 'border-primary border-start border-4', btnClass: 'btn-primary text-white', priceClass: 'text-primary' };
+      }
+      return { borderClass: 'border-danger border-start border-4', btnClass: 'btn-danger text-white', priceClass: 'text-danger' };
     },
     handleCardAdd(product) {
       if (this.isCustomizable(product)) {

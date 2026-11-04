@@ -567,23 +567,73 @@
           v-for="sug in suggestedItems"
           :key="'sug-' + sug.id"
           class="flex-shrink-0 cursor-pointer"
-          style="width: 250px; min-width: 250px; scroll-snap-align: start;"
+          style="width: 290px; min-width: 290px; scroll-snap-align: start;"
           @click="$emit('select-product', sug)"
         >
-          <div class="card aky-card h-100 bg-white shadow-sm border-0 rounded-4 overflow-hidden p-3 d-flex flex-column justify-content-between">
-            <div class="d-flex gap-2 align-items-center mb-2">
-              <div class="rounded-3 overflow-hidden bg-light border flex-shrink-0" style="width: 60px; height: 60px;">
-                <img v-if="sug.photo_path" :src="sug.photo_path" class="w-100 h-100 object-fit-cover" :alt="sug.name">
-                <i v-else class="bi bi-tag text-muted fs-4 d-flex align-items-center justify-content-center h-100"></i>
+          <div
+            :class="['card aky-card h-100 bg-white shadow-sm rounded-4 overflow-hidden cursor-pointer transition', getItemTheme(sug).borderClass, !sug.is_available ? 'opacity-75' : '']"
+          >
+            <div class="d-flex p-3 gap-3">
+              <!-- Foto do Produto -->
+              <div class="product-thumb rounded-3 overflow-hidden flex-shrink-0 bg-light d-flex align-items-center justify-content-center border position-relative" style="width: 85px; height: 85px;">
+                <img
+                  v-if="sug.photo_path"
+                  :src="sug.photo_path"
+                  :alt="sug.name"
+                  class="w-100 h-100 object-fit-cover"
+                >
+                <div v-else class="text-center text-muted">
+                  <i :class="[getCategoryIcon(sug), getItemTheme(sug).iconClass, 'fs-2 opacity-75 d-block']"></i>
+                  <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(sug).iconClass]">{{ sug.is_combo ? 'Combo' : (sug.is_promotion ? 'Promo' : 'AKY') }}</span>
+                </div>
               </div>
-              <div class="min-w-0">
-                <h6 class="fw-bold text-dark mb-0 small text-truncate" :title="sug.name">{{ sug.name }}</h6>
-                <span class="fw-bold text-aky-primary small d-block">R$ {{ formatPrice(sug.effective_price || sug.price) }}</span>
+
+              <!-- Detalhes do Produto -->
+              <div class="flex-grow-1 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex justify-content-between align-items-start gap-1">
+                    <h6 class="fw-bold text-dark mb-1 text-truncate" :title="sug.name" style="font-size: 0.92rem; max-width: 145px;">
+                      {{ sug.name }}
+                    </h6>
+                    <span v-if="!sug.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
+                  </div>
+
+                  <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 145px;" :title="sug.description">
+                    {{ sug.description || 'Preparo artesanal com muito sabor.' }}
+                  </p>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
+                  <div>
+                    <div v-if="sug.is_promotion && sug.promotional_price">
+                      <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
+                        R$ {{ formatPrice(sug.price) }}
+                      </span>
+                      <span :class="['fw-bold fs-6', getItemTheme(sug).priceClass]">
+                        R$ {{ formatPrice(sug.promotional_price) }}
+                      </span>
+                    </div>
+                    <div v-else>
+                      <span :class="['fw-bold fs-6', getItemTheme(sug).priceClass]">
+                        R$ {{ formatPrice(sug.effective_price || sug.price) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getItemTheme(sug).btnClass]"
+                    style="width: 36px; height: 36px;"
+                    :disabled="!sug.is_available"
+                    :title="isCustomizable(sug) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
+                    @click.stop="handleSuggestedAdd(sug)"
+                  >
+                    <i :class="isCustomizable(sug) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
+                  </button>
+                </div>
+
               </div>
+
             </div>
-            <button class="btn btn-outline-danger btn-sm rounded-pill w-100 mt-2 fw-semibold" style="font-size: 0.72rem;">
-              Ver Detalhes
-            </button>
           </div>
         </div>
       </div>
@@ -960,6 +1010,85 @@ export default {
         quantity: this.quantity,
         notes: fullNotes,
       });
+    },
+    handleSuggestedAdd(sug) {
+      if (this.isCustomizable(sug)) {
+        this.$emit('select-product', sug);
+      } else {
+        this.$emit('add-to-cart', {
+          ...sug,
+          effective_price: sug.effective_price || sug.price,
+          quantity: 1,
+          notes: '',
+        });
+      }
+    },
+    isDrink(prod) {
+      if (!prod) return false;
+      const catSlug = (prod.category && prod.category.slug) ? prod.category.slug.toLowerCase() : '';
+      const catName = (prod.category && prod.category.name) ? prod.category.name.toLowerCase() : '';
+      const name = (prod.name || '').toLowerCase();
+      const terms = ['bebida', 'suco', 'refrigerante', 'refrig', 'cerveja', 'agua', 'água', 'drink', 'coca', 'guaraná', 'guarana', 'fanta', 'sprite'];
+      return terms.some(t => catSlug.includes(t) || catName.includes(t) || name.includes(t));
+    },
+    isCustomizable(prod) {
+      if (!prod) return false;
+      const name = (prod.name || '').toLowerCase();
+      const catSlug = (prod.category && prod.category.slug) ? prod.category.slug.toLowerCase() : '';
+      if (name.includes('monte seu pastel') || name.includes('monte seu')) return true;
+      if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
+      if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
+      return false;
+    },
+    getItemTheme(prod) {
+      if (prod?.is_promotion) {
+        return {
+          borderClass: 'card-promo-rgb',
+          btnClass: 'btn-rgb text-white shadow-sm',
+          priceClass: 'text-rgb',
+          iconClass: 'text-danger',
+        };
+      }
+      if (this.isDrink(prod)) {
+        return {
+          borderClass: 'border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          priceClass: 'text-warning-emphasis fw-bold',
+          iconClass: 'text-warning',
+        };
+      }
+      const isCombo = prod?.is_combo || (prod.category && prod.category.slug === 'combos-especiais') || (prod.category?.name && prod.category.name.toLowerCase().includes('combo'));
+      if (isCombo) {
+        return {
+          borderClass: 'border-success',
+          btnClass: 'btn-success text-white',
+          priceClass: 'text-success fw-bold',
+          iconClass: 'text-success',
+        };
+      }
+      if (this.isCustomizable(prod)) {
+        return {
+          borderClass: 'border-primary',
+          btnClass: 'btn-primary text-white',
+          priceClass: 'text-primary fw-bold',
+          iconClass: 'text-primary',
+        };
+      }
+      return {
+        borderClass: 'border-danger',
+        btnClass: 'btn-danger text-white',
+        priceClass: 'text-danger fw-bold',
+        iconClass: 'text-danger',
+      };
+    },
+    getCategoryIcon(prod) {
+      const catSlug = (prod.category && prod.category.slug) ? prod.category.slug.toLowerCase() : '';
+      if (catSlug.includes('pizza')) return 'bi-pie-chart-fill';
+      if (catSlug.includes('bebida') || catSlug.includes('refrig') || catSlug.includes('suco')) return 'bi-cup-straw';
+      if (catSlug.includes('combo')) return 'bi-gift-fill';
+      if (catSlug.includes('monte') || catSlug.includes('tapioca') || catSlug.includes('cuscuz')) return 'bi-sliders';
+      return 'bi-tag-fill';
     },
   },
 };

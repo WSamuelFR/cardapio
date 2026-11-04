@@ -56,15 +56,15 @@
           <!-- Ações -->
           <div class="d-grid gap-2">
             <!-- Botão de Envio para WhatsApp da AKY Lanches com Pedido Formatado -->
-            <a
-              :href="whatsappUrl"
-              target="_blank"
-              class="btn btn-success py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center transition text-white text-decoration-none"
+            <button
+              type="button"
+              class="btn btn-success py-2.5 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center transition text-white"
               style="background-color: #25D366; border-color: #25D366;"
+              @click="handleSendWhatsApp"
             >
               <i class="bi bi-whatsapp fs-5 me-2"></i>
               <span>Enviar Pedido no WhatsApp da Lanchonete</span>
-            </a>
+            </button>
 
             <button class="btn btn-aky-primary py-2 fw-semibold rounded-pill shadow-sm" @click="$emit('track', order.order_number)">
               <i class="bi bi-search me-2"></i> Acompanhar Status do Pedido
@@ -81,6 +81,8 @@
 </template>
 
 <script>
+import { showError } from '../utils/swal';
+
 export default {
   props: {
     order: {
@@ -228,6 +230,25 @@ Por favor, confirmem o recebimento do meu pedido! 🙏🍟🥤`;
         setTimeout(() => {
           this.copied = false;
         }, 3000);
+      }
+    },
+    isPhoneSuspect(phone) {
+      if (!phone) return true;
+      const clean = phone.replace(/\D/g, '');
+      if (clean.length < 10) return true;
+      if (clean.includes('99999999') || clean.includes('00000000') || phone.includes('(99)')) return true;
+      return false;
+    },
+    handleSendWhatsApp() {
+      if (this.isPhoneSuspect(this.storeWhatsapp)) {
+        showError(
+          'WhatsApp Indisponível',
+          'O número de WhatsApp da lanchonete ainda não foi configurado ou é inválido. Seu pedido já foi registrado na cozinha!'
+        );
+        return;
+      }
+      if (this.whatsappUrl && this.whatsappUrl !== '#') {
+        window.open(this.whatsappUrl, '_blank');
       }
     },
   },

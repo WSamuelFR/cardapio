@@ -115,10 +115,33 @@
                 {{ currentUser.role === 'admin' ? 'Admin' : (currentUser.role === 'motoboy' ? 'Motoboy' : 'Atendente') }}
               </span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-              <li><h6 class="dropdown-header small">{{ currentUser.email }}</h6></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger cursor-pointer" @click="handleLogout"><i class="bi bi-box-arrow-right me-2"></i> Sair</a></li>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2" style="min-width: 220px;">
+              <li>
+                <button
+                  type="button"
+                  class="dropdown-item rounded-3 py-2 px-3 d-flex align-items-center gap-2 cursor-pointer"
+                  @click="showProfileModal = true"
+                >
+                  <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+                    <i class="bi bi-person-gear fs-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 150px;">{{ currentUser.name }}</div>
+                    <div class="text-muted small" style="font-size: 0.75rem;">Gerenciar Meus Dados</div>
+                  </div>
+                </button>
+              </li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li>
+                <button
+                  type="button"
+                  class="dropdown-item text-danger rounded-3 py-2 px-3 d-flex align-items-center gap-2 cursor-pointer"
+                  @click="handleLogout"
+                >
+                  <i class="bi bi-box-arrow-right fs-5"></i>
+                  <span class="fw-semibold">Sair da Conta</span>
+                </button>
+              </li>
             </ul>
           </div>
           
@@ -274,6 +297,8 @@
         v-else-if="currentView === 'tracker'"
         :initial-code="trackerCode"
         :store-info="menuData.menu_settings ? menuData.menu_settings.store_info : null"
+        :store-whatsapp="menuData.menu_settings ? menuData.menu_settings.store_whatsapp : ''"
+        :whatsapp-messages="menuData.menu_settings ? menuData.menu_settings.whatsapp_messages : []"
       />
 
       <!-- TELA PAINEL DE PEDIDOS (Admin e Atendente) -->
@@ -341,6 +366,13 @@
       @logged-in="onLoggedIn"
     />
 
+    <ProfileModal
+      :show="showProfileModal"
+      :current-user="currentUser"
+      @close="showProfileModal = false"
+      @updated="onProfileUpdated"
+    />
+
     <!-- ALERTA SONORO & TOAST FLUTUANTE DE NOVO PEDIDO PARA ADMIN (EM QUALQUER PÁGINA) -->
     <transition name="fade">
       <div
@@ -376,6 +408,7 @@ import CartModal from './components/CartModal.vue';
 import OrderSuccessModal from './components/OrderSuccessModal.vue';
 import OrderTracker from './components/OrderTracker.vue';
 import LoginModal from './components/LoginModal.vue';
+import ProfileModal from './components/ProfileModal.vue';
 import AdminOrders from './components/AdminOrders.vue';
 import AdminProducts from './components/AdminProducts.vue';
 import AdminAttendants from './components/AdminAttendants.vue';
@@ -392,6 +425,7 @@ export default {
     OrderSuccessModal,
     OrderTracker,
     LoginModal,
+    ProfileModal,
     AdminOrders,
     AdminProducts,
     AdminAttendants,
@@ -404,6 +438,7 @@ export default {
       currentUser: null,
       showCart: false,
       showLogin: false,
+      showProfileModal: false,
       createdOrder: null,
       trackerCode: '',
       cart: [],
@@ -669,6 +704,11 @@ export default {
         this.currentView = 'motoboy-orders';
       } else {
         this.currentView = 'admin-orders';
+      }
+    },
+    onProfileUpdated(updatedUser) {
+      if (updatedUser) {
+        this.currentUser = { ...this.currentUser, ...updatedUser };
       }
     },
     async handleLogout() {

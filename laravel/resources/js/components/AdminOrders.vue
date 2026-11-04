@@ -10,7 +10,18 @@
         <small class="text-muted">Gerencie a esteira de atendimento da cozinha e entrega</small>
       </div>
 
-      <div class="d-flex gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <button
+          v-if="paginatedOrders.length > 0"
+          type="button"
+          class="btn btn-outline-dark rounded-pill btn-sm px-3 shadow-sm bg-white d-flex align-items-center gap-1.5 transition"
+          @click="toggleAllOrdersExpand"
+          :title="areAllVisibleExpanded ? 'Recolher todos os cards visíveis' : 'Expandir todos os cards visíveis'"
+        >
+          <i :class="areAllVisibleExpanded ? 'bi bi-arrows-collapse' : 'bi bi-arrows-expand'"></i>
+          <span class="d-none d-sm-inline">{{ areAllVisibleExpanded ? 'Recolher Todos' : 'Expandir Todos' }}</span>
+        </button>
+
         <button class="btn btn-outline-secondary rounded-pill btn-sm px-3 shadow-sm bg-white" @click="fetchOrders" :disabled="loading">
           <i class="bi bi-arrow-clockwise me-1" :class="{'spin': loading}"></i> Atualizar
         </button>
@@ -104,168 +115,277 @@
       <h6 class="text-muted fw-semibold">Nenhum pedido encontrado nesta visualização</h6>
     </div>
 
-    <!-- Grade de Cards de Pedidos Operacionais -->
+    <!-- Grade de Cards de Pedidos Operacionais (Expansíveis) -->
     <div v-else class="row g-3">
       <div v-for="order in paginatedOrders" :key="order.id" class="col-12 col-md-6 col-lg-4">
-        <div :class="['card border-0 border-start border-3 shadow-sm rounded-4 h-100 bg-white overflow-hidden transition', statusBorderClass(order.status), order.status === 'cancelado' ? 'opacity-75' : '']">
-          <div class="card-header bg-transparent border-0 pt-3 px-3 pb-0 d-flex justify-content-between align-items-center">
-            <span class="badge font-monospace fs-6 px-3 py-1 shadow-sm rounded-pill" :class="statusBadgeClass(order.status)">
+        <div :class="['card border-0 border-start border-3 shadow-sm rounded-4 bg-white overflow-hidden transition', statusBorderClass(order.status), order.status === 'cancelado' ? 'opacity-75' : '']">
+          
+          <!-- Cabeçalho Limpo e Direto: Apenas Código, Horário e Botão Expandir -->
+          <div class="card-header bg-transparent border-0 pt-3 px-3 pb-1 d-flex justify-content-between align-items-center">
+            <span
+              class="badge font-monospace fs-6 px-2.5 py-1 shadow-sm rounded-pill cursor-pointer"
+              :class="statusBadgeClass(order.status)"
+              @click="toggleOrderExpand(order.id)"
+              :title="isOrderExpanded(order.id) ? 'Recolher detalhes' : 'Expandir detalhes'"
+            >
               {{ order.order_number }}
             </span>
-            <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ formatTime(order.created_at) }}</small>
-          </div>
 
-          <div class="card-body p-3">
-            <h6 class="fw-bold text-dark mb-1">{{ order.customer_name }}</h6>
-            <div class="small text-muted mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1">
-              <span class="d-inline-flex align-items-center gap-1">
-                <i class="bi bi-telephone text-aky-primary"></i>
-                <span :class="isPhoneSuspect(order.customer_phone) ? 'text-danger fw-bold' : ''">{{ order.customer_phone }}</span>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-link p-0 text-muted"
-                  title="Editar número de telefone do pedido"
-                  @click="openEditPhoneModal(order)"
-                >
-                  <i class="bi bi-pencil-square text-primary"></i>
-                </button>
-              </span>
-
+            <div class="d-flex align-items-center gap-1.5">
+              <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ formatTime(order.created_at) }}</small>
+              
+              <!-- Botão Discreto de Impressão de Cupom para a Cozinha -->
               <button
-                v-if="isPhoneSuspect(order.customer_phone)"
                 type="button"
-                class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-bold d-inline-flex align-items-center shadow-sm"
-                style="font-size: 0.73rem;"
-                title="Número de teste ou formato inválido. Clique para corrigir antes de enviar para o WhatsApp."
-                @click="openEditPhoneModal(order)"
+                class="btn btn-sm btn-light border rounded-circle p-0 d-flex align-items-center justify-content-center shadow-none text-muted transition"
+                style="width: 28px; height: 28px;"
+                @click.stop="printKitchenTicket(order)"
+                title="Imprimir cupom descritivo para a cozinha"
               >
-                <i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i> Corrigir WhatsApp
+                <i class="bi bi-printer"></i>
               </button>
 
-              <a
-                v-else-if="order.customer_phone"
-                :href="getCustomerWhatsAppUrl(order)"
-                target="_blank"
-                class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-0.5 fw-bold d-inline-flex align-items-center text-decoration-none shadow-sm"
-                style="font-size: 0.73rem;"
-                title="Notificar cliente no WhatsApp"
+              <button
+                type="button"
+                class="btn btn-sm btn-light border rounded-circle p-0 d-flex align-items-center justify-content-center shadow-none expand-toggle-btn transition"
+                style="width: 28px; height: 28px;"
+                @click="toggleOrderExpand(order.id)"
+                :title="isOrderExpanded(order.id) ? 'Recolher detalhes do pedido' : 'Expandir detalhes do pedido'"
               >
-                <i class="bi bi-whatsapp me-1 text-success"></i> WhatsApp
-              </a>
+                <i class="bi" :class="isOrderExpanded(order.id) ? 'bi-chevron-up text-primary fw-bold' : 'bi-chevron-down text-muted'"></i>
+              </button>
             </div>
-            <div class="small text-secondary mb-3">
-              <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-dark rounded-pill px-2.5 py-1 mb-1 d-inline-flex align-items-center">
-                <i class="bi bi-shop me-1 text-warning"></i> Retirada no Estabelecimento
+          </div>
+
+          <div class="card-body p-3 pt-1">
+            <!-- Linha Principal Super Limpa: Nome do Cliente e Total -->
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-1 cursor-pointer" @click="toggleOrderExpand(order.id)">
+              <h6 class="fw-bold text-dark mb-0 text-truncate" :title="order.customer_name">
+                {{ order.customer_name }}
+              </h6>
+              <span class="fw-bold text-aky-primary fs-6 flex-shrink-0">
+                R$ {{ formatPrice(order.total) }}
               </span>
-              <div v-else>
-                <i class="bi bi-geo-alt me-1 text-aky-primary"></i> {{ order.delivery_address }}
-                <span v-if="order.delivery_complement"> ({{ order.delivery_complement }})</span>
-              </div>
             </div>
 
-            <!-- Itens do Pedido -->
-            <div class="bg-light rounded-3 p-2 small mb-3">
-              <div v-for="item in order.items" :key="item.id" class="d-flex justify-content-between text-dark py-1">
-                <span>{{ item.quantity }}x {{ item.product_name_snapshot }}</span>
-                <span class="text-muted">R$ {{ formatPrice(item.subtotal) }}</span>
-              </div>
-              <div v-if="order.notes" class="mt-2 pt-2 border-top text-danger fst-italic">
-                <i class="bi bi-chat-left-dots me-1"></i> Obs: {{ order.notes }}
-              </div>
+            <!-- Botão Minimalista para Expandir / Recolher Detalhes -->
+            <div class="d-flex align-items-center justify-content-between pb-1">
+              <button
+                type="button"
+                class="btn btn-sm btn-link p-0 text-decoration-none small text-muted d-inline-flex align-items-center gap-1 transition"
+                style="font-size: 0.74rem;"
+                @click="toggleOrderExpand(order.id)"
+              >
+                <span>{{ isOrderExpanded(order.id) ? 'Recolher detalhes' : 'Mais detalhes' }}</span>
+                <i class="bi" :class="isOrderExpanded(order.id) ? 'bi-chevron-up text-primary' : 'bi-chevron-down text-primary'"></i>
+              </button>
+
+              <span v-if="!isOrderExpanded(order.id)" class="text-muted" style="font-size: 0.72rem;">
+                {{ getOrderItemsCount(order) }} {{ getOrderItemsCount(order) === 1 ? 'item' : 'itens' }}
+              </span>
             </div>
 
-            <!-- FORMA DE PAGAMENTO E INFORMAÇÃO DE TROCO -->
-            <div class="p-2 rounded-3 bg-light border small mb-3">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="text-muted" style="font-size: 0.72rem;">Pagamento:</span>
-                <span :class="paymentBadgeClass(order.payment_method)" class="badge rounded-pill fw-semibold">
+            <!-- ======================================================== -->
+            <!-- CONTEÚDO DETALHADO DO PEDIDO (EXPANSÍVEL)                -->
+            <!-- ======================================================== -->
+            <div v-if="isOrderExpanded(order.id)" class="pt-2 border-top mt-1 animate-expand">
+              
+              <!-- Badges de Identificação Operacional (Exibidas Apenas Quando Expandido) -->
+              <div class="d-flex align-items-center gap-1 flex-wrap mb-2.5" style="font-size: 0.72rem;">
+                <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-dark rounded-pill px-2 py-1">
+                  <i class="bi bi-shop text-warning me-1"></i>Balcão (Retirada)
+                </span>
+                <span v-else class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1">
+                  <i class="bi bi-bicycle me-1"></i>Entrega em Domicílio
+                </span>
+
+                <span class="badge bg-light text-dark border rounded-pill px-2 py-1">
+                  🛒 {{ getOrderItemsCount(order) }} {{ getOrderItemsCount(order) === 1 ? 'item' : 'itens' }}
+                </span>
+
+                <span :class="paymentBadgeClass(order.payment_method)" class="badge rounded-pill px-2 py-1">
                   <i :class="paymentIconClass(order.payment_method)" class="me-1"></i>
                   {{ paymentLabel(order.payment_method) }}
                 </span>
-              </div>
 
-              <!-- Detalhes de Troco para Dinheiro -->
-              <div v-if="order.payment_method === 'dinheiro'" class="mt-1 pt-1 border-top" style="font-size: 0.72rem;">
-                <div v-if="order.needs_change && order.change_for" class="d-flex justify-content-between align-items-center text-dark">
-                  <span>Troco p/ R$ {{ formatPrice(order.change_for) }}:</span>
-                  <span class="fw-bold text-danger">Devolver R$ {{ formatPrice(order.change_for - order.total) }}</span>
-                </div>
-                <div v-else class="text-muted">
-                  <i class="bi bi-check2 text-success me-1"></i> Não precisa de troco
-                </div>
-              </div>
-            </div>
-
-            <!-- BOTÃO PARA ABRIR O MODAL DE SELEÇÃO DE MOTOBOY COM BUSCA (Apenas se for pedido de entrega) -->
-            <div class="mb-3">
-              <!-- Se for pedido de retirada no estabelecimento -->
-              <div v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="p-2.5 rounded-pill bg-light border text-center d-flex align-items-center justify-content-center gap-2">
-                <i class="bi bi-shop text-dark fs-5"></i>
-                <span class="small fw-bold text-dark">Retirada no Balcão (Sem Entregador)</span>
-              </div>
-
-              <!-- Se for pedido de entrega tradicional -->
-              <button
-                v-else
-                class="btn btn-sm w-100 rounded-pill py-2 d-flex align-items-center justify-content-between px-3 border shadow-sm transition"
-                :class="order.motoboy ? 'btn-white text-dark border-primary' : 'btn-light text-muted'"
-                :disabled="order.status === 'concluido'"
-                @click="openMotoboyModal(order)"
-              >
-                <div class="d-flex align-items-center text-truncate">
-                  <i class="bi bi-bicycle fs-5 me-2" :class="order.motoboy ? 'text-primary' : 'text-muted'"></i>
-                  <div class="text-start text-truncate">
-                    <small class="text-muted d-block" style="font-size: 0.68rem;">Entregador:</small>
-                    <span class="fw-bold small">{{ order.motoboy ? order.motoboy.name : 'Nenhum entregador atribuído' }}</span>
-                  </div>
-                </div>
-                <span v-if="order.status !== 'concluido'" class="badge rounded-pill bg-primary bg-opacity-10 text-primary ms-2">
-                  {{ order.motoboy ? 'Alterar' : 'Escolher' }}
+                <span v-if="order.motoboy" class="badge bg-light text-primary border rounded-pill px-2 py-1 text-truncate" style="max-width: 140px;">
+                  <i class="bi bi-bicycle me-1"></i>{{ order.motoboy.name.split(' ')[0] }}
                 </span>
-                <span v-else class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary ms-2" title="Bloqueado para alterações">
-                  <i class="bi bi-lock-fill"></i>
-                </span>
-              </button>
-            </div>
 
-            <!-- STATUS DE CONFIRMAÇÃO ANTIFRAUDE E AVALIAÇÃO DO CLIENTE -->
-            <div class="p-2 rounded-3 bg-light border small mb-3">
+                <span v-if="order.food_rating" class="badge bg-warning bg-opacity-25 text-dark rounded-pill px-2 py-1">
+                  ⭐ {{ order.food_rating }}★
+                </span>
+              </div>
+              
+              <!-- Telefone e Notificação WhatsApp -->
+              <div class="small text-muted mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1">
+                <span class="d-inline-flex align-items-center gap-1">
+                  <i class="bi bi-telephone text-aky-primary"></i>
+                  <span :class="isPhoneSuspect(order.customer_phone) ? 'text-danger fw-bold' : ''">{{ order.customer_phone }}</span>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link p-0 text-muted"
+                    title="Editar número de telefone do pedido"
+                    @click="openEditPhoneModal(order)"
+                  >
+                    <i class="bi bi-pencil-square text-primary"></i>
+                  </button>
+                </span>
+
+                <button
+                  v-if="isPhoneSuspect(order.customer_phone)"
+                  type="button"
+                  class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-bold d-inline-flex align-items-center shadow-sm"
+                  style="font-size: 0.73rem;"
+                  title="Número de teste ou formato inválido. Clique para corrigir antes de enviar para o WhatsApp."
+                  @click="openEditPhoneModal(order)"
+                >
+                  <i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i> Corrigir WhatsApp
+                </button>
+
+                <a
+                  v-else-if="order.customer_phone"
+                  :href="getCustomerWhatsAppUrl(order)"
+                  target="_blank"
+                  class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-0.5 fw-bold d-inline-flex align-items-center text-decoration-none shadow-sm"
+                  style="font-size: 0.73rem;"
+                  title="Notificar cliente no WhatsApp"
+                >
+                  <i class="bi bi-whatsapp me-1 text-success"></i> WhatsApp
+                </a>
+              </div>
+
+              <!-- Endereço -->
+              <div class="small text-secondary mb-3">
+                <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-dark rounded-pill px-2.5 py-1 mb-1 d-inline-flex align-items-center">
+                  <i class="bi bi-shop me-1 text-warning"></i> Retirada no Estabelecimento
+                </span>
+                <div v-else>
+                  <i class="bi bi-geo-alt me-1 text-aky-primary"></i> {{ order.delivery_address }}
+                  <span v-if="order.delivery_complement"> ({{ order.delivery_complement }})</span>
+                </div>
+              </div>
+
+              <!-- Itens do Pedido -->
               <div class="d-flex justify-content-between align-items-center mb-1">
-                <span style="font-size: 0.72rem;">
-                  <i class="bi bi-bicycle text-info me-1"></i> <strong>Motoboy:</strong>
-                </span>
-                <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-secondary" style="font-size: 0.68rem;">Disp. (Retirada)</span>
-                <span v-else-if="order.motoboy_confirmed_at" class="badge bg-success" style="font-size: 0.68rem;">Confirmou ✓</span>
-                <span v-else class="badge bg-secondary" style="font-size: 0.68rem;">Pendente ⏳</span>
+                <span class="small fw-bold text-dark">Itens do Pedido ({{ getOrderItemsCount(order) }}):</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-0.5 fw-semibold d-inline-flex align-items-center gap-1 shadow-none"
+                  style="font-size: 0.72rem;"
+                  @click.stop="printKitchenTicket(order)"
+                  title="Reimprimir cupom descritivo para a cozinha"
+                >
+                  <i class="bi bi-printer text-dark"></i> Imprimir Cozinha
+                </button>
+              </div>
+              <div class="bg-light rounded-3 p-2 small mb-3">
+                <div v-for="item in order.items" :key="item.id" class="d-flex justify-content-between text-dark py-1">
+                  <span>{{ item.quantity }}x {{ item.product_name_snapshot }}</span>
+                  <span class="text-muted">R$ {{ formatPrice(item.subtotal) }}</span>
+                </div>
+                <div v-if="order.notes" class="mt-2 pt-2 border-top text-danger fst-italic">
+                  <i class="bi bi-chat-left-dots me-1"></i> Obs: {{ order.notes }}
+                </div>
               </div>
 
-              <div class="d-flex justify-content-between align-items-center">
-                <span style="font-size: 0.72rem;">
-                  <i class="bi bi-person-check text-primary me-1"></i> <strong>Cliente:</strong>
-                </span>
-                <span v-if="order.customer_confirmed_at" class="badge bg-success" style="font-size: 0.68rem;">Confirmou ✓</span>
-                <span v-else class="badge bg-warning text-dark" style="font-size: 0.68rem;">Pendente ⏳</span>
-              </div>
+              <!-- Forma de Pagamento e Detalhes de Troco -->
+              <div class="p-2 rounded-3 bg-light border small mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-muted" style="font-size: 0.72rem;">Pagamento:</span>
+                  <span :class="paymentBadgeClass(order.payment_method)" class="badge rounded-pill fw-semibold">
+                    <i :class="paymentIconClass(order.payment_method)" class="me-1"></i>
+                    {{ paymentLabel(order.payment_method) }}
+                  </span>
+                </div>
 
-              <!-- Se houver avaliação de lanche / entrega -->
-              <div v-if="order.food_rating" class="mt-2 pt-2 border-top">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="fw-bold text-dark" style="font-size: 0.72rem;">⭐ Avaliação:</span>
-                  <div class="text-warning small" style="font-size: 0.75rem;">
-                    <span>🍔 {{ order.food_rating }}★</span>
-                    <span class="ms-1.5">🛵 {{ order.delivery_rating }}★</span>
+                <!-- Detalhes de Troco para Dinheiro -->
+                <div v-if="order.payment_method === 'dinheiro'" class="mt-1 pt-1 border-top" style="font-size: 0.72rem;">
+                  <div v-if="order.needs_change && order.change_for" class="d-flex justify-content-between align-items-center text-dark">
+                    <span>Troco p/ R$ {{ formatPrice(order.change_for) }}:</span>
+                    <span class="fw-bold text-danger">Devolver R$ {{ formatPrice(order.change_for - order.total) }}</span>
+                  </div>
+                  <div v-else class="text-muted">
+                    <i class="bi bi-check2 text-success me-1"></i> Não precisa de troco
                   </div>
                 </div>
-                <div v-if="order.review_comment" class="text-muted fst-italic p-1.5 bg-white rounded border" style="font-size: 0.7rem; line-height: 1.2;">
-                  "{{ order.review_comment }}"
+              </div>
+
+              <!-- Atribuição de Motoboy -->
+              <div class="mb-3">
+                <!-- Se for pedido de retirada no estabelecimento -->
+                <div v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="p-2.5 rounded-pill bg-light border text-center d-flex align-items-center justify-content-center gap-2">
+                  <i class="bi bi-shop text-dark fs-5"></i>
+                  <span class="small fw-bold text-dark">Retirada no Balcão (Sem Entregador)</span>
+                </div>
+
+                <!-- Se for pedido de entrega tradicional -->
+                <button
+                  v-else
+                  class="btn btn-sm w-100 rounded-pill py-2 d-flex align-items-center justify-content-between px-3 border shadow-sm transition"
+                  :class="order.motoboy ? 'btn-white text-dark border-primary' : 'btn-light text-muted'"
+                  :disabled="order.status === 'concluido'"
+                  @click="openMotoboyModal(order)"
+                >
+                  <div class="d-flex align-items-center text-truncate">
+                    <i class="bi bi-bicycle fs-5 me-2" :class="order.motoboy ? 'text-primary' : 'text-muted'"></i>
+                    <div class="text-start text-truncate">
+                      <small class="text-muted d-block" style="font-size: 0.68rem;">Entregador:</small>
+                      <span class="fw-bold small">{{ order.motoboy ? order.motoboy.name : 'Nenhum entregador atribuído' }}</span>
+                    </div>
+                  </div>
+                  <span v-if="order.status !== 'concluido'" class="badge rounded-pill bg-primary bg-opacity-10 text-primary ms-2">
+                    {{ order.motoboy ? 'Alterar' : 'Escolher' }}
+                  </span>
+                  <span v-else class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary ms-2" title="Bloqueado para alterações">
+                    <i class="bi bi-lock-fill"></i>
+                  </span>
+                </button>
+              </div>
+
+              <!-- Confirmação Antifraude e Avaliação -->
+              <div class="p-2 rounded-3 bg-light border small mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span style="font-size: 0.72rem;">
+                    <i class="bi bi-bicycle text-info me-1"></i> <strong>Motoboy:</strong>
+                  </span>
+                  <span v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')" class="badge bg-secondary" style="font-size: 0.68rem;">Disp. (Retirada)</span>
+                  <span v-else-if="order.motoboy_confirmed_at" class="badge bg-success" style="font-size: 0.68rem;">Confirmou ✓</span>
+                  <span v-else class="badge bg-secondary" style="font-size: 0.68rem;">Pendente ⏳</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                  <span style="font-size: 0.72rem;">
+                    <i class="bi bi-person-check text-primary me-1"></i> <strong>Cliente:</strong>
+                  </span>
+                  <span v-if="order.customer_confirmed_at" class="badge bg-success" style="font-size: 0.68rem;">Confirmou ✓</span>
+                  <span v-else class="badge bg-warning text-dark" style="font-size: 0.68rem;">Pendente ⏳</span>
+                </div>
+
+                <!-- Se houver avaliação de lanche / entrega -->
+                <div v-if="order.food_rating" class="mt-2 pt-2 border-top">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold text-dark" style="font-size: 0.72rem;">⭐ Avaliação:</span>
+                    <div class="text-warning small" style="font-size: 0.75rem;">
+                      <span>🍔 {{ order.food_rating }}★</span>
+                      <span class="ms-1.5">🛵 {{ order.delivery_rating }}★</span>
+                    </div>
+                  </div>
+                  <div v-if="order.review_comment" class="text-muted fst-italic p-1.5 bg-white rounded border" style="font-size: 0.7rem; line-height: 1.2;">
+                    "{{ order.review_comment }}"
+                  </div>
                 </div>
               </div>
+
             </div>
 
-            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-              <div>
-                <small class="text-muted d-block" style="font-size: 0.7rem;">Valor Total</small>
-                <span class="fw-bold text-aky-primary fs-5">R$ {{ formatPrice(order.total) }}</span>
+            <!-- Rodapé do Card: Status Atual e Botão de Ação (Sempre Visível) -->
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-1">
+              <div class="d-flex align-items-center gap-1">
+                <small class="text-muted" style="font-size: 0.7rem;">Status:</small>
+                <span class="fw-semibold text-dark small" style="font-size: 0.74rem;">
+                  {{ statusLabel(order.status, order.delivery_address && order.delivery_address.includes('RETIRADA')) }}
+                </span>
               </div>
 
               <div class="d-flex align-items-center gap-2">
@@ -282,7 +402,7 @@
                 <!-- Se pedido Concluído, mostra selo bloqueado -->
                 <span
                   v-if="order.status === 'concluido'"
-                  class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center"
+                  class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center"
                 >
                   <i class="bi bi-lock-fill me-1"></i> Concluído
                 </span>
@@ -295,7 +415,7 @@
                     type="button"
                     data-bs-toggle="dropdown"
                   >
-                    {{ statusLabel(order.status, order.delivery_address && order.delivery_address.includes('RETIRADA')) }}
+                    Mudar Status
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2">
                     <li><h6 class="dropdown-header small text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Mudar Status:</h6></li>
@@ -669,6 +789,7 @@
 import axios from 'axios';
 import { maskPhone } from '../utils/masks';
 import { showError, showSuccess } from '../utils/swal';
+import { printThermalTicket } from '../utils/printer';
 
 export default {
   data() {
@@ -694,6 +815,11 @@ export default {
       orderToNotifyWhatsApp: null,
       customWhatsAppList: [],
       selectedMsgTemplateId: null,
+      expandedOrderIds: [],
+      printSettings: null,
+      storeInfo: null,
+      selectedMsgTemplateId: null,
+      expandedOrderIds: [],
 
       // Paginação
       currentPage: 1,
@@ -706,6 +832,10 @@ export default {
     },
   },
   computed: {
+    areAllVisibleExpanded() {
+      if (!this.paginatedOrders || this.paginatedOrders.length === 0) return false;
+      return this.paginatedOrders.every(o => this.expandedOrderIds.includes(o.id));
+    },
     statusCounts() {
       const counts = {
         all: this.allOrders.length,
@@ -759,6 +889,31 @@ export default {
     this.stopPolling();
   },
   methods: {
+    isOrderExpanded(orderId) {
+      return this.expandedOrderIds.includes(orderId);
+    },
+    toggleOrderExpand(orderId) {
+      const idx = this.expandedOrderIds.indexOf(orderId);
+      if (idx > -1) {
+        this.expandedOrderIds.splice(idx, 1);
+      } else {
+        this.expandedOrderIds.push(orderId);
+      }
+    },
+    toggleAllOrdersExpand() {
+      if (this.areAllVisibleExpanded) {
+        const visibleIds = this.paginatedOrders.map(o => o.id);
+        this.expandedOrderIds = this.expandedOrderIds.filter(id => !visibleIds.includes(id));
+      } else {
+        const visibleIds = this.paginatedOrders.map(o => o.id);
+        const newSet = new Set([...this.expandedOrderIds, ...visibleIds]);
+        this.expandedOrderIds = Array.from(newSet);
+      }
+    },
+    getOrderItemsCount(order) {
+      if (!order || !order.items) return 0;
+      return order.items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+    },
     goToPage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page;
@@ -823,11 +978,26 @@ export default {
     async fetchWhatsAppTemplate() {
       try {
         const res = await axios.get('/api/admin/store-info');
-        if (res.data && res.data.whatsapp_messages) {
-          this.customWhatsAppList = res.data.whatsapp_messages;
+        if (res.data) {
+          if (res.data.whatsapp_messages) {
+            this.customWhatsAppList = res.data.whatsapp_messages;
+          }
+          if (res.data.print_settings) {
+            this.printSettings = res.data.print_settings;
+          }
+          if (res.data.store_info) {
+            this.storeInfo = res.data.store_info;
+          }
         }
       } catch (err) {
         // silencioso
+      }
+    },
+    async printKitchenTicket(order) {
+      try {
+        await printThermalTicket(order, this.printSettings || {}, this.storeInfo || {});
+      } catch (err) {
+        console.error('Falha ao acionar impressão de comanda de cozinha:', err);
       }
     },
     async fetchOrders(silent = false) {
@@ -1126,5 +1296,25 @@ Qualquer dúvida estamos à disposição! 🍔🥤`;
 @keyframes rotation {
   from { transform: rotate(0deg); }
   to { transform: rotate(359deg); }
+}
+
+.expand-toggle-btn:hover {
+  background-color: #e9ecef !important;
+  transform: scale(1.08);
+}
+
+.animate-expand {
+  animation: fadeInDown 0.25s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

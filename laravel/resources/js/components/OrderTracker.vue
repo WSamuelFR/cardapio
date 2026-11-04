@@ -1,55 +1,192 @@
 <template>
-  <div class="card border-0 shadow-sm rounded-4 p-4 my-4 bg-white">
+  <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 my-4 bg-white">
     
     <!-- Cabeçalho -->
-    <div class="d-flex align-items-center mb-3">
-      <div class="rounded-circle bg-danger bg-opacity-10 p-2 me-2 text-aky-primary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-        <i class="bi bi-clock-history fs-4"></i>
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+      <div class="d-flex align-items-center">
+        <div class="rounded-circle bg-danger bg-opacity-10 p-2 me-2 text-aky-primary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+          <i class="bi bi-clock-history fs-4"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold mb-0 text-dark">Acompanhar Pedido</h5>
+          <small class="text-muted">Consulte o status do seu pedido em tempo real</small>
+        </div>
       </div>
-      <div>
-        <h5 class="fw-bold mb-0 text-dark">Acompanhar Pedido</h5>
-        <small class="text-muted">Consulte o status em tempo real</small>
-      </div>
+
+      <button
+        v-if="order"
+        type="button"
+        class="btn btn-sm btn-light border rounded-pill px-3 py-1.5 text-muted d-inline-flex align-items-center gap-1.5 shadow-none"
+        @click="resetSearch"
+      >
+        <i class="bi bi-search"></i>
+        <span>Consultar outro</span>
+      </button>
     </div>
 
-    <!-- Barra de Busca Compacta (Apenas o Ícone de Lupa no Botão) -->
+    <!-- Barra de Busca -->
     <div class="input-group mb-3 shadow-sm rounded-pill overflow-hidden border">
       <input
         type="text"
         class="form-control text-uppercase font-monospace border-0 shadow-none ps-3"
         placeholder="Digite o código (ex: AKY-20261029-ABCD)"
         v-model="orderNumber"
-        @keyup.enter="searchOrder"
+        @keyup.enter="searchOrder(true)"
       >
-      <button class="btn btn-aky-primary px-3 px-sm-4 border-0 d-flex align-items-center justify-content-center" @click="searchOrder" :disabled="loading" title="Consultar">
+      <button
+        class="btn btn-aky-primary px-3 px-sm-4 border-0 d-flex align-items-center justify-content-center"
+        @click="searchOrder(true)"
+        :disabled="loading"
+        title="Consultar"
+      >
         <span v-if="loading" class="spinner-border spinner-border-sm"></span>
         <i v-else class="bi bi-search fs-5"></i>
       </button>
     </div>
 
-    <div v-if="error" class="alert alert-warning py-2 small rounded-3">
-      <i class="bi bi-info-circle me-1"></i> {{ error }}
+    <!-- Pedidos Recentes Consultados Neste Aparelho -->
+    <div v-if="recentOrders.length > 0 && !order" class="mb-3 p-2.5 rounded-4 bg-light border">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <small class="text-muted fw-bold d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+          <i class="bi bi-clock-history text-danger"></i> Pedidos Recentes neste Aparelho:
+        </small>
+        <button
+          type="button"
+          class="btn btn-link p-0 text-muted small text-decoration-none"
+          style="font-size: 0.72rem;"
+          @click="clearRecentOrders"
+        >
+          Limpar histórico
+        </button>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <button
+          v-for="rec in recentOrders"
+          :key="rec.code"
+          type="button"
+          class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark d-flex align-items-center gap-2 shadow-sm transition hover-pill"
+          @click="selectRecentOrder(rec.code)"
+        >
+          <span class="font-monospace fw-bold text-aky-primary" style="font-size: 0.78rem;">{{ rec.code }}</span>
+          <span v-if="rec.date" class="text-muted small d-none d-sm-inline" style="font-size: 0.7rem;">• {{ rec.date }}</span>
+          <span class="badge rounded-pill" :class="getStatusBadgeClass(rec.status)" style="font-size: 0.65rem;">
+            {{ getStatusLabel(rec.status) }}
+          </span>
+        </button>
+      </div>
     </div>
 
-    <!-- Resultado do Pedido -->
+    <!-- Alerta de Erro -->
+    <div v-if="error" class="alert alert-warning py-2 small rounded-3 d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle fs-5 flex-shrink-0"></i>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- RESULTADO DO PEDIDO                                       -->
+    <!-- ======================================================== -->
     <div v-if="order" class="card bg-light border-0 rounded-4 p-3 mt-2 shadow-sm">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      
+      <!-- Cabeçalho do Pedido com Código, Cópia e Auto-refresh -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-3 border-bottom">
         <div>
           <span class="text-muted small d-block">Código do Pedido:</span>
-          <span class="fw-bold fs-5 font-monospace text-aky-primary">{{ order.order_number }}</span>
+          <div class="d-flex align-items-center gap-2 mt-0.5">
+            <span class="fw-bold fs-5 font-monospace text-aky-primary">{{ order.order_number }}</span>
+            <button
+              type="button"
+              class="btn btn-sm rounded-pill px-2.5 py-0.5 border d-inline-flex align-items-center gap-1 transition"
+              :class="copiedCode ? 'btn-success text-white' : 'btn-white bg-white text-dark shadow-sm'"
+              style="font-size: 0.72rem;"
+              @click="copyOrderCode"
+              :title="copiedCode ? 'Código copiado!' : 'Copiar código'"
+            >
+              <i :class="copiedCode ? 'bi bi-check2' : 'bi bi-copy'"></i>
+              <span>{{ copiedCode ? 'Copiado!' : 'Copiar' }}</span>
+            </button>
+          </div>
         </div>
-        <div class="text-end">
-          <span class="text-muted small d-block">Horário do Pedido:</span>
-          <span class="small text-dark fw-semibold">{{ formatDate(order.created_at) }}</span>
+
+        <div class="d-flex align-items-center gap-2 text-end">
+          <div v-if="isActiveOrder" class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 0.72rem;">
+            <span class="live-dot"></span>
+            <span>Ao Vivo (15s)</span>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-sm btn-white bg-white border rounded-pill px-2.5 py-1 text-dark d-inline-flex align-items-center gap-1 shadow-sm transition"
+            style="font-size: 0.75rem;"
+            @click="searchOrder(false)"
+            :disabled="loading"
+            title="Atualizar dados agora"
+          >
+            <i class="bi bi-arrow-repeat" :class="loading ? 'spin-icon' : ''"></i>
+            <span class="d-none d-sm-inline">Atualizar</span>
+          </button>
         </div>
       </div>
 
       <!-- ======================================================== -->
-      <!-- EXIBIÇÃO EXCLUSIVA DO STATUS ATUAL (APENAS A INFORMAÇÃO ATUAL) -->
+      <!-- LINHA DO TEMPO VISUAL (STEPPER DE 4 ETAPAS)              -->
+      <!-- ======================================================== -->
+      <div v-if="order.status !== 'cancelado'" class="card bg-white border-0 rounded-4 p-3 mb-3 shadow-sm">
+        <div class="stepper-container">
+          <!-- Linha de fundo -->
+          <div class="stepper-progress-track">
+            <div
+              class="stepper-progress-fill"
+              :style="{ width: stepperProgressPercent + '%' }"
+            ></div>
+          </div>
+
+          <!-- Os 4 Passos -->
+          <div class="stepper-steps">
+            <!-- Passo 1: Recebido -->
+            <div class="step-item" :class="getStepClass(1)">
+              <div class="step-circle shadow-sm">
+                <i v-if="currentStepIndex > 1" class="bi bi-check-lg"></i>
+                <i v-else class="bi bi-receipt"></i>
+              </div>
+              <div class="step-label">Recebido</div>
+            </div>
+
+            <!-- Passo 2: Em Preparo -->
+            <div class="step-item" :class="getStepClass(2)">
+              <div class="step-circle shadow-sm">
+                <i v-if="currentStepIndex > 2" class="bi bi-check-lg"></i>
+                <i v-else class="bi bi-fire"></i>
+              </div>
+              <div class="step-label">Em Preparo</div>
+            </div>
+
+            <!-- Passo 3: A Caminho / Pronto -->
+            <div class="step-item" :class="getStepClass(3)">
+              <div class="step-circle shadow-sm">
+                <i v-if="currentStepIndex > 3" class="bi bi-check-lg"></i>
+                <i v-else :class="isPickupOrder ? 'bi bi-shop' : 'bi bi-bicycle'"></i>
+              </div>
+              <div class="step-label">{{ isPickupOrder ? 'Pronto' : 'A Caminho' }}</div>
+            </div>
+
+            <!-- Passo 4: Concluído -->
+            <div class="step-item" :class="getStepClass(4)">
+              <div class="step-circle shadow-sm">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+              <div class="step-label">Entregue</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- CARD DE STATUS ATUAL DETALHADO                            -->
       <!-- ======================================================== -->
 
       <!-- 1. STATUS: RECEBIDO -->
-      <div v-if="order.status === 'recebido'" class="card border-0 shadow-sm rounded-4 p-3 my-3 bg-white border-start border-4 border-warning">
+      <div v-if="order.status === 'recebido'" class="card border-0 shadow-sm rounded-4 p-3 my-2 bg-white border-start border-4 border-warning">
         <div class="d-flex align-items-center gap-3">
           <div class="rounded-circle bg-warning bg-opacity-25 text-dark p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
             <i class="bi bi-receipt fs-2 text-warning"></i>
@@ -63,7 +200,7 @@
       </div>
 
       <!-- 2. STATUS: EM PREPARAÇÃO -->
-      <div v-else-if="order.status === 'em_preparacao'" class="card border-0 shadow-sm rounded-4 p-3 my-3 bg-white border-start border-4 border-primary">
+      <div v-else-if="order.status === 'em_preparacao'" class="card border-0 shadow-sm rounded-4 p-3 my-2 bg-white border-start border-4 border-primary">
         <div class="d-flex align-items-center gap-3">
           <div class="rounded-circle bg-primary bg-opacity-25 text-primary p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
             <i class="bi bi-fire fs-2 text-primary"></i>
@@ -76,10 +213,11 @@
         </div>
       </div>
 
-      <!-- 3. STATUS: SAIU PARA ENTREGA (COM IDENTIFICAÇÃO DO MOTOBOY E ANIMAÇÃO DA MOTO OU AVISO DE RETIRADA) -->
-      <div v-else-if="order.status === 'saiu_para_entrega'" class="delivery-track-box my-3 p-3 bg-white rounded-4 shadow-sm border border-info border-start border-4 border-info">
+      <!-- 3. STATUS: SAIU PARA ENTREGA (COM MOTOBOY E ANIMAÇÃO OU BALCÃO DE RETIRADA) -->
+      <div v-else-if="order.status === 'saiu_para_entrega'" class="delivery-track-box my-2 p-3 bg-white rounded-4 shadow-sm border border-info border-start border-4 border-info">
         
-        <template v-if="order.delivery_address && order.delivery_address.includes('RETIRADA')">
+        <!-- Caso A: Retirada no Balcão -->
+        <template v-if="isPickupOrder">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <div class="d-flex align-items-center gap-3">
               <div class="rounded-circle bg-info bg-opacity-25 text-dark p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
@@ -132,6 +270,7 @@
           </div>
         </template>
 
+        <!-- Caso B: Entrega em Domicílio com Motoboy -->
         <template v-else>
           <!-- Identificação do Motoboy -->
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
@@ -177,7 +316,7 @@
       </div>
 
       <!-- 4. STATUS: CONCLUÍDO -->
-      <div v-else-if="order.status === 'concluido'" class="card border-0 shadow-sm rounded-4 p-3 my-3 bg-white border-start border-4 border-success">
+      <div v-else-if="order.status === 'concluido'" class="card border-0 shadow-sm rounded-4 p-3 my-2 bg-white border-start border-4 border-success">
         <div class="d-flex align-items-center gap-3">
           <div class="rounded-circle bg-success bg-opacity-25 text-success p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
             <i class="bi bi-check-circle-fill fs-2 text-success"></i>
@@ -186,6 +325,20 @@
             <span class="badge bg-success rounded-pill mb-1 fw-bold">Status Atual: Concluído</span>
             <h6 class="fw-bold text-dark mb-1">Pedido Entregue!</h6>
             <p class="text-muted small mb-0">Bom apetite! Muito obrigado pela preferência e volte sempre ao AKY Lanches.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. STATUS: CANCELADO -->
+      <div v-else-if="order.status === 'cancelado'" class="card border-0 shadow-sm rounded-4 p-3 my-2 bg-white border-start border-4 border-danger">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-danger bg-opacity-25 text-danger p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+            <i class="bi bi-x-circle-fill fs-2 text-danger"></i>
+          </div>
+          <div>
+            <span class="badge bg-danger rounded-pill mb-1 fw-bold">Status: Cancelado</span>
+            <h6 class="fw-bold text-dark mb-1">Este pedido foi cancelado</h6>
+            <p class="text-muted small mb-0">Se precisar de qualquer esclarecimento, fale diretamente com nossa equipe de atendimento.</p>
           </div>
         </div>
       </div>
@@ -269,16 +422,16 @@
               ></textarea>
             </div>
 
-            <!-- OPÇÕES DE PRIVACIDADE E EXIBIÇÃO DA AVALIAÇÃO -->
+            <!-- OPÇÕES DE PRIVACIDADE E NOVO DESIGN COMPACTO DOS BOTÕES DE ASSINATURA -->
             <div class="p-2.5 rounded-3 bg-white border mb-3">
               <div class="form-check form-switch mb-2">
                 <input
-                  class="form-check-input"
+                  class="form-check-input cursor-pointer"
                   type="checkbox"
                   id="allowPublicReviewSwitch"
                   v-model="ratingForm.allow_public_review"
                 >
-                <label class="form-check-label small fw-bold text-dark" for="allowPublicReviewSwitch">
+                <label class="form-check-label small fw-bold text-dark cursor-pointer" for="allowPublicReviewSwitch">
                   <i class="bi bi-eye-fill text-primary me-1"></i> Permitir exibir minha avaliação no cardápio
                 </label>
                 <small class="text-muted d-block" style="font-size: 0.72rem;">
@@ -286,30 +439,36 @@
                 </small>
               </div>
 
-              <!-- Se permitir exibição, escolhe se quer mostrar nome ou anônimo -->
-              <div v-if="ratingForm.allow_public_review" class="pt-2 border-top">
-                <label class="form-label small fw-bold text-dark mb-1">Como você deseja assinar sua avaliação?</label>
-                <div class="d-flex gap-2">
+              <!-- NOVO CONTROLE COMPACTO EM FORMATO DE PÍLULA SEGMENTADA -->
+              <div v-if="ratingForm.allow_public_review" class="pt-2 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <span class="small fw-bold text-dark d-block" style="font-size: 0.78rem;">Assinar avaliação como:</span>
+                  <small class="text-muted" style="font-size: 0.7rem;">Visível no cardápio junto ao seu elogio</small>
+                </div>
+
+                <div class="bg-light p-1 rounded-pill border d-inline-flex gap-1 align-items-center shadow-sm">
                   <button
                     type="button"
-                    :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold flex-fill border transition', ratingForm.review_show_name ? 'btn-primary text-white shadow-sm' : 'btn-light text-dark']"
+                    :class="['btn btn-sm rounded-pill px-2.5 py-1 fw-semibold transition border-0', ratingForm.review_show_name ? 'bg-primary text-white shadow-sm' : 'text-dark bg-transparent']"
+                    style="font-size: 0.78rem;"
                     @click="ratingForm.review_show_name = true"
                   >
-                    <i class="bi bi-person-fill me-1"></i> Com meu nome ({{ order.customer_name ? order.customer_name.split(' ')[0] : 'Meu Nome' }})
+                    <i class="bi bi-person-fill me-1"></i> {{ order.customer_name ? order.customer_name.split(' ')[0] : 'Meu Nome' }}
                   </button>
                   <button
                     type="button"
-                    :class="['btn btn-sm rounded-pill px-3 py-1 fw-semibold flex-fill border transition', !ratingForm.review_show_name ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
+                    :class="['btn btn-sm rounded-pill px-2.5 py-1 fw-semibold transition border-0', !ratingForm.review_show_name ? 'bg-dark text-white shadow-sm' : 'text-dark bg-transparent']"
+                    style="font-size: 0.78rem;"
                     @click="ratingForm.review_show_name = false"
                   >
-                    <i class="bi bi-incognito me-1"></i> Avaliar como Anônimo
+                    <i class="bi bi-incognito me-1"></i> Anônimo
                   </button>
                 </div>
               </div>
             </div>
 
             <button
-              class="btn btn-success w-100 py-2.5 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+              class="btn btn-success w-100 py-2.5 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 transition"
               @click="submitCustomerConfirmationAndReview"
               :disabled="submittingReview"
             >
@@ -350,38 +509,70 @@
 
       </div>
 
-      <!-- 5. STATUS: CANCELADO -->
-      <div v-else-if="order.status === 'cancelado'" class="card border-0 shadow-sm rounded-4 p-3 my-3 bg-white border-start border-4 border-danger">
-        <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-danger bg-opacity-25 text-danger p-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
-            <i class="bi bi-x-circle-fill fs-2 text-danger"></i>
-          </div>
-          <div>
-            <span class="badge bg-danger rounded-pill mb-1 fw-bold">Status: Cancelado</span>
-            <h6 class="fw-bold text-dark mb-1">Este pedido foi cancelado</h6>
-            <p class="text-muted small mb-0">Se precisar de qualquer esclarecimento, fale com nossa equipe de atendimento.</p>
-          </div>
+      <!-- ======================================================== -->
+      <!-- RESUMO COMPLETO DOS ITENS, PAGAMENTO E SUPORTE           -->
+      <!-- ======================================================== -->
+      <div class="bg-white p-3 p-md-4 rounded-4 shadow-sm mt-2">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5">
+            <i class="bi bi-bag-check-fill text-danger"></i>
+            <span>Itens Solicitados</span>
+          </h6>
+          <span class="badge bg-light text-dark border rounded-pill">
+            {{ order.items ? order.items.length : 0 }} {{ (order.items && order.items.length === 1) ? 'item' : 'itens' }}
+          </span>
         </div>
-      </div>
 
-      <!-- Detalhes dos Itens do Pedido -->
-      <div class="bg-white p-3 rounded-4 shadow-sm mt-3">
-        <h6 class="fw-bold text-dark mb-2">Itens Solicitados</h6>
         <div class="small">
-          <div v-for="item in order.items" :key="item.id" class="d-flex justify-content-between py-1 border-bottom">
-            <span>{{ item.quantity }}x {{ item.product_name_snapshot }}</span>
-            <span class="fw-semibold">R$ {{ Number(item.subtotal).toFixed(2).replace('.', ',') }}</span>
+          <div v-for="item in order.items" :key="item.id" class="d-flex justify-content-between py-1.5 border-bottom">
+            <span><strong>{{ item.quantity }}x</strong> {{ item.product_name_snapshot }}</span>
+            <span class="fw-semibold text-dark">R$ {{ Number(item.subtotal).toFixed(2).replace('.', ',') }}</span>
           </div>
-          <div class="d-flex justify-content-between pt-2 mt-1 fw-bold fs-6 text-dark">
-            <span>Total:</span>
-            <span class="text-aky-primary">R$ {{ Number(order.total).toFixed(2).replace('.', ',') }}</span>
+
+          <div class="d-flex justify-content-between pt-2.5 mt-1 fw-bold fs-6 text-dark">
+            <span>Total Geral:</span>
+            <span class="text-aky-primary fs-5">R$ {{ Number(order.total).toFixed(2).replace('.', ',') }}</span>
           </div>
         </div>
 
-        <div class="mt-3 pt-2 border-top small text-muted">
-          <div><i class="bi bi-geo-alt me-1 text-danger"></i> <strong>Entrega:</strong> {{ order.delivery_address }} <span v-if="order.delivery_complement">({{ order.delivery_complement }})</span></div>
-          <div v-if="order.delivery_reference" class="mt-1"><i class="bi bi-signpost me-1"></i> <strong>Referência:</strong> {{ order.delivery_reference }}</div>
+        <!-- Forma de Pagamento e Endereço -->
+        <div class="row g-2 mt-2 pt-2 border-top small text-muted">
+          <div class="col-12 col-sm-6">
+            <div class="p-2 bg-light rounded-3">
+              <span class="d-block fw-bold text-dark mb-0.5">
+                <i class="bi bi-wallet2 text-primary me-1"></i> Forma de Pagamento:
+              </span>
+              <span class="text-dark">{{ paymentMethodDescription }}</span>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6">
+            <div class="p-2 bg-light rounded-3">
+              <span class="d-block fw-bold text-dark mb-0.5">
+                <i class="bi bi-geo-alt-fill text-danger me-1"></i> Destino:
+              </span>
+              <span class="text-dark">{{ order.delivery_address }}</span>
+              <span v-if="order.delivery_complement" class="text-muted d-block">Compl: {{ order.delivery_complement }}</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Botão WhatsApp de Dúvidas sobre o Pedido -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top">
+          <small class="text-muted">
+            <i class="bi bi-clock me-1"></i> Feito em: {{ formatDate(order.created_at) }}
+          </small>
+
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-success rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm transition"
+            @click="handleWhatsAppSupport"
+          >
+            <i class="bi bi-whatsapp fs-6"></i>
+            <span>Tirar dúvidas sobre este pedido</span>
+          </button>
+        </div>
+
       </div>
 
     </div>
@@ -396,7 +587,7 @@
                 <i class="bi bi-shop fs-5"></i>
               </div>
               <div>
-                <h6 class="modal-title fw-bold mb-0">Local de Retirada • AKY Lanches</h6>
+                <h6 class="modal-title fw-bold mb-0 text-white">Local de Retirada • AKY Lanches</h6>
                 <small class="text-white-50" style="font-size: 0.72rem;">{{ currentStoreAddress }}</small>
               </div>
             </div>
@@ -446,6 +637,7 @@ import axios from 'axios';
 import { showSuccess, showError } from '../utils/swal';
 
 export default {
+  name: 'OrderTracker',
   props: {
     initialCode: {
       type: String,
@@ -454,6 +646,14 @@ export default {
     storeInfo: {
       type: Object,
       default: null,
+    },
+    storeWhatsapp: {
+      type: String,
+      default: '',
+    },
+    whatsappMessages: {
+      type: Array,
+      default: () => [],
     },
   },
   data() {
@@ -464,6 +664,12 @@ export default {
       error: null,
       showMapModal: false,
       submittingReview: false,
+      copiedCode: false,
+      recentOrders: [],
+      pollingTimer: null,
+      visibilityHandler: null,
+      loadedStoreWhatsapp: '',
+      doubtTemplate: null,
       ratingForm: {
         food_rating: 5,
         delivery_rating: 5,
@@ -477,47 +683,282 @@ export default {
     isPickupOrder() {
       return this.order && this.order.delivery_address && this.order.delivery_address.includes('RETIRADA');
     },
+    isActiveOrder() {
+      return this.order && this.order.status !== 'concluido' && this.order.status !== 'cancelado';
+    },
     currentStoreAddress() {
       if (this.storeInfo && this.storeInfo.address && this.storeInfo.address.trim()) {
         return this.storeInfo.address.trim();
       }
       return 'Rua Principal, Centro - Teixeira - PB';
     },
+    currentStepIndex() {
+      if (!this.order) return 1;
+      switch (this.order.status) {
+        case 'recebido': return 1;
+        case 'em_preparacao': return 2;
+        case 'saiu_para_entrega': return 3;
+        case 'concluido': return 4;
+        default: return 1;
+      }
+    },
+    stepperProgressPercent() {
+      switch (this.currentStepIndex) {
+        case 1: return 0;
+        case 2: return 33;
+        case 3: return 66;
+        case 4: return 100;
+        default: return 0;
+      }
+    },
+    paymentMethodDescription() {
+      if (!this.order) return '';
+      const method = this.order.payment_method;
+      if (method === 'pix') return 'PIX (Chave da Lanchonete)';
+      if (method === 'cartao') return 'Cartão de Débito / Crédito na Entrega';
+      if (method === 'dinheiro') {
+        if (this.order.needs_change && this.order.change_for) {
+          return `Dinheiro (Troco para R$ ${Number(this.order.change_for).toFixed(2).replace('.', ',')})`;
+        }
+        return 'Dinheiro (Sem troco)';
+      }
+      return method || 'Não especificado';
+    },
+    effectiveStoreWhatsapp() {
+      if (this.loadedStoreWhatsapp && this.loadedStoreWhatsapp.trim()) {
+        return this.loadedStoreWhatsapp.trim();
+      }
+      if (this.storeWhatsapp && this.storeWhatsapp.trim()) {
+        return this.storeWhatsapp.trim();
+      }
+      if (this.storeInfo && this.storeInfo.whatsapp && this.storeInfo.whatsapp.trim()) {
+        return this.storeInfo.whatsapp.trim();
+      }
+      return '';
+    },
   },
   watch: {
     initialCode(val) {
       if (val) {
         this.orderNumber = val;
-        this.searchOrder();
+        this.searchOrder(true);
       }
     },
   },
   mounted() {
+    this.loadRecentOrders();
     if (this.orderNumber) {
-      this.searchOrder();
+      this.searchOrder(true);
     }
+    this.startAutoPolling();
+  },
+  beforeUnmount() {
+    this.stopAutoPolling();
   },
   methods: {
-    async searchOrder() {
-      if (!this.orderNumber.trim()) return;
+    isPhoneSuspect(phone) {
+      if (!phone) return true;
+      const clean = phone.replace(/\D/g, '');
+      if (clean.length < 10) return true;
+      if (clean.includes('99999999') || clean.includes('00000000') || phone.includes('(99)')) return true;
+      return false;
+    },
+    handleWhatsAppSupport(e) {
+      if (e) e.preventDefault();
+      const rawPhone = this.effectiveStoreWhatsapp;
+      if (this.isPhoneSuspect(rawPhone)) {
+        showError(
+          'Atendimento WhatsApp Indisponível',
+          'O número de WhatsApp da lanchonete ainda não foi configurado ou é inválido. Por favor, compareça ao balcão ou consulte nosso endereço.'
+        );
+        return;
+      }
+      const digits = rawPhone.replace(/\D/g, '');
+      const phone = digits.startsWith('55') ? digits : ('55' + digits);
+      const order = this.order;
+      const orderCode = order ? order.order_number : '';
 
-      this.loading = true;
-      this.error = null;
+      // Modelo de mensagem editável de dúvidas (definido em AdminSettings / API)
+      let template = this.doubtTemplate;
+      if (!template && Array.isArray(this.whatsappMessages)) {
+        const found = this.whatsappMessages.find(m => m.trigger === 'duvida_pedido' && m.is_active);
+        if (found) {
+          template = found.text;
+        }
+      }
+
+      let text = '';
+      if (template && order) {
+        const trackingUrl = `${window.location.origin}/?rastreio=${order.order_number}`;
+        const totalFormatted = Number(order.total || 0).toFixed(2).replace('.', ',');
+        const statusText = this.getStatusLabel(order.status);
+        const addressText = order.delivery_address || 'Retirada no Balcão';
+        const paymentText = this.paymentMethodDescription || (order.payment_method || 'A combinar');
+
+        text = template
+          .replace(/\{codigo\}/g, order.order_number || '')
+          .replace(/\{cliente\}/g, order.customer_name || 'Cliente')
+          .replace(/\{status\}/g, statusText)
+          .replace(/\{total\}/g, totalFormatted)
+          .replace(/\{pagamento\}/g, paymentText)
+          .replace(/\{endereco\}/g, addressText)
+          .replace(/\{link_rastreio\}/g, trackingUrl);
+      } else {
+        text = `Olá, AKY Lanches! 👋🍔\n\nGostaria de tirar uma dúvida sobre o meu pedido *#${orderCode}*. Poderiam me ajudar por favor?`;
+      }
+
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    },
+    resetSearch() {
       this.order = null;
+      this.orderNumber = '';
+      this.error = null;
+    },
+    async searchOrder(manual = true) {
+      if (!this.orderNumber || !this.orderNumber.trim()) return;
+
+      if (manual) {
+        this.loading = true;
+      }
+      this.error = null;
 
       try {
         const res = await axios.get(`/api/orders/${this.orderNumber.trim()}`);
         this.order = res.data.order;
+        if (res.data.store_whatsapp) {
+          this.loadedStoreWhatsapp = res.data.store_whatsapp;
+        }
+        if (res.data.doubt_whatsapp_template) {
+          this.doubtTemplate = res.data.doubt_whatsapp_template;
+        }
+        this.saveToRecentOrders(this.order);
       } catch (err) {
-        this.error = 'Pedido não encontrado. Verifique o código e tente novamente.';
+        if (manual) {
+          this.error = 'Pedido não encontrado. Verifique o código e tente novamente.';
+          this.order = null;
+        }
       } finally {
-        this.loading = false;
+        if (manual) {
+          this.loading = false;
+        }
+      }
+    },
+    selectRecentOrder(code) {
+      this.orderNumber = code;
+      this.searchOrder(true);
+    },
+    loadRecentOrders() {
+      try {
+        const saved = localStorage.getItem('aky_recent_orders');
+        if (saved) {
+          this.recentOrders = JSON.parse(saved);
+        }
+      } catch (e) {
+        this.recentOrders = [];
+      }
+    },
+    saveToRecentOrders(order) {
+      if (!order || !order.order_number) return;
+      try {
+        let list = this.recentOrders || [];
+        list = list.filter(item => item.code !== order.order_number);
+        list.unshift({
+          code: order.order_number,
+          status: order.status,
+          date: this.formatShortDate(order.created_at),
+          total: order.total,
+        });
+        list = list.slice(0, 4); // mantém até 4
+        this.recentOrders = list;
+        localStorage.setItem('aky_recent_orders', JSON.stringify(list));
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    clearRecentOrders() {
+      this.recentOrders = [];
+      localStorage.removeItem('aky_recent_orders');
+    },
+    startAutoPolling() {
+      this.pollingTimer = setInterval(() => {
+        if (document.visibilityState === 'visible' && this.isActiveOrder && this.orderNumber) {
+          this.searchOrder(false);
+        }
+      }, 15000);
+
+      this.visibilityHandler = () => {
+        if (document.visibilityState === 'visible' && this.isActiveOrder && this.orderNumber) {
+          this.searchOrder(false);
+        }
+      };
+      document.addEventListener('visibilitychange', this.visibilityHandler);
+    },
+    stopAutoPolling() {
+      if (this.pollingTimer) {
+        clearInterval(this.pollingTimer);
+        this.pollingTimer = null;
+      }
+      if (this.visibilityHandler) {
+        document.removeEventListener('visibilitychange', this.visibilityHandler);
+        this.visibilityHandler = null;
+      }
+    },
+    async copyOrderCode() {
+      if (!this.order) return;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(this.order.order_number);
+        } else {
+          const el = document.createElement('textarea');
+          el.value = this.order.order_number;
+          document.body.appendChild(el);
+          el.select();
+          document.execCommand('copy');
+          document.body.removeChild(el);
+        }
+        this.copiedCode = true;
+        setTimeout(() => {
+          this.copiedCode = false;
+        }, 2000);
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    getStepClass(stepIndex) {
+      if (this.currentStepIndex > stepIndex) return 'step-completed';
+      if (this.currentStepIndex === stepIndex) return 'step-active';
+      return 'step-pending';
+    },
+    getStatusLabel(status) {
+      switch (status) {
+        case 'recebido': return 'Recebido';
+        case 'em_preparacao': return 'Em Preparo';
+        case 'saiu_para_entrega': return 'A Caminho';
+        case 'concluido': return 'Concluído';
+        case 'cancelado': return 'Cancelado';
+        default: return status;
+      }
+    },
+    getStatusBadgeClass(status) {
+      switch (status) {
+        case 'recebido': return 'bg-warning text-dark';
+        case 'em_preparacao': return 'bg-primary text-white';
+        case 'saiu_para_entrega': return 'bg-info text-dark';
+        case 'concluido': return 'bg-success text-white';
+        case 'cancelado': return 'bg-danger text-white';
+        default: return 'bg-secondary text-white';
       }
     },
     formatDate(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
       return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    },
+    formatShortDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     },
     getRatingLabel(stars) {
       switch (stars) {
@@ -542,6 +983,7 @@ export default {
           review_show_name: this.ratingForm.review_show_name,
         });
         this.order = res.data.order;
+        this.saveToRecentOrders(this.order);
         await showSuccess('Avaliação Registrada!', res.data.message || 'Recebimento e avaliação registrados com sucesso. Muito obrigado!');
       } catch (err) {
         showError('Aviso', err.response?.data?.message || 'Erro ao registrar avaliação.');
@@ -560,6 +1002,130 @@ export default {
 }
 .transition-star:hover {
   transform: scale(1.25);
+}
+
+.hover-pill:hover {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+}
+
+/* Indicador pulsante Ao Vivo */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #198754;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 rgba(25, 135, 84, 0.4);
+  animation: pulseLive 1.8s infinite;
+}
+
+@keyframes pulseLive {
+  0% {
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(25, 135, 84, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+  }
+}
+
+.spin-icon {
+  animation: spinAnim 0.8s linear infinite;
+}
+
+@keyframes spinAnim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========================================= */
+/* STEPPER / TIMELINE VISUAL DE 4 ETAPAS     */
+/* ========================================= */
+.stepper-container {
+  position: relative;
+  padding: 10px 4px 6px;
+}
+
+.stepper-progress-track {
+  position: absolute;
+  top: 26px;
+  left: 12%;
+  right: 12%;
+  height: 4px;
+  background-color: #e9ecef;
+  z-index: 1;
+}
+
+.stepper-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e50914, #ff8c00, #198754);
+  transition: width 0.4s ease;
+}
+
+.stepper-steps {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 25%;
+  text-align: center;
+}
+
+.step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: bold;
+  background-color: #f8f9fa;
+  color: #adb5bd;
+  border: 2px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.step-label {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  transition: color 0.3s ease;
+}
+
+/* Estado Completo */
+.step-item.step-completed .step-circle {
+  background-color: #198754;
+  color: #ffffff;
+  border-color: #198754;
+}
+
+.step-item.step-completed .step-label {
+  color: #198754;
+}
+
+/* Estado Ativo (Fase Atual) */
+.step-item.step-active .step-circle {
+  background-color: #e50914;
+  color: #ffffff;
+  border-color: #e50914;
+  box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.2) !important;
+  transform: scale(1.1);
+}
+
+.step-item.step-active .step-label {
+  color: #e50914;
+  font-weight: 700;
 }
 
 /* ========================================= */

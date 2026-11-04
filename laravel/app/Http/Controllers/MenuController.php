@@ -128,7 +128,7 @@ class MenuController extends Controller
                 'pizza_sizes' => \App\Models\SystemSetting::getSetting('pizza_sizes', []),
                 'pizza_borders' => \App\Models\SystemSetting::getSetting('pizza_borders', []),
                 'monte_pastel' => \App\Models\SystemSetting::getSetting('monte_pastel', []),
-                'store_whatsapp' => \App\Models\SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+                'store_whatsapp' => \App\Models\SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
                 'store_info' => \App\Models\SystemSetting::getSetting('store_info', [
                     'name' => 'AKY LANCHES',
                     'slogan' => 'Cardápio Digital & Pedidos',
@@ -137,6 +137,7 @@ class MenuController extends Controller
                     'document' => '',
                 ]),
                 'whatsapp_messages' => \App\Models\SystemSetting::getSetting('whatsapp_messages', []),
+                'print_settings' => \App\Models\SystemSetting::getSetting('print_settings', (new AdminController)->defaultPrintSettings()),
             ],
         ]);
     }
@@ -274,7 +275,22 @@ class MenuController extends Controller
             return response()->json(['message' => 'Pedido não encontrado.'], 404);
         }
 
-        return response()->json(['order' => $order]);
+        $whatsappMessages = \App\Models\SystemSetting::getSetting('whatsapp_messages', (new AdminController)->defaultWhatsAppMessages());
+        $doubtTemplate = null;
+        if (is_array($whatsappMessages)) {
+            foreach ($whatsappMessages as $msg) {
+                if (isset($msg['trigger']) && $msg['trigger'] === 'duvida_pedido' && !empty($msg['is_active'])) {
+                    $doubtTemplate = $msg['text'];
+                    break;
+                }
+            }
+        }
+
+        return response()->json([
+            'order' => $order,
+            'store_whatsapp' => \App\Models\SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
+            'doubt_whatsapp_template' => $doubtTemplate,
+        ]);
     }
 
     /**

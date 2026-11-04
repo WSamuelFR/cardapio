@@ -516,7 +516,7 @@ class AdminController extends Controller
     {
         $this->checkAdmin();
         return response()->json([
-            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
             'require_motoboy_confirmation' => (bool) SystemSetting::getSetting('require_motoboy_confirmation', true),
             'store_info' => SystemSetting::getSetting('store_info', [
                 'name' => 'AKY LANCHES',
@@ -526,6 +526,7 @@ class AdminController extends Controller
                 'document' => '',
             ]),
             'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
+            'print_settings' => SystemSetting::getSetting('print_settings', $this->defaultPrintSettings()),
         ]);
     }
 
@@ -538,6 +539,7 @@ class AdminController extends Controller
             'require_motoboy_confirmation' => 'nullable|boolean',
             'store_info' => 'nullable|array',
             'whatsapp_messages' => 'nullable|array',
+            'print_settings' => 'nullable|array',
         ]);
 
         if (isset($validated['store_whatsapp'])) {
@@ -571,13 +573,36 @@ class AdminController extends Controller
             SystemSetting::setSetting('whatsapp_messages', $validated['whatsapp_messages'], 'Modelos de mensagens do WhatsApp de pedidos');
         }
 
+        if (isset($validated['print_settings'])) {
+            SystemSetting::setSetting('print_settings', $validated['print_settings'], 'Configurações de impressão do cupom da cozinha');
+        }
+
         return response()->json([
             'message' => 'Configurações atualizadas globalmente com sucesso.',
-            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
+            'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
             'require_motoboy_confirmation' => (bool) SystemSetting::getSetting('require_motoboy_confirmation', true),
             'store_info' => SystemSetting::getSetting('store_info', []),
             'whatsapp_messages' => SystemSetting::getSetting('whatsapp_messages', $this->defaultWhatsAppMessages()),
+            'print_settings' => SystemSetting::getSetting('print_settings', $this->defaultPrintSettings()),
         ]);
+    }
+
+    public function defaultPrintSettings(): array
+    {
+        return [
+            'paper_size' => '80mm',
+            'custom_width_mm' => 80,
+            'font_size' => '13px',
+            'margin_mm' => 2,
+            'show_prices' => false,
+            'show_customer_phone' => true,
+            'show_delivery_address' => true,
+            'highlight_notes' => true,
+            'show_cut_line' => true,
+            'header_title' => 'AKY LANCHES • COZINHA',
+            'custom_template' => "================================\n        {loja}\n     *** CUPOM DA COZINHA ***\n================================\nPEDIDO: #{codigo}\nDATA/HORA: {data_hora}\nTIPO: {tipo_pedido}\nCLIENTE: {cliente}\n{telefone}\n{endereco}\n--------------------------------\nITENS DA COMANDA:\n{itens_detalhados}\n--------------------------------\n{observacoes}\n{pagamento}\n{total}\n================================\n      {rodape}\n================================",
+            'footer_text' => 'Bom apetite! Preparado com capricho.',
+        ];
     }
 
     public function defaultWhatsAppMessages(): array
@@ -643,6 +668,15 @@ class AdminController extends Controller
                 'trigger' => 'cancelado',
                 'description' => 'Enviada caso o pedido precise ser cancelado.',
                 'text' => "Aviso sobre seu pedido: ⚠️\n\nOlá, *{cliente}*. Informamos que o pedido *#{codigo}* precisou ser cancelado.\n\nSe tiver qualquer dúvida ou se precisar refazer o pedido com alguma alteração, é só responder esta mensagem que nossa equipe te atende na hora! 🙏",
+                'is_system' => true,
+                'is_active' => true,
+            ],
+            [
+                'id' => 'msg_duvida_pedido',
+                'title' => 'Dúvidas sobre o Pedido (Cliente / Rastreio)',
+                'trigger' => 'duvida_pedido',
+                'description' => 'Texto enviado pelo cliente via WhatsApp na tela de rastreamento ao tirar dúvidas sobre seu pedido.',
+                'text' => "Olá, AKY Lanches! 👋🍔\n\nEstou com uma dúvida sobre o meu pedido *#{codigo}*:\n\n👤 *Cliente:* {cliente}\n📍 *Status atual:* {status}\n💰 *Total:* R$ {total}\n💳 *Pagamento:* {pagamento}\n📌 *Endereço/Retirada:* {endereco}\n\n🔍 *Link de Rastreio:* {link_rastreio}\n\nPoderiam me dar um suporte por favor?",
                 'is_system' => true,
                 'is_active' => true,
             ],

@@ -51,10 +51,140 @@ body {
     border-radius: 1rem;
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
 }
 
 .aky-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.aky-card.border-danger {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    border-left-color: #dc3545 !important;
+}
+
+.aky-card.border-success {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    border-left-color: #198754 !important;
+}
+
+.aky-card.border-primary {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    border-left-color: #0d6efd !important;
+}
+
+.aky-card.border-warning {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    border-left-color: #ffc107 !important;
+}
+
+.aky-card.border-purple {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    border-left-color: #7c3aed !important;
+}
+
+.aky-card.card-promo-rgb {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
+    animation: rgbBorderAnim 3.5s linear infinite !important;
+}
+
+/* ========================================= */
+/* EFEITOS RGB DINÂMICOS PARA PROMOÇÕES      */
+/* ========================================= */
+@keyframes rgbBorderAnim {
+    0% { border-left-color: #ff0055 !important; }
+    20% { border-left-color: #ff7700 !important; }
+    40% { border-left-color: #00dd77 !important; }
+    60% { border-left-color: #00bbff !important; }
+    80% { border-left-color: #9d00ff !important; }
+    100% { border-left-color: #ff0055 !important; }
+}
+
+@keyframes rgbGradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.card-promo-rgb {
+    position: relative;
+    border-left: 4px solid #ff0055 !important;
+    animation: rgbBorderAnim 3.5s linear infinite !important;
+}
+
+.badge-rgb {
+    background: linear-gradient(135deg, #ff0055, #ff7700, #00d2ff, #9d00ff, #ff0055) !important;
+    background-size: 300% 300% !important;
+    animation: rgbGradientMove 3s ease infinite !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(255, 0, 85, 0.3) !important;
+}
+
+.text-rgb {
+    background: linear-gradient(90deg, #ff0055, #ff7700, #00d2ff, #9d00ff, #ff0055) !important;
+    background-size: 300% auto !important;
+    color: transparent !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    animation: rgbGradientMove 3s linear infinite !important;
+    font-weight: 800 !important;
+}
+
+.btn-rgb {
+    background: linear-gradient(135deg, #ff0055, #ff7700, #00d2ff, #9d00ff, #ff0055) !important;
+    background-size: 300% auto !important;
+    animation: rgbGradientMove 3s linear infinite !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 10px rgba(255, 0, 85, 0.25) !important;
+}
+.btn-rgb:hover, .btn-rgb:focus {
+    color: #ffffff !important;
+    filter: brightness(1.1);
+}
+
+/* ========================================= */
+/* UTILITÁRIOS ROXOS (MAIS PEDIDOS NO FEED)  */
+/* ========================================= */
+.text-purple {
+    color: #7c3aed !important;
+}
+
+.border-purple {
+    border-left-color: #7c3aed !important;
+}
+
+.bg-purple-subtle {
+    background-color: rgba(124, 58, 237, 0.12) !important;
+    color: #6d28d9 !important;
+}
+
+.btn-purple {
+    background-color: #7c3aed !important;
+    border-color: #7c3aed !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25) !important;
+}
+
+.btn-purple:hover, .btn-purple:focus {
+    background-color: #6d28d9 !important;
+    border-color: #6d28d9 !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-purple {
+    color: #7c3aed !important;
+    border-color: #7c3aed !important;
+}
+
+.btn-outline-purple:hover, .btn-outline-purple:focus {
+    background-color: #7c3aed !important;
+    color: #ffffff !important;
 }

@@ -14,9 +14,9 @@
 
         <div>
           <h4 class="fw-bold text-dark mb-0 d-flex align-items-center flex-wrap gap-2">
-            <i :class="[icon || 'bi-tag-fill', 'text-' + (themeColor || 'danger'), 'fs-4']"></i>
+            <i :class="[icon || 'bi-tag-fill', themeColor === 'rgb' ? 'text-rgb' : (themeColor === 'purple' ? 'text-purple' : ('text-' + (themeColor || 'danger'))), 'fs-4']"></i>
             <span>{{ title }}</span>
-            <span v-if="badgeText" :class="['badge rounded-pill px-3 py-1 small', 'bg-' + (themeColor || 'danger'), themeColor === 'warning' ? 'text-dark' : 'text-white']">
+            <span v-if="badgeText" :class="['badge rounded-pill px-3 py-1 small', themeColor === 'rgb' ? 'badge-rgb text-white' : (themeColor === 'purple' ? 'bg-purple-subtle text-purple' : ('bg-' + (themeColor || 'danger'))), themeColor === 'warning' ? 'text-dark' : 'text-white']">
               {{ badgeText }}
             </span>
           </h4>
@@ -70,7 +70,7 @@
         class="col-12 col-md-6 col-lg-4"
       >
         <div
-          :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition border-start border-4', getCardTheme(idx, item).borderClass, !item.is_available ? 'opacity-75' : '']"
+          :class="['card aky-card h-100 bg-white shadow-sm rounded-4 cursor-pointer transition', getCardTheme(idx, item).borderClass, !item.is_available ? 'opacity-75' : '']"
           @click="$emit('select-product', item, 'section')"
         >
           <div class="d-flex p-3 gap-3">
@@ -195,57 +195,91 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
+    isDrink(item) {
+      if (!item) return false;
+      const catSlug = (item.category && item.category.slug) ? item.category.slug.toLowerCase() : '';
+      const catName = (item.category && item.category.name) ? item.category.name.toLowerCase() : '';
+      const name = (item.name || '').toLowerCase();
+      const keywords = ['bebida', 'suco', 'refrigerante', 'refrig', 'cerveja', 'agua', 'água', 'drink', 'coca', 'guaraná', 'guarana', 'fanta', 'sprite'];
+      return keywords.some(k => catSlug.includes(k) || catName.includes(k) || name.includes(k));
+    },
     getCardTheme(idx, item = null) {
-      if (item && this.backTo === 'menu') {
-        const isCombo = item.is_combo || (item.category && item.category.slug === 'combos-especiais');
-        if (isCombo) {
-          return {
-            borderClass: 'border-success',
-            btnClass: 'btn-success text-white',
-            priceClass: 'text-success fw-bold',
-            iconClass: 'text-success',
-          };
-        }
-        if (this.isCustomizable(item)) {
-          return {
-            borderClass: 'border-primary',
-            btnClass: 'btn-primary text-white',
-            priceClass: 'text-primary fw-bold',
-            iconClass: 'text-primary',
-          };
-        }
+      // 1. Promoção tem prioridade com visual animado RGB
+      if ((item && item.is_promotion) || this.themeColor === 'rgb') {
         return {
-          borderClass: 'border-danger',
-          btnClass: 'btn-danger text-white',
-          priceClass: 'text-danger fw-bold',
-          iconClass: 'text-danger',
+          borderClass: 'card-promo-rgb',
+          btnClass: 'btn-rgb text-white',
+          priceClass: 'text-rgb fw-bold',
+          iconClass: 'text-rgb',
         };
       }
-      const color = this.themeColor || 'danger';
-      if (color === 'success') {
+
+      // 2. Bebidas e Sucos: Amarelo (warning)
+      if (item && this.isDrink(item)) {
         return {
-          borderClass: 'border-success',
-          btnClass: 'btn-success text-white',
-          priceClass: 'text-success fw-bold',
-          iconClass: 'text-success',
-        };
-      } else if (color === 'primary') {
-        return {
-          borderClass: 'border-primary',
-          btnClass: 'btn-primary text-white',
-          priceClass: 'text-primary fw-bold',
-          iconClass: 'text-primary',
-        };
-      } else if (color === 'warning') {
-        return {
-          borderClass: 'border-warning',
+          borderClass: 'border-start border-4 border-warning',
           btnClass: 'btn-warning text-dark fw-bold',
           priceClass: 'text-warning-emphasis fw-bold',
           iconClass: 'text-warning',
         };
       }
+
+      // 3. Combos especiais: Verde (success)
+      const isCombo = item && (item.is_combo || (item.category && item.category.slug === 'combos-especiais'));
+      if (isCombo) {
+        return {
+          borderClass: 'border-start border-4 border-success',
+          btnClass: 'btn-success text-white',
+          priceClass: 'text-success fw-bold',
+          iconClass: 'text-success',
+        };
+      }
+
+      // 4. Montadores / Personalizáveis (Pizza, Pastel, Tapioca, Cuscuz): Azul (primary)
+      if (item && this.isCustomizable(item)) {
+        return {
+          borderClass: 'border-start border-4 border-primary',
+          btnClass: 'btn-primary text-white',
+          priceClass: 'text-primary fw-bold',
+          iconClass: 'text-primary',
+        };
+      }
+
+      // 5. Cores temáticas da seção se especificada
+      const color = this.themeColor || 'danger';
+      if (color === 'warning') {
+        return {
+          borderClass: 'border-start border-4 border-warning',
+          btnClass: 'btn-warning text-dark fw-bold',
+          priceClass: 'text-warning-emphasis fw-bold',
+          iconClass: 'text-warning',
+        };
+      } else if (color === 'success') {
+        return {
+          borderClass: 'border-start border-4 border-success',
+          btnClass: 'btn-success text-white',
+          priceClass: 'text-success fw-bold',
+          iconClass: 'text-success',
+        };
+      } else if (color === 'purple') {
+        return {
+          borderClass: 'border-start border-4 border-purple',
+          btnClass: 'btn-purple text-white',
+          priceClass: 'text-purple fw-bold',
+          iconClass: 'text-purple',
+        };
+      } else if (color === 'primary') {
+        return {
+          borderClass: 'border-start border-4 border-primary',
+          btnClass: 'btn-primary text-white',
+          priceClass: 'text-primary fw-bold',
+          iconClass: 'text-primary',
+        };
+      }
+
+      // 6. Restante padrão: Vermelho (danger)
       return {
-        borderClass: 'border-danger',
+        borderClass: 'border-start border-4 border-danger',
         btnClass: 'btn-danger text-white',
         priceClass: 'text-danger fw-bold',
         iconClass: 'text-danger',

@@ -8,11 +8,33 @@
           <i class="bi bi-gear-fill text-aky-primary"></i>
           <span>Configurações do Sistema</span>
         </h4>
-        <small class="text-muted">Gerencie os dados da AKY Lanches, WhatsApp comercial e a equipe de administradores</small>
+        <small class="text-muted">Gerencie os dados da AKY Lanches, WhatsApp comercial, impressão de cupons e a equipe de administradores</small>
+      </div>
+
+      <div v-if="currentTab === 'print'" class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-outline-secondary rounded-pill btn-sm px-3 fw-semibold shadow-sm d-flex align-items-center gap-1.5"
+          @click="restoreDefaultPrintTemplate"
+          title="Restaurar configurações e modelo padrão de fábrica"
+        >
+          <i class="bi bi-arrow-counterclockwise"></i>
+          <span>Restaurar Padrão</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary rounded-pill btn-sm px-3 fw-semibold shadow-sm d-flex align-items-center gap-1.5"
+          @click="printTestTicket"
+          title="Fazer um teste de impressão agora"
+        >
+          <i class="bi bi-printer-fill"></i>
+          <span>Imprimir Teste</span>
+        </button>
       </div>
 
       <button
-        v-if="currentTab === 'admins'"
+        v-else-if="currentTab === 'admins'"
         class="btn btn-aky-primary rounded-pill btn-sm px-3 fw-semibold shadow-sm d-flex align-items-center gap-1.5"
         @click="openCreateAdminModal"
       >
@@ -31,9 +53,9 @@
     </div>
 
     <!-- SELETOR DE ABAS MODERNO & RESPONSIVO (Segmented Control) -->
-    <div class="bg-white p-2 rounded-4 shadow-sm border mb-4" style="max-width: 680px;">
+    <div class="bg-white p-2 rounded-4 shadow-sm border mb-4" style="max-width: 900px;">
       <div class="row g-2">
-        <div class="col-12 col-sm-4">
+        <div class="col-6 col-md-3">
           <button
             :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'store' ? 'btn-aky-primary text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentTab = 'store'"
@@ -41,15 +63,23 @@
             <i class="bi bi-shop me-1"></i> Dados da Loja
           </button>
         </div>
-        <div class="col-12 col-sm-4">
+        <div class="col-6 col-md-3">
           <button
             :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'whatsapp' ? 'btn-success text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentTab = 'whatsapp'"
           >
-            <i class="bi bi-whatsapp me-1"></i> Mensagens WhatsApp ({{ whatsappMessages.length }})
+            <i class="bi bi-whatsapp me-1"></i> WhatsApp ({{ whatsappMessages.length }})
           </button>
         </div>
-        <div class="col-12 col-sm-4">
+        <div class="col-6 col-md-3">
+          <button
+            :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'print' ? 'btn-primary text-white shadow-sm' : 'btn-light text-dark']"
+            @click="currentTab = 'print'"
+          >
+            <i class="bi bi-printer-fill me-1"></i> Impressão & Cupom
+          </button>
+        </div>
+        <div class="col-6 col-md-3">
           <button
             :class="['btn w-100 rounded-3 py-2 btn-sm fw-bold border-0 transition text-truncate', currentTab === 'admins' ? 'btn-dark text-white shadow-sm' : 'btn-light text-dark']"
             @click="currentTab = 'admins'"
@@ -374,6 +404,270 @@
         </div>
       </div>
     </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 3: IMPRESSÃO & CUPOM DA COZINHA                      -->
+    <!-- ======================================================== -->
+    <div v-else-if="currentTab === 'print'">
+      <div class="row g-4">
+        
+        <!-- Coluna da Esquerda: Configurações do Formato e Script -->
+        <div class="col-12 col-xl-7">
+          
+          <!-- Card 1: Formato da Bobina e Layout -->
+          <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                  <i class="bi bi-aspect-ratio text-primary fs-4"></i>
+                  <span>Formato do Papel & Impressora</span>
+                </h5>
+                <small class="text-muted">Ajuste as dimensões da folha e tamanho dos caracteres para sua impressora térmica</small>
+              </div>
+              <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1.5 fw-semibold small">
+                {{ (printSettings.paper_size || '80mm').toUpperCase() }}
+              </span>
+            </div>
+
+            <div class="row g-3">
+              <!-- Tamanho da Folha -->
+              <div class="col-12 col-sm-6">
+                <label class="form-label small fw-bold text-dark mb-1">Tamanho da Bobina / Folha</label>
+                <select class="form-select" v-model="printSettings.paper_size">
+                  <option value="80mm">Bobina Térmica 80mm (Padrão Cozinha / POS)</option>
+                  <option value="58mm">Bobina Estreita 58mm (Mini Térmica / Maquininha)</option>
+                  <option value="a4">Folha Inteira A4 (Impressora Comum)</option>
+                  <option value="custom">Tamanho Personalizado (mm)</option>
+                </select>
+                <small class="text-muted" style="font-size: 0.72rem;">80mm e 58mm são as mais comuns em cozinhas e balcões.</small>
+              </div>
+
+              <!-- Largura Personalizada se custom -->
+              <div class="col-12 col-sm-6" v-if="printSettings.paper_size === 'custom'">
+                <label class="form-label small fw-bold text-dark mb-1">Largura Personalizada (em mm)</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" v-model.number="printSettings.custom_width_mm" min="30" max="250" step="1">
+                  <span class="input-group-text bg-light text-muted">mm</span>
+                </div>
+              </div>
+
+              <!-- Tamanho da Fonte -->
+              <div class="col-12 col-sm-6">
+                <label class="form-label small fw-bold text-dark mb-1">Tamanho da Fonte (Texto)</label>
+                <select class="form-select" v-model="printSettings.font_size">
+                  <option value="11px">Pequeno (11px) - mais texto por linha</option>
+                  <option value="12px">Compacto (12px)</option>
+                  <option value="13px">Padrão Recomendado (13px)</option>
+                  <option value="14px">Médio (14px)</option>
+                  <option value="16px">Grande / Alta Legibilidade (16px)</option>
+                </select>
+              </div>
+
+              <!-- Margem lateral -->
+              <div class="col-12 col-sm-6">
+                <label class="form-label small fw-bold text-dark mb-1">Margem Externa do Papel</label>
+                <select class="form-select" v-model.number="printSettings.margin_mm">
+                  <option :value="0">Sem Margem (0 mm) - Aproveitamento total</option>
+                  <option :value="2">Margem Estreita (2 mm - Recomendada)</option>
+                  <option :value="4">Margem Normal (4 mm)</option>
+                  <option :value="6">Margem Ampla (6 mm)</option>
+                </select>
+              </div>
+
+              <!-- Título Cabeçalho do Cupom -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-dark mb-1">Título Superior da Comanda</label>
+                <input type="text" class="form-control" v-model="printSettings.header_title" placeholder="Ex: AKY LANCHES • COZINHA">
+              </div>
+
+              <!-- Frase do Rodapé -->
+              <div class="col-12">
+                <label class="form-label small fw-bold text-dark mb-1">Texto de Rodapé</label>
+                <input type="text" class="form-control" v-model="printSettings.footer_text" placeholder="Ex: Bom apetite! Preparado com capricho.">
+              </div>
+            </div>
+
+            <!-- Opções Operacionais (Checkboxes) -->
+            <div class="border-top pt-3 mt-3">
+              <h6 class="small fw-bold text-dark mb-2">Exibição de Informações no Cupom:</h6>
+              <div class="row g-2">
+                <div class="col-12 col-md-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show-prices-check" v-model="printSettings.show_prices">
+                    <label class="form-check-label small text-dark fw-semibold" for="show-prices-check">
+                      Exibir Valores / Preços <small class="text-muted d-block fw-normal" style="font-size: 0.7rem;">(Desmarque se a cozinha não precisa ver valores)</small>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show-phone-check" v-model="printSettings.show_customer_phone">
+                    <label class="form-check-label small text-dark fw-semibold" for="show-phone-check">
+                      Exibir Telefone do Cliente <small class="text-muted d-block fw-normal" style="font-size: 0.7rem;">(Facilita contato com o cliente)</small>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show-addr-check" v-model="printSettings.show_delivery_address">
+                    <label class="form-check-label small text-dark fw-semibold" for="show-addr-check">
+                      Exibir Endereço de Entrega <small class="text-muted d-block fw-normal" style="font-size: 0.7rem;">(Identifica pedidos de Retirada vs Delivery)</small>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="cut-line-check" v-model="printSettings.show_cut_line">
+                    <label class="form-check-label small text-dark fw-semibold" for="cut-line-check">
+                      Linha de Corte (Tesoura) <small class="text-muted d-block fw-normal" style="font-size: 0.7rem;">(Marca o ponto exato para destacar a comanda)</small>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Card 2: Editor do Script / Modelo do Cupom -->
+          <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                  <i class="bi bi-code-slash text-primary fs-4"></i>
+                  <span>Script & Estrutura do Cupom</span>
+                </h5>
+                <small class="text-muted">Personalize as linhas e a disposição das informações que serão impressas no papel</small>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-muted"
+                @click="restoreDefaultPrintTemplate"
+                title="Voltar ao script padrão de fábrica"
+              >
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Padrão
+              </button>
+            </div>
+
+            <!-- Botões Rápidos de Tags Inteligentes -->
+            <div class="bg-light rounded-3 p-2.5 mb-2 border">
+              <div class="small fw-bold text-muted mb-1.5" style="font-size: 0.72rem;">
+                <i class="bi bi-tags-fill me-1 text-primary"></i> Clique para inserir tags dinâmicas no script:
+              </div>
+              <div class="d-flex flex-wrap gap-1">
+                <button
+                  v-for="tag in availablePrintTags"
+                  :key="tag.key"
+                  type="button"
+                  class="btn btn-xs btn-white border rounded-pill px-2 py-0.5 text-dark fw-semibold shadow-none transition"
+                  style="font-size: 0.72rem;"
+                  @click="insertPrintTag(tag.key)"
+                  :title="tag.desc"
+                >
+                  <span class="text-primary font-monospace">+ {{ tag.key }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Editor Textarea Monospace -->
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark mb-1">Editor do Script (Template de Impressão):</label>
+              <textarea
+                ref="templateTextarea"
+                class="form-control font-monospace bg-dark text-white rounded-3 p-3 shadow-inner"
+                rows="15"
+                style="font-size: 0.8rem; line-height: 1.35; tab-size: 2;"
+                v-model="printSettings.custom_template"
+                placeholder="Insira o modelo de texto com as tags..."
+              ></textarea>
+              <div class="d-flex justify-content-between align-items-center mt-1">
+                <small class="text-muted" style="font-size: 0.7rem;">Use traços e quebras de linha para formatar conforme sua impressora térmica.</small>
+                <small class="text-muted" style="font-size: 0.7rem;">{{ (printSettings.custom_template || '').length }} caracteres</small>
+              </div>
+            </div>
+
+            <!-- Botão Salvar -->
+            <div class="text-end pt-3 border-top">
+              <button
+                type="button"
+                class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+                :disabled="savingStore"
+                @click="saveStoreSettings"
+              >
+                <span v-if="savingStore" class="spinner-border spinner-border-sm"></span>
+                <i v-else class="bi bi-floppy-fill"></i>
+                <span>Salvar Configurações de Impressão</span>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Coluna da Direita: Simulador Térmico Realista em Tempo Real -->
+        <div class="col-12 col-xl-5">
+          <div class="sticky-top" style="top: 85px;">
+            <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+              
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt-cutoff text-success fs-5"></i>
+                    <span>Simulador Térmico (Ao Vivo)</span>
+                  </h6>
+                  <small class="text-muted" style="font-size: 0.72rem;">Pré-visualização fiel com dados simulados de um pedido real</small>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1"
+                  @click="printTestTicket"
+                >
+                  <i class="bi bi-printer"></i>
+                  <span>Testar</span>
+                </button>
+              </div>
+
+              <!-- Bobina Térmica Simulada -->
+              <div class="d-flex justify-content-center bg-light p-3 rounded-4 border overflow-auto" style="min-height: 480px; max-height: 75vh;">
+                <div
+                  class="thermal-paper-preview bg-white shadow p-3 rounded-1 position-relative"
+                  :style="{
+                    width: previewPaperWidth,
+                    fontFamily: '\'Courier New\', Courier, monospace',
+                    fontSize: printSettings.font_size || '13px',
+                    lineHeight: '1.32',
+                    fontWeight: '700',
+                    color: '#000000',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    borderTop: '3px solid #dee2e6'
+                  }"
+                >
+                  {{ simulatedReceiptText }}
+                  <div v-if="printSettings.show_cut_line" class="text-center mt-3 pt-2 text-muted small border-top border-secondary border-dashed" style="font-size: 10px; font-weight: normal;">
+                    ✂ - - - - - CORTE AQUI - - - - - ✂
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dica Operacional -->
+              <div class="mt-3 p-2 bg-light rounded-3 text-muted small text-center" style="font-size: 0.73rem;">
+                <i class="bi bi-info-circle me-1 text-primary"></i>
+                Ao clicar em <strong>"Imprimir Teste"</strong> ou no botão de impressora do pedido, o sistema acionará a caixa de diálogo da impressora sem abrir popups.
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 4: ADMINISTRADORES DO SISTEMA                        -->
+    <!-- ======================================================== -->
     <div v-else-if="currentTab === 'admins'">
       
       <div v-if="loadingAdmins" class="text-center py-5">
@@ -890,6 +1184,8 @@
                     <option value="saiu_para_entrega">Status: Saiu para Entrega</option>
                     <option value="pronto_retirada">Retirada: Pronto no Balcão</option>
                     <option value="concluido">Status: Concluído</option>
+                    <option value="avaliacao">Solicitação de Avaliação</option>
+                    <option value="duvida_pedido">Cliente: Dúvidas sobre o Pedido (Rastreio)</option>
                     <option value="cancelado">Status: Cancelado</option>
                     <option value="avulsa">Mensagem Rápida / Opcional</option>
                   </select>
@@ -979,6 +1275,7 @@
 import axios from 'axios';
 import { maskName, maskPhone, maskDocument, onlyDigits, isValidCpf, applyMask } from '../utils/masks';
 import { showConfirm, showSuccess, showError, showWarning } from '../utils/swal';
+import { defaultPrintSettings, formatKitchenTicket, printThermalTicket } from '../utils/printer';
 
 export default {
   name: 'AdminSettings',
@@ -990,7 +1287,7 @@ export default {
   },
   data() {
     return {
-      currentTab: 'store', // 'store' ou 'admins'
+      currentTab: 'store', // 'store', 'whatsapp', 'print', 'admins'
       savingStore: false,
       loadingAdmins: false,
       savingAdmin: false,
@@ -1008,6 +1305,55 @@ export default {
           hours: 'Todos os dias, das 18h00 às 23h30',
           document: '',
         },
+      },
+
+      // Configurações de Impressão & Cupom da Cozinha
+      printSettings: { ...defaultPrintSettings },
+      availablePrintTags: [
+        { key: '{loja}', desc: 'Nome oficial da lanchonete' },
+        { key: '{codigo}', desc: 'Número do pedido (Ex: #0042)' },
+        { key: '{data_hora}', desc: 'Data e horário do pedido' },
+        { key: '{tipo_pedido}', desc: 'Retirada no Balcão ou Entrega' },
+        { key: '{cliente}', desc: 'Nome completo do cliente' },
+        { key: '{telefone}', desc: 'Telefone ou WhatsApp do cliente' },
+        { key: '{endereco}', desc: 'Endereço completo de entrega' },
+        { key: '{itens_detalhados}', desc: 'Itens, adicionais, bordas e quantidades' },
+        { key: '{observacoes}', desc: 'Observações do pedido em destaque' },
+        { key: '{pagamento}', desc: 'Forma de pagamento (Dinheiro, PIX, Cartão)' },
+        { key: '{troco}', desc: 'Troco solicitado e valor a devolver' },
+        { key: '{total}', desc: 'Valor total do pedido (R$)' },
+        { key: '{rodape}', desc: 'Mensagem de rodapé configurada' },
+      ],
+      sampleOrderForSimulation: {
+        id: 42,
+        order_number: '0042',
+        created_at: new Date().toISOString(),
+        customer_name: 'Maria Eduarda Silva',
+        customer_phone: '(83) 99876-5432',
+        delivery_address: 'Rua das Flores, 120, Centro - Teixeira - PB',
+        delivery_complement: 'Apto 202',
+        payment_method: 'dinheiro',
+        needs_change: true,
+        change_for: 50.00,
+        total: 37.00,
+        notes: 'SEM CEBOLA E SEM MAIONESE POR FAVOR!',
+        items: [
+          {
+            quantity: 2,
+            product_name_snapshot: 'X-Tudo Artesanal',
+            subtotal: 30.00,
+            unit_price: 15.00,
+            notes: 'Um deles bem passado',
+            details: { extras: ['Bacon crocante', 'Ovo extra'] },
+          },
+          {
+            quantity: 1,
+            product_name_snapshot: 'Coca-Cola 2L',
+            subtotal: 7.00,
+            unit_price: 7.00,
+            notes: 'Bem gelada',
+          },
+        ],
       },
 
       // Administradores
@@ -1079,6 +1425,22 @@ export default {
       if (digits.length === 11) return isValidCpf(digits);
       return false;
     },
+    simulatedReceiptText() {
+      return formatKitchenTicket(
+        this.sampleOrderForSimulation,
+        this.printSettings || defaultPrintSettings,
+        this.storeSettings.store_info || {}
+      );
+    },
+    previewPaperWidth() {
+      const size = this.printSettings.paper_size;
+      if (size === '58mm') return '235px';
+      if (size === 'a4') return '100%';
+      if (size === 'custom' && this.printSettings.custom_width_mm) {
+        return `${Math.min(450, Math.max(180, this.printSettings.custom_width_mm * 3.7))}px`;
+      }
+      return '310px'; // 80mm
+    },
   },
   mounted() {
     this.fetchStoreInfo();
@@ -1102,6 +1464,8 @@ export default {
         saiu_para_entrega: 'Status: A Caminho',
         pronto_retirada: 'Retirada: Pronto no Balcão',
         concluido: 'Status: Concluído',
+        avaliacao: 'Solicitação de Avaliação',
+        duvida_pedido: 'Dúvidas no Rastreio',
         cancelado: 'Status: Cancelado',
         avulsa: 'Mensagem Opcional / Rápida',
       };
@@ -1114,6 +1478,8 @@ export default {
         saiu_para_entrega: 'bg-info text-dark',
         pronto_retirada: 'bg-dark text-warning',
         concluido: 'bg-success text-white',
+        avaliacao: 'bg-warning bg-opacity-25 text-dark border border-warning',
+        duvida_pedido: 'bg-info text-dark',
         cancelado: 'bg-danger text-white',
         avulsa: 'bg-secondary text-white',
       };
@@ -1126,6 +1492,8 @@ export default {
         saiu_para_entrega: 'border-info',
         pronto_retirada: 'border-dark',
         concluido: 'border-success',
+        avaliacao: 'border-warning',
+        duvida_pedido: 'border-info',
         cancelado: 'border-danger',
         avulsa: 'border-secondary',
       };
@@ -1258,6 +1626,24 @@ export default {
           is_active: true,
         },
         {
+          id: 'msg_avaliacao',
+          title: 'Solicitação de Avaliação do Pedido e Entrega',
+          trigger: 'avaliacao',
+          description: 'Enviada após entrega ou retirada para solicitar avaliação com estrelas e comentário.',
+          text: "Olá, *{cliente}*! 👋🍔\n\nEsperamos que seu pedido da *AKY LANCHES* esteja uma delícia!\n\n⭐ *Poderia avaliar sua experiência em menos de 1 minuto?*\n\nSua opinião é fundamental para avaliarmos nosso lanche e nossa entrega:\n👉 {link_rastreio}\n\nBasta clicar no link acima para dar suas estrelas e deixar seu comentário. Muito obrigado! ❤️",
+          is_system: true,
+          is_active: true,
+        },
+        {
+          id: 'msg_duvida_pedido',
+          title: 'Dúvidas sobre o Pedido (Cliente / Rastreio)',
+          trigger: 'duvida_pedido',
+          description: 'Texto enviado pelo cliente via WhatsApp na tela de rastreamento ao tirar dúvidas sobre seu pedido.',
+          text: "Olá, AKY Lanches! 👋🍔\n\nEstou com uma dúvida sobre o meu pedido *#{codigo}*:\n\n👤 *Cliente:* {cliente}\n📍 *Status atual:* {status}\n💰 *Total:* R$ {total}\n💳 *Pagamento:* {pagamento}\n📌 *Endereço/Retirada:* {endereco}\n\n🔍 *Link de Rastreio:* {link_rastreio}\n\nPoderiam me dar um suporte por favor?",
+          is_system: true,
+          is_active: true,
+        },
+        {
           id: 'msg_cancelado',
           title: 'Pedido Cancelado',
           trigger: 'cancelado',
@@ -1345,19 +1731,26 @@ export default {
               ...res.data.store_info,
             };
           }
+          if (res.data.print_settings) {
+            this.printSettings = {
+              ...defaultPrintSettings,
+              ...res.data.print_settings,
+            };
+          }
         }
       } catch (err) {
         console.error(err);
       }
     },
 
-    // Salvar Informações da Loja
+    // Salvar Informações da Loja e Configurações de Impressão
     async saveStoreSettings() {
       this.savingStore = true;
       try {
         const payload = {
           ...this.storeSettings,
           whatsapp_messages: this.whatsappMessages,
+          print_settings: this.printSettings,
         };
         const res = await axios.post('/api/admin/store-info', payload);
         if (res.data) {
@@ -1376,13 +1769,67 @@ export default {
           if (res.data.whatsapp_messages && Array.isArray(res.data.whatsapp_messages)) {
             this.whatsappMessages = res.data.whatsapp_messages;
           }
+          if (res.data.print_settings) {
+            this.printSettings = {
+              ...defaultPrintSettings,
+              ...res.data.print_settings,
+            };
+          }
         }
         this.$emit('menu-updated');
-        this.openFeedback('Dados Salvos!', 'As informações da lanchonete e as mensagens do WhatsApp foram salvas com sucesso.', 'success');
+        this.openFeedback('Dados Salvos!', 'As informações da lanchonete, WhatsApp e configurações de impressão foram salvas com sucesso.', 'success');
       } catch (err) {
         this.openFeedback('Erro ao Salvar', err.response?.data?.message || 'Não foi possível salvar os dados da lanchonete.', 'danger');
       } finally {
         this.savingStore = false;
+      }
+    },
+
+    // Inserir Tag Dinâmica no Editor do Template
+    insertPrintTag(tagKey) {
+      if (!this.printSettings.custom_template) {
+        this.printSettings.custom_template = '';
+      }
+      const textarea = this.$refs.templateTextarea;
+      if (!textarea) {
+        this.printSettings.custom_template += `\n${tagKey}`;
+        return;
+      }
+      const start = textarea.selectionStart || 0;
+      const end = textarea.selectionEnd || 0;
+      const text = this.printSettings.custom_template;
+      this.printSettings.custom_template = text.substring(0, start) + tagKey + text.substring(end);
+      this.$nextTick(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + tagKey.length, start + tagKey.length);
+      });
+    },
+
+    // Restaurar Modelo Padrão de Fábrica
+    async restoreDefaultPrintTemplate() {
+      const confirmed = await showConfirm(
+        'Restaurar Padrão?',
+        'Deseja restaurar as configurações de impressão e o script do cupom para os valores originais de fábrica?',
+        'Sim, Restaurar'
+      );
+      if (confirmed) {
+        this.printSettings = JSON.parse(JSON.stringify(defaultPrintSettings));
+        this.openFeedback('Padrão Restaurado!', 'As configurações e o script voltaram ao padrão original. Clique em "Salvar" para confirmar no banco.', 'info');
+      }
+    },
+
+    // Testar Impressão na Impressora Física / PDF
+    async printTestTicket() {
+      try {
+        await printThermalTicket(
+          this.sampleOrderForSimulation,
+          this.printSettings,
+          this.storeSettings.store_info
+        );
+        this.openFeedback('Impressão Disparada!', 'O cupom de teste foi enviado para a impressora com sucesso.', 'success');
+      } catch (err) {
+        console.error('Falha ao imprimir teste:', err);
+        this.openFeedback('Falha de Impressão', 'Não foi possível enviar para a impressora.', 'danger');
       }
     },
 

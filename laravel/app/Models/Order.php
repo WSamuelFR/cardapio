@@ -11,7 +11,10 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'order_number',
+        'origin',
+        'sync_status',
         'customer_name',
         'customer_phone',
         'customer_document_encrypted',
@@ -34,7 +37,23 @@ class Order extends Model
         'payment_method',
         'needs_change',
         'change_for',
+        'client_updated_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($order) {
+            if (empty($order->uuid)) {
+                $order->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+            if (empty($order->origin)) {
+                $order->origin = 'web';
+            }
+            if (empty($order->client_updated_at)) {
+                $order->client_updated_at = now();
+            }
+        });
+    }
 
     /**
      * Oculta o documento criptografado de qualquer resposta de API para proteger a privacidade
@@ -56,6 +75,7 @@ class Order extends Model
             'delivery_rating' => 'integer',
             'allow_public_review' => 'boolean',
             'review_show_name' => 'boolean',
+            'client_updated_at' => 'datetime',
         ];
     }
 

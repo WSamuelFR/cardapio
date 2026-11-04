@@ -11,6 +11,7 @@ class OrderItem extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'order_id',
         'product_id',
         'product_name_snapshot',
@@ -18,6 +19,15 @@ class OrderItem extends Model
         'unit_price',
         'subtotal',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($item) {
+            if (empty($item->uuid)) {
+                $item->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     protected function casts(): array
     {

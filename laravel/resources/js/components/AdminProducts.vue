@@ -146,7 +146,7 @@
             :key="'admin-prod-' + product.id"
             class="col-12 col-md-6 col-lg-4"
           >
-            <div :class="['card border-0 border-start border-4 shadow-sm rounded-4 h-100 bg-white overflow-hidden', idx % 3 === 0 ? 'border-danger' : (idx % 3 === 1 ? 'border-warning' : 'border-success'), !product.is_available ? 'opacity-75' : '']">
+            <div :class="['card border-0 border-start border-4 shadow-sm rounded-4 h-100 bg-white overflow-hidden', getProductBorderClass(product), !product.is_available ? 'opacity-75' : '']">
               <div class="card-body p-2 p-sm-3 d-flex flex-column justify-content-between">
                 
                 <!-- Topo: Foto + Detalhes Compactos -->
@@ -181,8 +181,8 @@
                       <span class="badge bg-light text-dark border small" style="font-size: 0.65rem;">
                         {{ product.category ? product.category.name : 'Geral' }}
                       </span>
-                      <span v-if="product.is_promotion" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">
-                        Promo
+                      <span v-if="product.is_promotion" class="badge badge-rgb rounded-pill" style="font-size: 0.65rem;">
+                        🔥 Promo
                       </span>
                     </div>
 
@@ -336,10 +336,10 @@
           :key="'admin-cat-' + cat.id"
           class="col-12 col-md-6 col-lg-4"
         >
-          <div class="card border-0 border-start border-3 border-warning shadow-sm rounded-4 h-100 bg-white p-2 p-sm-3 d-flex flex-column justify-content-between">
+          <div :class="['card border-0 border-start border-3 shadow-sm rounded-4 h-100 bg-white p-2 p-sm-3 d-flex flex-column justify-content-between', getCategoryBorderClass(cat)]">
             <div class="d-flex align-items-center justify-content-between mb-2">
               <div class="d-flex align-items-center gap-2 min-w-0">
-                <div class="rounded-circle bg-warning bg-opacity-25 p-2 text-dark d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <div :class="['rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0', getCategoryIconBgClass(cat)]" style="width: 38px; height: 38px;">
                   <i class="bi bi-folder2-open fs-5"></i>
                 </div>
                 <div class="min-w-0">
@@ -358,9 +358,9 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 p-2 my-2">
+            <div class="d-flex justify-content-between align-items-center bg-light border rounded-3 p-2 my-2">
               <span class="small text-dark fw-semibold" style="font-size: 0.75rem;">Produtos Vinculados:</span>
-              <span class="badge bg-warning text-dark border border-warning rounded-pill px-2" style="font-size: 0.72rem;">{{ cat.products_count || (cat.products ? cat.products.length : 0) }}</span>
+              <span class="badge rounded-pill px-2.5 py-1" :class="getCategoryBadgeClass(cat)" style="font-size: 0.72rem;">{{ cat.products_count || (cat.products ? cat.products.length : 0) }}</span>
             </div>
 
             <!-- Switch de Ativação da Categoria -->
@@ -1535,6 +1535,77 @@ export default {
     },
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
+    },
+    isDrink(product, category = null) {
+      const catSlug = (category?.slug || product?.category?.slug || '').toLowerCase();
+      const catName = (category?.name || product?.category?.name || '').toLowerCase();
+      const prodName = (product?.name || '').toLowerCase();
+      const terms = ['bebida', 'suco', 'refrigerante', 'refrig', 'cerveja', 'agua', 'água', 'drink', 'coca', 'guaraná', 'guarana', 'fanta', 'sprite'];
+      return terms.some(t => catSlug.includes(t) || catName.includes(t) || prodName.includes(t));
+    },
+    isBuilder(product, category = null) {
+      const catSlug = (category?.slug || product?.category?.slug || '').toLowerCase();
+      const catName = (category?.name || product?.category?.name || '').toLowerCase();
+      const prodName = (product?.name || '').toLowerCase();
+      const terms = ['monte', 'pizza', 'tapioca', 'cuscuz'];
+      return terms.some(t => catSlug.includes(t) || catName.includes(t) || prodName.includes(t));
+    },
+    isCombo(product, category = null) {
+      const catSlug = (category?.slug || product?.category?.slug || '').toLowerCase();
+      const catName = (category?.name || product?.category?.name || '').toLowerCase();
+      const prodName = (product?.name || '').toLowerCase();
+      return product?.is_combo || catSlug.includes('combo') || catName.includes('combo') || prodName.includes('combo');
+    },
+    getProductBorderClass(product) {
+      if (product.is_promotion) {
+        return 'card-promo-rgb';
+      }
+      if (this.isDrink(product)) {
+        return 'border-warning';
+      }
+      if (this.isCombo(product)) {
+        return 'border-success';
+      }
+      if (this.isBuilder(product)) {
+        return 'border-primary';
+      }
+      return 'border-danger';
+    },
+    getCategoryBorderClass(cat) {
+      if (this.isDrink(null, cat)) {
+        return 'border-warning';
+      }
+      if (this.isCombo(null, cat)) {
+        return 'border-success';
+      }
+      if (this.isBuilder(null, cat)) {
+        return 'border-primary';
+      }
+      return 'border-danger';
+    },
+    getCategoryIconBgClass(cat) {
+      if (this.isDrink(null, cat)) {
+        return 'bg-warning bg-opacity-25 text-dark';
+      }
+      if (this.isCombo(null, cat)) {
+        return 'bg-success bg-opacity-25 text-success';
+      }
+      if (this.isBuilder(null, cat)) {
+        return 'bg-primary bg-opacity-25 text-primary';
+      }
+      return 'bg-danger bg-opacity-10 text-danger';
+    },
+    getCategoryBadgeClass(cat) {
+      if (this.isDrink(null, cat)) {
+        return 'bg-warning text-dark border border-warning';
+      }
+      if (this.isCombo(null, cat)) {
+        return 'bg-success text-white';
+      }
+      if (this.isBuilder(null, cat)) {
+        return 'bg-primary text-white';
+      }
+      return 'bg-danger text-white';
     },
     async fetchData() {
       try {
