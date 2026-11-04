@@ -4,9 +4,9 @@
 #define MyAppName "AKY Lanches"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "AKY Lanches"
-#define MyAppURL "https://akylanches.com.br"
+#define MyAppURL "https://akylanches.freedevs.tech"
 #define MyAppExeName "AKY Lanches.exe"
-#define MyAppIconName "..\assets\icon.ico"
+#define MyAppIcon "app-icon.ico"
 
 [Setup]
 AppId={{C8E19B14-99D2-48F1-A3C8-58B2E4929D12}
@@ -21,7 +21,8 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\dist-app\installer
 OutputBaseFilename=AKY-Lanches-Instalador-v{#MyAppVersion}
-SetupIconFile={#MyAppIconName}
+SetupIconFile={#MyAppIcon}
+UninstallIconFile={#MyAppIcon}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -35,6 +36,8 @@ Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortugue
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
+; Ícone oficial do aplicativo (hambúrguer AKY Lanches)
+Source: "{#MyAppIcon}"; DestDir: "{app}"; Flags: ignoreversion
 ; Todos os arquivos da aplicação empacotada pelo electron-builder
 Source: "..\dist-app\win-unpacked\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -47,9 +50,10 @@ Name: "{app}\resources\laravel\storage\logs"; Permissions: users-full
 Name: "{app}\resources\laravel\bootstrap\cache"; Permissions: users-full
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
+; Atalhos vinculados diretamente ao ícone oficial do aplicativo
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppIcon}"
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"; IconFilename: "{app}\{#MyAppIcon}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppIcon}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
@@ -58,4 +62,3 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 Type: filesandordirs; Name: "{app}\resources\laravel\storage\framework\cache\*"
 Type: filesandordirs; Name: "{app}\resources\laravel\storage\framework\sessions\*"
 Type: filesandordirs; Name: "{app}\resources\laravel\storage\framework\views\*"
-
