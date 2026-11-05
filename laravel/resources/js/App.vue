@@ -349,6 +349,34 @@
 
     </main>
 
+    <!-- BARRA FLUTUANTE DA SACOLA NO RODAPÉ (MOBILE STICKY FOOTER) -->
+    <transition name="slide-up">
+      <div
+        v-if="cartCount > 0 && (currentView === 'home' || currentView === 'menu')"
+        class="d-md-none position-fixed bottom-0 start-0 w-100 p-2 z-3"
+        style="background: linear-gradient(to top, rgba(255,255,255,1) 85%, rgba(255,255,255,0)); pointer-events: none;"
+      >
+        <button
+          type="button"
+          class="btn btn-aky-primary w-100 rounded-4 py-2.5 px-3 text-white shadow-lg d-flex align-items-center justify-content-between fw-bold border-0"
+          style="pointer-events: auto;"
+          @click="showCart = true"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-white text-dark rounded-pill px-2.5 py-1 fs-6 shadow-2xs">
+              {{ cartCount }}
+            </span>
+            <span style="font-size: 0.98rem;">Ver Sacola</span>
+          </div>
+          <div class="d-flex align-items-center gap-1.5 fs-6">
+            <small class="fw-normal opacity-75" style="font-size: 0.8rem;">Total:</small>
+            <span>R$ {{ formatPrice(cartTotal) }}</span>
+            <i class="bi bi-chevron-right ms-1"></i>
+          </div>
+        </button>
+      </div>
+    </transition>
+
     <!-- RODAPÉ (Oculto no Monitor KDS da Cozinha para Máximo Aproveitamento da TV) -->
     <footer v-if="currentView !== 'kitchen-orders'" class="bg-white border-top py-4 mt-auto">
       <div class="container text-center">
@@ -504,6 +532,12 @@ export default {
     },
     cartCount() {
       return this.cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
+    },
+    cartTotal() {
+      return this.cart.reduce((sum, item) => {
+        const price = Number(item.promotional_price && item.is_promotion ? item.promotional_price : (item.effective_price || item.price || 0));
+        return sum + (price * Number(item.quantity || 1));
+      }, 0);
     },
     allProductsList() {
       const list = [];
@@ -835,6 +869,9 @@ export default {
       this.currentView = 'admin-orders';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
+    formatPrice(val) {
+      return Number(val || 0).toFixed(2).replace('.', ',');
+    },
   },
 };
 </script>
@@ -852,5 +889,15 @@ export default {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 </style>
