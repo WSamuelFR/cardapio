@@ -374,6 +374,124 @@
             </div>
 
             <!-- ======================================================== -->
+            <!-- FERRAMENTA ESTILO IFOOD: COMBO DO SEU JEITO (PASSO A PASSO) -->
+            <!-- ======================================================== -->
+            <div v-if="isComboDoSeuJeito" class="d-flex flex-column gap-3 mb-3">
+              
+              <!-- ETAPA 1: ESCOLHA SEU SANDUÍCHE (OBRIGATÓRIO) -->
+              <div class="card border-0 bg-light rounded-4 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5" style="font-size: 0.95rem;">
+                      <span class="fs-5">🍔</span>
+                      <span>1. Escolha o seu Sanduíche</span>
+                    </h6>
+                    <small class="text-muted" style="font-size: 0.75rem;">1 opção inclusa no combo</small>
+                  </div>
+                  <span :class="['badge rounded-pill px-2.5 py-1 small fw-bold', selectedComboSandwich ? 'bg-success text-white' : 'bg-danger text-white']">
+                    {{ selectedComboSandwich ? 'Escolhido ✓' : 'Obrigatório' }}
+                  </span>
+                </div>
+
+                <div class="row g-2">
+                  <div
+                    v-for="(sand, sIdx) in comboSandwichesList"
+                    :key="'combo-sand-' + sIdx"
+                    class="col-12 col-sm-6"
+                  >
+                    <div
+                      :class="['card p-2.5 rounded-3 cursor-pointer transition border text-start d-flex flex-row align-items-center justify-content-between', selectedComboSandwich && selectedComboSandwich.name === sand.name ? 'border-success bg-white shadow-sm ring-success' : 'bg-white border-light']"
+                      @click="selectedComboSandwich = sand"
+                    >
+                      <div class="min-w-0 me-2">
+                        <span class="small fw-bold text-dark d-block text-truncate" style="font-size: 0.82rem;">{{ sand.name }}</span>
+                        <span :class="['small fw-semibold', sand.price > 0 ? 'text-success' : 'text-muted']" style="font-size: 0.72rem;">
+                          {{ sand.price > 0 ? '+ R$ ' + formatPrice(sand.price) : 'Incluso no Combo' }}
+                        </span>
+                      </div>
+                      <i :class="selectedComboSandwich && selectedComboSandwich.name === sand.name ? 'bi-check-circle-fill text-success fs-5' : 'bi-circle text-muted fs-5'"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ETAPA 2: ESCOLHA SEU ACOMPANHAMENTO (OBRIGATÓRIO) -->
+              <div class="card border-0 bg-light rounded-4 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5" style="font-size: 0.95rem;">
+                      <span class="fs-5">🍟</span>
+                      <span>2. Escolha o Acompanhamento</span>
+                    </h6>
+                    <small class="text-muted" style="font-size: 0.75rem;">1 opção inclusa ou faça um upgrade</small>
+                  </div>
+                  <span :class="['badge rounded-pill px-2.5 py-1 small fw-bold', selectedComboSide ? 'bg-success text-white' : 'bg-danger text-white']">
+                    {{ selectedComboSide ? 'Escolhido ✓' : 'Obrigatório' }}
+                  </span>
+                </div>
+
+                <div class="row g-2">
+                  <div
+                    v-for="(side, sIdx) in comboSidesList"
+                    :key="'combo-side-' + sIdx"
+                    class="col-12 col-sm-6"
+                  >
+                    <div
+                      :class="['card p-2.5 rounded-3 cursor-pointer transition border text-start d-flex flex-row align-items-center justify-content-between', selectedComboSide && selectedComboSide.name === side.name ? 'border-success bg-white shadow-sm ring-success' : 'bg-white border-light']"
+                      @click="selectedComboSide = side"
+                    >
+                      <div class="min-w-0 me-2">
+                        <span class="small fw-bold text-dark d-block text-truncate" style="font-size: 0.82rem;">{{ side.name }}</span>
+                        <span :class="['small fw-semibold', side.price > 0 ? 'text-success' : 'text-muted']" style="font-size: 0.72rem;">
+                          {{ side.price > 0 ? '+ R$ ' + formatPrice(side.price) : 'Incluso no Combo' }}
+                        </span>
+                      </div>
+                      <i :class="selectedComboSide && selectedComboSide.name === side.name ? 'bi-check-circle-fill text-success fs-5' : 'bi-circle text-muted fs-5'"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ETAPA 3: ESCOLHA SUA BEBIDA (OBRIGATÓRIO) -->
+              <div class="card border-0 bg-light rounded-4 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1.5" style="font-size: 0.95rem;">
+                      <span class="fs-5">🥤</span>
+                      <span>3. Escolha sua Bebida</span>
+                    </h6>
+                    <small class="text-muted" style="font-size: 0.75rem;">Bebida inclusa ou escolha sua favorita</small>
+                  </div>
+                  <span :class="['badge rounded-pill px-2.5 py-1 small fw-bold', selectedComboDrink ? 'bg-success text-white' : 'bg-danger text-white']">
+                    {{ selectedComboDrink ? 'Escolhido ✓' : 'Obrigatório' }}
+                  </span>
+                </div>
+
+                <div class="row g-2">
+                  <div
+                    v-for="(drk, dIdx) in comboDrinksList"
+                    :key="'combo-drink-' + dIdx"
+                    class="col-12 col-sm-6"
+                  >
+                    <div
+                      :class="['card p-2.5 rounded-3 cursor-pointer transition border text-start d-flex flex-row align-items-center justify-content-between', selectedComboDrink && selectedComboDrink.name === drk.name ? 'border-success bg-white shadow-sm ring-success' : 'bg-white border-light']"
+                      @click="selectedComboDrink = drk"
+                    >
+                      <div class="min-w-0 me-2">
+                        <span class="small fw-bold text-dark d-block text-truncate" style="font-size: 0.82rem;">{{ drk.name }}</span>
+                        <span :class="['small fw-semibold', drk.price > 0 ? 'text-success' : 'text-muted']" style="font-size: 0.72rem;">
+                          {{ drk.price > 0 ? '+ R$ ' + formatPrice(drk.price) : 'Incluso no Combo' }}
+                        </span>
+                      </div>
+                      <i :class="selectedComboDrink && selectedComboDrink.name === drk.name ? 'bi-check-circle-fill text-success fs-5' : 'bi-circle text-muted fs-5'"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ======================================================== -->
             <!-- FERRAMENTA ESTILO IFOOD 3: ADICIONAIS OPCIONAIS (LANCHES) -->
             <!-- ======================================================== -->
             <div v-if="hasExtrasOption" class="card border-0 bg-light rounded-4 p-3 mb-3">
@@ -457,6 +575,7 @@
               <i class="bi bi-exclamation-triangle-fill me-1"></i>
               <span v-if="isMonteSeuPastel">Escolha pelo menos 1 ingrediente para seu pastel!</span>
               <span v-else-if="isPizza && pizzaFlavorsMode === 'half' && !secondPizzaFlavor">Escolha a 2ª metade da sua pizza!</span>
+              <span v-else-if="isComboDoSeuJeito">Selecione o sanduíche, acompanhamento e bebida do combo!</span>
             </div>
 
             <!-- Botão de Ação: Adicionar ao Carrinho -->
@@ -711,6 +830,11 @@ export default {
 
       // Estado dos Adicionais Opcionais
       selectedExtras: [],
+
+      // Estado do Montador "Combo do Seu Jeito"
+      selectedComboSandwich: null,
+      selectedComboSide: null,
+      selectedComboDrink: null,
     };
   },
   watch: {
@@ -728,6 +852,30 @@ export default {
         }
       },
     },
+    comboSandwichesList: {
+      immediate: true,
+      handler(list) {
+        if (this.isComboDoSeuJeito && (!this.selectedComboSandwich || !list.some(s => s.name === this.selectedComboSandwich.name))) {
+          this.selectedComboSandwich = list[0] || null;
+        }
+      },
+    },
+    comboSidesList: {
+      immediate: true,
+      handler(list) {
+        if (this.isComboDoSeuJeito && (!this.selectedComboSide || !list.some(s => s.name === this.selectedComboSide.name))) {
+          this.selectedComboSide = list[0] || null;
+        }
+      },
+    },
+    comboDrinksList: {
+      immediate: true,
+      handler(list) {
+        if (this.isComboDoSeuJeito && (!this.selectedComboDrink || !list.some(s => s.name === this.selectedComboDrink.name))) {
+          this.selectedComboDrink = list[0] || null;
+        }
+      },
+    },
   },
   computed: {
     isMonteSeuPastel() {
@@ -737,6 +885,11 @@ export default {
     isMonteSeuHamburguer() {
       const name = (this.product.name || '').toLowerCase();
       return name.includes('monte seu hamb') || name.includes('monte seu burger');
+    },
+    isComboDoSeuJeito() {
+      const normalize = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const name = normalize(this.product.name);
+      return name.includes('combo do seu jeito') || name.includes('monte seu combo');
     },
     isPizza() {
       const name = (this.product.name || '').toLowerCase();
@@ -748,15 +901,94 @@ export default {
     },
     hasExtrasOption() {
       if (this.isMonteSeuPastel || this.isPizza) return false;
-      const catSlug = (this.product.category && this.product.category.slug) ? this.product.category.slug.toLowerCase() : '';
-      const name = (this.product.name || '').toLowerCase();
-      const isSandwichOrBurger = catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer') || this.isMonteSeuHamburguer;
+      const normalize = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const catSlug = normalize(this.product.category && this.product.category.slug);
+      const catName = normalize(this.product.category && this.product.category.name);
+      const name = normalize(this.product.name);
+
+      // Combo do Seu Jeito permite adicionar extras no Passo 4
+      if (this.isComboDoSeuJeito) return true;
+
+      const isSandwichOrBurger =
+        catSlug.includes('sanduich') ||
+        catSlug.includes('hamburg') ||
+        catSlug.includes('artesanal') ||
+        catSlug.includes('lanche') ||
+        catName.includes('sanduich') ||
+        catName.includes('hamburg') ||
+        name.includes('sanduich') ||
+        name.includes('burger') ||
+        name.includes('hamburg') ||
+        name.includes('misto') ||
+        name.includes('bauru') ||
+        name.includes('americano') ||
+        this.isMonteSeuHamburguer;
 
       if (isSandwichOrBurger) {
         return this.menuSettings?.monte_hamburguer?.allow_all_sandwiches_extra !== false;
       }
 
       return catSlug.includes('tapioca') || catSlug.includes('cuscuz');
+    },
+
+    // Configurações Dinâmicas do Banco de Dados para Combo do Seu Jeito
+    comboSettings() {
+      const defaults = {
+        base_price: 28.99,
+        sandwiches: [],
+        sides: [],
+        drinks: [],
+      };
+      return (this.menuSettings && this.menuSettings.combo_do_seu_jeito)
+        ? { ...defaults, ...this.menuSettings.combo_do_seu_jeito }
+        : defaults;
+    },
+    comboSandwichesList() {
+      const list = this.comboSettings.sandwiches || [];
+      if (list.length > 0) {
+        return list.filter(i => i.is_available !== false);
+      }
+      return [
+        { name: 'X-Bacon', price: 0.00 },
+        { name: 'Americano', price: 0.00 },
+        { name: 'X-Frango', price: 0.00 },
+        { name: 'X-Burguer Egg', price: 0.00 },
+        { name: 'X-Burguer', price: 0.00 },
+        { name: 'X-Calabresa', price: 0.00 },
+        { name: 'X-Salada', price: 0.00 },
+        { name: 'Burguer Egg', price: 0.00 },
+        { name: 'Cheddar Bacon', price: 0.00 },
+        { name: 'X-Egg', price: 0.00 },
+        { name: 'Hambúrguer Tradicional', price: 0.00 },
+        { name: 'Bauru', price: 0.00 },
+        { name: 'Hambúrguer Artesanal Duplo', price: 5.00 },
+      ];
+    },
+    comboSidesList() {
+      const list = this.comboSettings.sides || [];
+      if (list.length > 0) {
+        return list.filter(i => i.is_available !== false);
+      }
+      return [
+        { name: 'Batata Frita P (Inclusa)', price: 0.00 },
+        { name: 'Batata Frita M', price: 4.00 },
+        { name: 'Batata Frita com Cheddar e Bacon', price: 7.00 },
+        { name: 'Nuggets Crocantes (6 un)', price: 6.00 },
+      ];
+    },
+    comboDrinksList() {
+      const list = this.comboSettings.drinks || [];
+      if (list.length > 0) {
+        return list.filter(i => i.is_available !== false);
+      }
+      return [
+        { name: 'Refrigerante Pitxulinha 250ml (Incluso)', price: 0.00 },
+        { name: 'Coca-Cola Lata 350ml', price: 3.00 },
+        { name: 'Guaraná Antarctica Lata 350ml', price: 3.00 },
+        { name: 'Fanta Laranja Lata 350ml', price: 3.00 },
+        { name: 'Suco Natural de Laranja 400ml', price: 4.50 },
+        { name: 'Milkshake 300ml', price: 8.00 },
+      ];
     },
 
     // Configurações Dinâmicas do Banco de Dados para Monte Seu Pastel
@@ -925,7 +1157,27 @@ export default {
         return base;
       }
 
-      // 2. Regra para Pizzas Dinâmico (Tamanhos e Bordas do Banco)
+      // 3. Regra para Combo do Seu Jeito
+      if (this.isComboDoSeuJeito) {
+        let base = parseFloat(this.comboSettings.base_price || this.product.effective_price || this.product.price) || 28.99;
+        if (this.selectedComboSandwich && this.selectedComboSandwich.price) {
+          base += parseFloat(this.selectedComboSandwich.price);
+        }
+        if (this.selectedComboSide && this.selectedComboSide.price) {
+          base += parseFloat(this.selectedComboSide.price);
+        }
+        if (this.selectedComboDrink && this.selectedComboDrink.price) {
+          base += parseFloat(this.selectedComboDrink.price);
+        }
+        if (this.selectedExtras && this.selectedExtras.length > 0) {
+          this.selectedExtras.forEach(e => {
+            base += parseFloat(e.price || 0);
+          });
+        }
+        return base;
+      }
+
+      // 4. Regra para Pizzas Dinâmico (Tamanhos e Bordas do Banco)
       if (this.isPizza) {
         const sizeObj = this.pizzaSizes.find(s => s.id === this.selectedPizzaSize) || this.pizzaSizes[0];
         let base = sizeObj ? parseFloat(sizeObj.price) : 36.00;
@@ -936,7 +1188,7 @@ export default {
         return base;
       }
 
-      // 3. Regra Padrão com Adicionais Dinâmicos
+      // 5. Regra Padrão com Adicionais Dinâmicos
       let unit = 0;
       if (this.product.effective_price !== undefined && this.product.effective_price !== null) {
         unit = parseFloat(this.product.effective_price);
@@ -969,6 +1221,9 @@ export default {
       if (this.isMonteSeuPastel) {
         return this.selectedPastelIngredients.length >= 1;
       }
+      if (this.isComboDoSeuJeito) {
+        return !!(this.selectedComboSandwich && this.selectedComboSide && this.selectedComboDrink);
+      }
       if (this.isPizza && this.pizzaFlavorsMode === 'half') {
         return this.secondPizzaFlavor !== null;
       }
@@ -999,6 +1254,15 @@ export default {
       this.selectedPizzaBorder = 'nenhuma';
       this.selectedExtras = [];
       this.selectedDrinkFlavor = null;
+      if (this.isComboDoSeuJeito) {
+        this.selectedComboSandwich = (this.comboSandwichesList && this.comboSandwichesList.length > 0) ? this.comboSandwichesList[0] : null;
+        this.selectedComboSide = (this.comboSidesList && this.comboSidesList.length > 0) ? this.comboSidesList[0] : null;
+        this.selectedComboDrink = (this.comboDrinksList && this.comboDrinksList.length > 0) ? this.comboDrinksList[0] : null;
+      } else {
+        this.selectedComboSandwich = null;
+        this.selectedComboSide = null;
+        this.selectedComboDrink = null;
+      }
     },
     increaseQty() {
       this.quantity += 1;
@@ -1042,6 +1306,11 @@ export default {
       if (this.isMonteSeuPastel) {
         finalName = `Monte Seu Pastel (${this.selectedPastelIngredients.length} Ingredientes)`;
         notesParts.push(`Recheio: ${this.selectedPastelIngredients.join(', ')}`);
+      } else if (this.isComboDoSeuJeito) {
+        finalName = `Combo do Seu Jeito (${this.selectedComboSandwich?.name || 'Sanduíche'})`;
+        notesParts.push(`Sanduíche: ${this.selectedComboSandwich?.name || ''}`);
+        notesParts.push(`Acomp: ${this.selectedComboSide?.name || ''}`);
+        notesParts.push(`Bebida: ${this.selectedComboDrink?.name || ''}`);
       } else if (this.isPizza) {
         finalName = `${this.product.name} [${this.pizzaSizeLabel}]`;
         if (this.pizzaFlavorsMode === 'half' && this.secondPizzaFlavor) {
@@ -1095,14 +1364,31 @@ export default {
     },
     isCustomizable(prod) {
       if (!prod) return false;
-      const name = (prod.name || '').toLowerCase();
-      const catSlug = (prod.category && prod.category.slug) ? prod.category.slug.toLowerCase() : '';
+      const normalize = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const name = normalize(prod.name);
+      const catSlug = normalize(prod.category && prod.category.slug);
+      const catName = normalize(prod.category && prod.category.name);
+
+      if (name.includes('combo do seu jeito') || name.includes('monte seu combo')) return true;
       if (name.includes('monte seu pastel') || name.includes('monte seu')) return true;
-      if (catSlug.includes('pastel') || name.includes('pastel') || name.includes('pastelao') || name.includes('pastelão')) return false;
+      if (catSlug.includes('pastel') || name.includes('pastel')) return false;
       if (catSlug.includes('pizza') || name.startsWith('pizza')) return true;
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
-      if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer')) return true;
+      if (
+        catSlug.includes('sanduich') ||
+        catSlug.includes('hamburg') ||
+        catSlug.includes('artesanal') ||
+        catSlug.includes('lanche') ||
+        catName.includes('sanduich') ||
+        catName.includes('hamburg') ||
+        name.includes('sanduich') ||
+        name.includes('burger') ||
+        name.includes('hamburg') ||
+        name.includes('misto') ||
+        name.includes('bauru') ||
+        name.includes('americano')
+      ) return true;
       return false;
     },
     getItemTheme(prod) {

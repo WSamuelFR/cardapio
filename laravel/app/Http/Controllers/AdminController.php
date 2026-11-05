@@ -349,6 +349,7 @@ class AdminController extends Controller
             'pizza_borders' => SystemSetting::getSetting('pizza_borders', []),
             'monte_pastel' => SystemSetting::getSetting('monte_pastel', []),
             'monte_hamburguer' => SystemSetting::getSetting('monte_hamburguer', []),
+            'combo_do_seu_jeito' => SystemSetting::getSetting('combo_do_seu_jeito', []),
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
         ]);
     }
@@ -362,6 +363,7 @@ class AdminController extends Controller
             'pizza_borders' => 'nullable|array',
             'monte_pastel' => 'nullable|array',
             'monte_hamburguer' => 'nullable|array',
+            'combo_do_seu_jeito' => 'nullable|array',
             'store_whatsapp' => 'nullable|string|max:30',
             'sync_pizzas' => 'nullable|boolean',
         ]);
@@ -406,6 +408,18 @@ class AdminController extends Controller
             }
         }
 
+        if (isset($validated['combo_do_seu_jeito'])) {
+            SystemSetting::setSetting('combo_do_seu_jeito', $validated['combo_do_seu_jeito'], 'Regras e Itens do Combo do Seu Jeito');
+
+            if (isset($validated['combo_do_seu_jeito']['base_price'])) {
+                $basePrice = (float) $validated['combo_do_seu_jeito']['base_price'];
+                Product::where('name', 'LIKE', '%Combo do Seu Jeito%')->update([
+                    'price' => $basePrice,
+                    'promotional_price' => $basePrice,
+                ]);
+            }
+        }
+
         return response()->json([
             'message' => 'Configurações e valores atualizados com sucesso.',
             'settings' => [
@@ -413,6 +427,7 @@ class AdminController extends Controller
                 'pizza_borders' => SystemSetting::getSetting('pizza_borders', []),
                 'monte_pastel' => SystemSetting::getSetting('monte_pastel', []),
                 'monte_hamburguer' => SystemSetting::getSetting('monte_hamburguer', []),
+                'combo_do_seu_jeito' => SystemSetting::getSetting('combo_do_seu_jeito', []),
                 'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
             ],
         ]);

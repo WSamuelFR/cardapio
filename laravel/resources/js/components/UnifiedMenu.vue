@@ -718,18 +718,38 @@ export default {
     },
     isCustomizable(product) {
       if (!product) return false;
-      const name = (product.name || '').toLowerCase();
-      const catSlug = (product.category && product.category.slug) ? product.category.slug.toLowerCase() : '';
+      const normalize = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const name = normalize(product.name);
+      const catSlug = normalize(product.category && product.category.slug);
+      const catName = normalize(product.category && product.category.name);
+
+      // Combo do Seu Jeito / Monte Seu Combo
+      if (name.includes('combo do seu jeito') || name.includes('monte seu combo')) {
+        return true;
+      }
 
       // Pastelão NÃO é pizza, mesmo que o sabor seja pizza!
-      if (catSlug.includes('pastel') || name.includes('pastel') || name.includes('pastelao') || name.includes('pastelão')) {
+      if (catSlug.includes('pastel') || name.includes('pastel')) {
         return name.includes('monte seu');
       }
 
       if (catSlug.includes('pizza') || name.startsWith('pizza') || name.includes('pizza')) return true;
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
-      if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer')) return true;
+      if (
+        catSlug.includes('sanduich') ||
+        catSlug.includes('hamburg') ||
+        catSlug.includes('artesanal') ||
+        catSlug.includes('lanche') ||
+        catName.includes('sanduich') ||
+        catName.includes('hamburg') ||
+        name.includes('sanduich') ||
+        name.includes('burger') ||
+        name.includes('hamburg') ||
+        name.includes('misto') ||
+        name.includes('bauru') ||
+        name.includes('americano')
+      ) return true;
       return false;
     },
     isDrink(product, section = null) {

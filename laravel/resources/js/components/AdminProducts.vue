@@ -967,6 +967,314 @@
 
       </div>
 
+      <!-- 4. BLOCO DE CONFIGURAÇÃO DO COMBO DO SEU JEITO -->
+      <div v-if="menuSettings.combo_do_seu_jeito" class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span class="fs-4">🍱</span>
+              <span>4. Regras e Itens do "Combo do Seu Jeito"</span>
+            </h5>
+            <small class="text-muted">Configure o preço base e as opções de sanduíches, acompanhamentos e bebidas elegíveis para montagem</small>
+          </div>
+        </div>
+
+        <!-- Preço Base do Combo do Seu Jeito -->
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-sm-6 col-md-4">
+            <label class="form-label small fw-bold text-muted mb-1">Preço Base do "Combo do Seu Jeito"</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted fw-bold">R$</span>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control bg-white fw-bold text-dark"
+                v-model="menuSettings.combo_do_seu_jeito.base_price"
+                placeholder="28,99"
+              >
+            </div>
+            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Valor inicial do combo (sincroniza com o produto no cardápio)</small>
+          </div>
+        </div>
+
+        <!-- 4.1 Sanduíches Elegíveis -->
+        <div class="border rounded-4 p-3 bg-white mb-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span>🍔 Sanduíches Elegíveis ({{ menuSettings.combo_do_seu_jeito.sandwiches ? menuSettings.combo_do_seu_jeito.sandwiches.length : 0 }})</span>
+            </h6>
+          </div>
+
+          <!-- Formulário Rápido Novo Sanduíche -->
+          <div class="row g-2 mb-3 bg-light p-2.5 rounded-3 align-items-center">
+            <div class="col-12 col-sm-6 col-md-7">
+              <input
+                type="text"
+                class="form-control form-control-sm bg-white"
+                v-model="newComboSandwichName"
+                placeholder="Nome do sanduíche (ex: X-Bacon, Americano...)"
+                @keyup.enter="addComboSandwich"
+              >
+            </div>
+            <div class="col-7 col-sm-3 col-md-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white">Adic. R$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  class="form-control form-control-sm bg-white fw-bold"
+                  v-model="newComboSandwichPrice"
+                  placeholder="0,00"
+                  @keyup.enter="addComboSandwich"
+                >
+              </div>
+            </div>
+            <div class="col-5 col-sm-3 col-md-2">
+              <button
+                type="button"
+                class="btn btn-dark btn-sm rounded-pill w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                @click="addComboSandwich"
+                :disabled="!newComboSandwichName.trim()"
+              >
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Sanduíches -->
+          <div class="row g-2">
+            <div
+              v-for="(sand, idx) in menuSettings.combo_do_seu_jeito.sandwiches"
+              :key="'combo-sand-' + idx"
+              class="col-12 col-sm-6 col-md-4"
+            >
+              <div :class="['card p-2.5 rounded-3 border transition d-flex flex-row justify-content-between align-items-center shadow-none', sand.is_available ? 'bg-white' : 'bg-light opacity-50']">
+                <div class="min-w-0 flex-grow-1 pe-2">
+                  <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.85rem;" :title="sand.name">
+                    {{ sand.name }}
+                  </span>
+                  <div class="d-flex align-items-center gap-1 mt-1">
+                    <span class="small text-muted fw-bold" style="font-size: 0.72rem;">Adic: R$</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      class="form-control form-control-sm py-0 px-1 fw-bold text-success border-light-subtle"
+                      style="width: 70px; font-size: 0.80rem;"
+                      v-model="sand.price"
+                      placeholder="0,00"
+                    >
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                  <div class="form-check form-switch m-0 p-0" title="Ativar ou desativar">
+                    <input
+                      class="form-check-input ms-0 cursor-pointer"
+                      type="checkbox"
+                      v-model="sand.is_available"
+                      style="width: 32px; height: 18px;"
+                    >
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-danger border-0"
+                    @click="removeComboSandwich(idx)"
+                    title="Remover sanduíche"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4.2 Acompanhamentos Elegíveis -->
+        <div class="border rounded-4 p-3 bg-white mb-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span>🍟 Acompanhamentos ({{ menuSettings.combo_do_seu_jeito.sides ? menuSettings.combo_do_seu_jeito.sides.length : 0 }})</span>
+            </h6>
+          </div>
+
+          <!-- Formulário Rápido Novo Acompanhamento -->
+          <div class="row g-2 mb-3 bg-light p-2.5 rounded-3 align-items-center">
+            <div class="col-12 col-sm-6 col-md-7">
+              <input
+                type="text"
+                class="form-control form-control-sm bg-white"
+                v-model="newComboSideName"
+                placeholder="Nome do acompanhamento (ex: Batata Frita M, Nuggets...)"
+                @keyup.enter="addComboSide"
+              >
+            </div>
+            <div class="col-7 col-sm-3 col-md-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white">Adic. R$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  class="form-control form-control-sm bg-white fw-bold"
+                  v-model="newComboSidePrice"
+                  placeholder="0,00"
+                  @keyup.enter="addComboSide"
+                >
+              </div>
+            </div>
+            <div class="col-5 col-sm-3 col-md-2">
+              <button
+                type="button"
+                class="btn btn-dark btn-sm rounded-pill w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                @click="addComboSide"
+                :disabled="!newComboSideName.trim()"
+              >
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Acompanhamentos -->
+          <div class="row g-2">
+            <div
+              v-for="(side, idx) in menuSettings.combo_do_seu_jeito.sides"
+              :key="'combo-side-' + idx"
+              class="col-12 col-sm-6 col-md-4"
+            >
+              <div :class="['card p-2.5 rounded-3 border transition d-flex flex-row justify-content-between align-items-center shadow-none', side.is_available ? 'bg-white' : 'bg-light opacity-50']">
+                <div class="min-w-0 flex-grow-1 pe-2">
+                  <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.85rem;" :title="side.name">
+                    {{ side.name }}
+                  </span>
+                  <div class="d-flex align-items-center gap-1 mt-1">
+                    <span class="small text-muted fw-bold" style="font-size: 0.72rem;">Adic: R$</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      class="form-control form-control-sm py-0 px-1 fw-bold text-success border-light-subtle"
+                      style="width: 70px; font-size: 0.80rem;"
+                      v-model="side.price"
+                      placeholder="0,00"
+                    >
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                  <div class="form-check form-switch m-0 p-0" title="Ativar ou desativar">
+                    <input
+                      class="form-check-input ms-0 cursor-pointer"
+                      type="checkbox"
+                      v-model="side.is_available"
+                      style="width: 32px; height: 18px;"
+                    >
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-danger border-0"
+                    @click="removeComboSide(idx)"
+                    title="Remover acompanhamento"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4.3 Bebidas Elegíveis -->
+        <div class="border rounded-4 p-3 bg-white">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span>🥤 Bebidas ({{ menuSettings.combo_do_seu_jeito.drinks ? menuSettings.combo_do_seu_jeito.drinks.length : 0 }})</span>
+            </h6>
+          </div>
+
+          <!-- Formulário Rápido Nova Bebida -->
+          <div class="row g-2 mb-3 bg-light p-2.5 rounded-3 align-items-center">
+            <div class="col-12 col-sm-6 col-md-7">
+              <input
+                type="text"
+                class="form-control form-control-sm bg-white"
+                v-model="newComboDrinkName"
+                placeholder="Nome da bebida (ex: Coca Lata, Milkshake...)"
+                @keyup.enter="addComboDrink"
+              >
+            </div>
+            <div class="col-7 col-sm-3 col-md-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white">Adic. R$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  class="form-control form-control-sm bg-white fw-bold"
+                  v-model="newComboDrinkPrice"
+                  placeholder="0,00"
+                  @keyup.enter="addComboDrink"
+                >
+              </div>
+            </div>
+            <div class="col-5 col-sm-3 col-md-2">
+              <button
+                type="button"
+                class="btn btn-dark btn-sm rounded-pill w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                @click="addComboDrink"
+                :disabled="!newComboDrinkName.trim()"
+              >
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Bebidas -->
+          <div class="row g-2">
+            <div
+              v-for="(drk, idx) in menuSettings.combo_do_seu_jeito.drinks"
+              :key="'combo-drink-' + idx"
+              class="col-12 col-sm-6 col-md-4"
+            >
+              <div :class="['card p-2.5 rounded-3 border transition d-flex flex-row justify-content-between align-items-center shadow-none', drk.is_available ? 'bg-white' : 'bg-light opacity-50']">
+                <div class="min-w-0 flex-grow-1 pe-2">
+                  <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.85rem;" :title="drk.name">
+                    {{ drk.name }}
+                  </span>
+                  <div class="d-flex align-items-center gap-1 mt-1">
+                    <span class="small text-muted fw-bold" style="font-size: 0.72rem;">Adic: R$</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      class="form-control form-control-sm py-0 px-1 fw-bold text-success border-light-subtle"
+                      style="width: 70px; font-size: 0.80rem;"
+                      v-model="drk.price"
+                      placeholder="0,00"
+                    >
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                  <div class="form-check form-switch m-0 p-0" title="Ativar ou desativar">
+                    <input
+                      class="form-check-input ms-0 cursor-pointer"
+                      type="checkbox"
+                      v-model="drk.is_available"
+                      style="width: 32px; height: 18px;"
+                    >
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-danger border-0"
+                    @click="removeComboDrink(idx)"
+                    title="Remover bebida"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- BOTÃO INFERIOR DE SALVAR (RESPONSIVO) -->
       <div class="d-flex justify-content-center justify-content-md-end mb-5">
         <button
@@ -1563,6 +1871,12 @@ export default {
           allow_all_sandwiches_extra: true,
           ingredients: [],
         },
+        combo_do_seu_jeito: {
+          base_price: 28.99,
+          sandwiches: [],
+          sides: [],
+          drinks: [],
+        },
       },
       savingSettings: false,
       syncingPizzas: false,
@@ -1570,6 +1884,12 @@ export default {
       newDoceName: '',
       newBurgerIngredientName: '',
       newBurgerIngredientPrice: 3.00,
+      newComboSandwichName: '',
+      newComboSandwichPrice: 0.00,
+      newComboSideName: '',
+      newComboSidePrice: 0.00,
+      newComboDrinkName: '',
+      newComboDrinkPrice: 0.00,
 
       // Modais Modernos
       showSyncPizzaModal: false,
@@ -1753,6 +2073,7 @@ export default {
           const maxFree = mp.max_free_ingredients !== undefined ? mp.max_free_ingredients : (chargeFrom - 1);
 
           const mh = settingsRes.data.monte_hamburguer || {};
+          const cj = settingsRes.data.combo_do_seu_jeito || {};
 
           this.menuSettings = {
             pizza_sizes: settingsRes.data.pizza_sizes || [],
@@ -1771,6 +2092,12 @@ export default {
               base_price: mh.base_price !== undefined ? mh.base_price : 18.00,
               allow_all_sandwiches_extra: mh.allow_all_sandwiches_extra !== false,
               ingredients: (mh.ingredients && mh.ingredients.length > 0) ? mh.ingredients : this.getDefaultBurgerIngredients(),
+            },
+            combo_do_seu_jeito: {
+              base_price: cj.base_price !== undefined ? cj.base_price : 28.99,
+              sandwiches: (cj.sandwiches && cj.sandwiches.length > 0) ? cj.sandwiches : this.getDefaultComboSandwiches(),
+              sides: (cj.sides && cj.sides.length > 0) ? cj.sides : this.getDefaultComboSides(),
+              drinks: (cj.drinks && cj.drinks.length > 0) ? cj.drinks : this.getDefaultComboDrinks(),
             },
           };
         }
@@ -1957,6 +2284,104 @@ export default {
         { name: 'Salada Fresca (Alface e Tomate)', price: 2.00, is_available: true },
         { name: 'Batata Palha Crocante', price: 2.00, is_available: true },
       ];
+    },
+    getDefaultComboSandwiches() {
+      return [
+        { name: 'X-Bacon', price: 0.00, is_available: true },
+        { name: 'Americano', price: 0.00, is_available: true },
+        { name: 'X-Frango', price: 0.00, is_available: true },
+        { name: 'X-Burguer Egg', price: 0.00, is_available: true },
+        { name: 'X-Burguer', price: 0.00, is_available: true },
+        { name: 'X-Calabresa', price: 0.00, is_available: true },
+        { name: 'X-Salada', price: 0.00, is_available: true },
+        { name: 'Burguer Egg', price: 0.00, is_available: true },
+        { name: 'Cheddar Bacon', price: 0.00, is_available: true },
+        { name: 'X-Egg', price: 0.00, is_available: true },
+        { name: 'Hambúrguer Tradicional', price: 0.00, is_available: true },
+        { name: 'Bauru', price: 0.00, is_available: true },
+        { name: 'Hambúrguer Artesanal Duplo', price: 5.00, is_available: true },
+      ];
+    },
+    getDefaultComboSides() {
+      return [
+        { name: 'Batata Frita P (Inclusa)', price: 0.00, is_available: true },
+        { name: 'Batata Frita M', price: 4.00, is_available: true },
+        { name: 'Batata Frita com Cheddar e Bacon', price: 7.00, is_available: true },
+        { name: 'Nuggets Crocantes (6 un)', price: 6.00, is_available: true },
+      ];
+    },
+    getDefaultComboDrinks() {
+      return [
+        { name: 'Refrigerante Pitxulinha 250ml (Incluso)', price: 0.00, is_available: true },
+        { name: 'Coca-Cola Lata 350ml', price: 3.00, is_available: true },
+        { name: 'Guaraná Antarctica Lata 350ml', price: 3.00, is_available: true },
+        { name: 'Fanta Laranja Lata 350ml', price: 3.00, is_available: true },
+        { name: 'Suco Natural de Laranja 400ml', price: 4.50, is_available: true },
+        { name: 'Milkshake 300ml', price: 8.00, is_available: true },
+      ];
+    },
+    addComboSandwich() {
+      if (!this.newComboSandwichName.trim()) return;
+      if (!this.menuSettings.combo_do_seu_jeito) {
+        this.menuSettings.combo_do_seu_jeito = { base_price: 28.99, sandwiches: [], sides: [], drinks: [] };
+      }
+      if (!this.menuSettings.combo_do_seu_jeito.sandwiches) {
+        this.menuSettings.combo_do_seu_jeito.sandwiches = [];
+      }
+      this.menuSettings.combo_do_seu_jeito.sandwiches.push({
+        name: this.newComboSandwichName.trim(),
+        price: parseFloat(this.newComboSandwichPrice) || 0.00,
+        is_available: true,
+      });
+      this.newComboSandwichName = '';
+      this.newComboSandwichPrice = 0.00;
+    },
+    removeComboSandwich(idx) {
+      if (this.menuSettings.combo_do_seu_jeito?.sandwiches) {
+        this.menuSettings.combo_do_seu_jeito.sandwiches.splice(idx, 1);
+      }
+    },
+    addComboSide() {
+      if (!this.newComboSideName.trim()) return;
+      if (!this.menuSettings.combo_do_seu_jeito) {
+        this.menuSettings.combo_do_seu_jeito = { base_price: 28.99, sandwiches: [], sides: [], drinks: [] };
+      }
+      if (!this.menuSettings.combo_do_seu_jeito.sides) {
+        this.menuSettings.combo_do_seu_jeito.sides = [];
+      }
+      this.menuSettings.combo_do_seu_jeito.sides.push({
+        name: this.newComboSideName.trim(),
+        price: parseFloat(this.newComboSidePrice) || 0.00,
+        is_available: true,
+      });
+      this.newComboSideName = '';
+      this.newComboSidePrice = 0.00;
+    },
+    removeComboSide(idx) {
+      if (this.menuSettings.combo_do_seu_jeito?.sides) {
+        this.menuSettings.combo_do_seu_jeito.sides.splice(idx, 1);
+      }
+    },
+    addComboDrink() {
+      if (!this.newComboDrinkName.trim()) return;
+      if (!this.menuSettings.combo_do_seu_jeito) {
+        this.menuSettings.combo_do_seu_jeito = { base_price: 28.99, sandwiches: [], sides: [], drinks: [] };
+      }
+      if (!this.menuSettings.combo_do_seu_jeito.drinks) {
+        this.menuSettings.combo_do_seu_jeito.drinks = [];
+      }
+      this.menuSettings.combo_do_seu_jeito.drinks.push({
+        name: this.newComboDrinkName.trim(),
+        price: parseFloat(this.newComboDrinkPrice) || 0.00,
+        is_available: true,
+      });
+      this.newComboDrinkName = '';
+      this.newComboDrinkPrice = 0.00;
+    },
+    removeComboDrink(idx) {
+      if (this.menuSettings.combo_do_seu_jeito?.drinks) {
+        this.menuSettings.combo_do_seu_jeito.drinks.splice(idx, 1);
+      }
     },
     openProductModal(product = null) {
       this.selectedFile = null;
