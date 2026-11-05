@@ -236,18 +236,19 @@
             class="col"
           >
             <div
-              class="product-row card h-100 shadow-sm rounded-4 p-3 bg-white transition cursor-pointer"
               :class="[
-                !product.is_available ? 'opacity-75 bg-light' : 'hover-lift',
-                getItemTheme(product, section).borderClass
+                'card aky-card h-100 bg-white shadow-sm rounded-4 overflow-hidden cursor-pointer transition',
+                getItemTheme(product, section).borderClass,
+                !product.is_available ? 'opacity-75 bg-light' : 'hover-lift'
               ]"
               @click="onRowClick(product)"
             >
-              <div class="d-flex align-items-stretch gap-3 h-100">
+              <div class="d-flex p-3 gap-3 h-100">
                 
-                <!-- Miniatura da Foto com fallback moderno e dimensões ampliadas -->
+                <!-- Miniatura da Foto no estilo da área de sugestões (85x85px) -->
                 <div
-                  class="product-thumb rounded-4 overflow-hidden bg-light d-flex align-items-center justify-content-center flex-shrink-0 border position-relative"
+                  class="product-thumb rounded-3 overflow-hidden flex-shrink-0 bg-light d-flex align-items-center justify-content-center border position-relative"
+                  style="width: 85px; height: 85px;"
                 >
                   <img
                     v-if="product.photo_path"
@@ -257,7 +258,10 @@
                     loading="lazy"
                   >
                   <div v-else class="text-center text-muted">
-                    <i :class="['bi', getCategoryIcon(product.category?.slug), getItemTheme(product, section).iconClass, 'fs-1 opacity-75']"></i>
+                    <i :class="['bi', getCategoryIcon(product.category?.slug), getItemTheme(product, section).iconClass, 'fs-2 opacity-75 d-block']"></i>
+                    <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(product, section).iconClass]">
+                      {{ product.is_combo ? 'Combo' : (product.is_promotion ? 'Promo' : 'AKY') }}
+                    </span>
                   </div>
 
                   <!-- Badge Temática Flutuante sobre a Foto -->
@@ -270,11 +274,11 @@
                   </span>
                 </div>
 
-                <!-- Informações Principais (Nome, Descrição e Linha Inferior com Preço e Botão) -->
-                <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between py-0.5">
+                <!-- Detalhes do Produto (Nome, Descrição e Linha Inferior com Preço e Botão) -->
+                <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between">
                   <div>
-                    <div class="d-flex align-items-start justify-content-between gap-1 mb-1">
-                      <h6 class="fw-bold text-dark mb-0 line-clamp-1" :title="product.name" style="font-size: 1.02rem; letter-spacing: -0.2px;">
+                    <div class="d-flex justify-content-between align-items-start gap-1 mb-1">
+                      <h6 class="fw-bold text-dark mb-0 line-clamp-1" :title="product.name" style="font-size: 0.96rem; letter-spacing: -0.2px;">
                         {{ product.name }}
                       </h6>
                       <span v-if="!product.is_available" class="badge bg-secondary rounded-pill flex-shrink-0" style="font-size: 0.65rem;">
@@ -283,36 +287,36 @@
                     </div>
 
                     <!-- Descrição em 2 linhas com ellipsis -->
-                    <p class="text-secondary small mb-2 line-clamp-2" style="font-size: 0.82rem; line-height: 1.35;" :title="product.description">
+                    <p class="text-muted small mb-1 line-clamp-2" style="font-size: 0.78rem; line-height: 1.3;" :title="product.description">
                       {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
                     </p>
                   </div>
 
                   <!-- Linha Inferior: Preço à Esquerda e Botão de Ação Redondo à Direita -->
-                  <div class="d-flex align-items-center justify-content-between pt-1 gap-2 border-top border-light-subtle flex-wrap flex-sm-nowrap">
+                  <div class="d-flex align-items-center justify-content-between pt-1.5 mt-2 border-top border-light-subtle flex-wrap flex-sm-nowrap">
                     <!-- Área de Preço -->
                     <div class="d-flex align-items-baseline gap-1.5">
-                      <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1.5">
-                        <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;">
+                      <div v-if="product.is_promotion && product.promotional_price">
+                        <span class="text-muted text-decoration-line-through d-block" style="font-size: 0.70rem;">
                           R$ {{ formatPrice(product.price) }}
                         </span>
-                        <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
+                        <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
                           R$ {{ formatPrice(product.promotional_price) }}
                         </span>
                       </div>
                       <div v-else>
-                        <span :class="['fw-bold fs-5', getItemTheme(product, section).priceClass]">
+                        <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
                           R$ {{ formatPrice(product.effective_price || product.price) }}
                         </span>
                       </div>
 
-                      <!-- Tag discreta se for montador -->
+                      <!-- Tag discreta se for montador / opções -->
                       <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold ms-1" style="font-size: 0.68rem;">
                         <i class="bi bi-sliders me-0.5"></i> Opções
                       </span>
                     </div>
 
-                    <!-- Botão de Ação Ergonômico Apenas com Ícone -->
+                    <!-- Botão de Ação Redondo Estilo Sugestões (36x36px) -->
                     <div class="flex-shrink-0" @click.stop>
                       <button
                         type="button"
@@ -320,7 +324,7 @@
                           'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0 flex-shrink-0',
                           getItemTheme(product, section).btnClass
                         ]"
-                        style="width: 38px; height: 38px;"
+                        style="width: 36px; height: 36px;"
                         :disabled="!product.is_available"
                         :title="!product.is_available ? 'Produto esgotado' : (isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho')"
                         :aria-label="isCustomizable(product) ? 'Montar item' : 'Adicionar ao carrinho'"
@@ -328,7 +332,7 @@
                       >
                         <i v-if="!product.is_available" class="bi bi-slash-circle fs-6"></i>
                         <i v-else-if="isCustomizable(product)" class="bi bi-sliders fs-6"></i>
-                        <i v-else class="bi bi-plus-lg fs-5"></i>
+                        <i v-else class="bi bi-plus-lg fs-6"></i>
                       </button>
                     </div>
                   </div>
@@ -585,6 +589,7 @@ export default {
       if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
+      if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer')) return true;
       return false;
     },
     isDrink(product, section = null) {

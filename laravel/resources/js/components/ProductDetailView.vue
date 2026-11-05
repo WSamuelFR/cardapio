@@ -567,15 +567,15 @@
           v-for="sug in suggestedItems"
           :key="'sug-' + sug.id"
           class="flex-shrink-0 cursor-pointer"
-          style="width: 290px; min-width: 290px; scroll-snap-align: start;"
+          style="width: 340px; min-width: 340px; scroll-snap-align: start;"
           @click="$emit('select-product', sug)"
         >
           <div
             :class="['card aky-card h-100 bg-white shadow-sm rounded-4 overflow-hidden cursor-pointer transition', getItemTheme(sug).borderClass, !sug.is_available ? 'opacity-75' : '']"
           >
-            <div class="d-flex p-3 gap-3">
-              <!-- Foto do Produto -->
-              <div class="product-thumb rounded-3 overflow-hidden flex-shrink-0 bg-light d-flex align-items-center justify-content-center border position-relative" style="width: 85px; height: 85px;">
+            <div class="d-flex p-3 gap-3 h-100">
+              <!-- Foto do Produto Ampliada -->
+              <div class="product-thumb rounded-3 overflow-hidden flex-shrink-0 bg-light d-flex align-items-center justify-content-center border position-relative" style="width: 95px; height: 95px;">
                 <img
                   v-if="sug.photo_path"
                   :src="sug.photo_path"
@@ -586,24 +586,40 @@
                   <i :class="[getCategoryIcon(sug), getItemTheme(sug).iconClass, 'fs-2 opacity-75 d-block']"></i>
                   <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(sug).iconClass]">{{ sug.is_combo ? 'Combo' : (sug.is_promotion ? 'Promo' : 'AKY') }}</span>
                 </div>
+
+                <!-- Badge Temática Flutuante -->
+                <span
+                  v-if="sug.is_promotion"
+                  class="badge bg-danger position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
+                  style="font-size: 0.58rem; padding: 2px 5px;"
+                >
+                  PROMO
+                </span>
+                <span
+                  v-else-if="sug.is_combo"
+                  class="badge bg-success position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
+                  style="font-size: 0.58rem; padding: 2px 5px;"
+                >
+                  COMBO
+                </span>
               </div>
 
-              <!-- Detalhes do Produto -->
-              <div class="flex-grow-1 d-flex flex-column justify-content-between">
+              <!-- Detalhes do Produto Ampliados -->
+              <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between">
                 <div>
-                  <div class="d-flex justify-content-between align-items-start gap-1">
-                    <h6 class="fw-bold text-dark mb-1 text-truncate" :title="sug.name" style="font-size: 0.92rem; max-width: 145px;">
+                  <div class="d-flex justify-content-between align-items-start gap-1 mb-1">
+                    <h6 class="fw-bold text-dark mb-0 line-clamp-1" :title="sug.name" style="font-size: 0.98rem; letter-spacing: -0.2px;">
                       {{ sug.name }}
                     </h6>
-                    <span v-if="!sug.is_available" class="badge bg-secondary small" style="font-size: 0.65rem;">Esgotado</span>
+                    <span v-if="!sug.is_available" class="badge bg-secondary rounded-pill flex-shrink-0" style="font-size: 0.65rem;">Esgotado</span>
                   </div>
 
-                  <p class="text-muted small mb-1 text-truncate" style="font-size: 0.74rem; max-width: 145px;" :title="sug.description">
+                  <p class="text-muted small mb-1 line-clamp-2" style="font-size: 0.78rem; line-height: 1.3;" :title="sug.description">
                     {{ sug.description || 'Preparo artesanal com muito sabor.' }}
                   </p>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-1.5 border-top border-light-subtle">
                   <div>
                     <div v-if="sug.is_promotion && sug.promotional_price">
                       <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
@@ -621,8 +637,8 @@
                   </div>
 
                   <button
-                    :class="['btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getItemTheme(sug).btnClass]"
-                    style="width: 36px; height: 36px;"
+                    :class="['btn rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getItemTheme(sug).btnClass]"
+                    style="width: 38px; height: 38px;"
                     :disabled="!sug.is_available"
                     :title="isCustomizable(sug) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
                     @click.stop="handleSuggestedAdd(sug)"
@@ -713,7 +729,8 @@ export default {
     hasExtrasOption() {
       if (this.isMonteSeuPastel || this.isPizza) return false;
       const catSlug = (this.product.category && this.product.category.slug) ? this.product.category.slug.toLowerCase() : '';
-      return catSlug.includes('sanduiche') || catSlug.includes('tapioca') || catSlug.includes('cuscuz') || catSlug.includes('artesanal');
+      const name = (this.product.name || '').toLowerCase();
+      return catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || catSlug.includes('tapioca') || catSlug.includes('cuscuz') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer');
     },
 
     // Configurações Dinâmicas do Banco de Dados para Monte Seu Pastel
@@ -1039,6 +1056,7 @@ export default {
       if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
+      if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer')) return true;
       return false;
     },
     getItemTheme(prod) {
@@ -1087,7 +1105,7 @@ export default {
       if (catSlug.includes('pizza')) return 'bi-pie-chart-fill';
       if (catSlug.includes('bebida') || catSlug.includes('refrig') || catSlug.includes('suco')) return 'bi-cup-straw';
       if (catSlug.includes('combo')) return 'bi-gift-fill';
-      if (catSlug.includes('monte') || catSlug.includes('tapioca') || catSlug.includes('cuscuz')) return 'bi-sliders';
+      if (catSlug.includes('monte') || catSlug.includes('tapioca') || catSlug.includes('cuscuz') || catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal')) return 'bi-sliders';
       return 'bi-tag-fill';
     },
   },
