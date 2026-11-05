@@ -25,26 +25,55 @@
         </button>
       </div>
 
-      <!-- Sugestões Rápidas de 1 Toque (Para Facilitar Quem Tem Dificuldade de Digitar) -->
-      <div class="quick-tags d-flex align-items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 px-1">
-        <span class="text-muted small fw-semibold flex-shrink-0 d-none d-sm-inline" style="font-size: 0.75rem;">
-          <i class="bi bi-lightning-charge-fill text-warning me-0.5"></i> Sugestões:
-        </span>
+      <!-- Barra de Todas as Categorias no Estilo Pílula (Substitui as sugestões rápidas) -->
+      <div class="category-pills-bar d-flex align-items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 px-1 pb-1">
+        <!-- Pílula Todos -->
         <button
-          v-for="tag in quickSearchTags"
-          :key="tag.label"
           type="button"
           :class="[
             'btn btn-sm rounded-pill py-1 px-2.5 text-nowrap fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs transition flex-shrink-0',
-            searchTerm.toLowerCase() === tag.query.toLowerCase()
+            activeFilter === 'all'
               ? 'btn-dark text-white'
               : 'btn-white bg-white text-secondary border'
           ]"
           style="font-size: 0.75rem;"
-          @click="applyQuickSearch(tag.query)"
+          @click="selectCategoryPill('all')"
         >
-          <span>{{ tag.icon }}</span>
-          <span>{{ tag.label }}</span>
+          <span>📋</span>
+          <span>Todos</span>
+          <span
+            class="badge rounded-pill ms-0.5"
+            :class="activeFilter === 'all' ? 'bg-secondary text-white' : 'bg-light text-muted border'"
+            style="font-size: 0.65rem;"
+          >
+            {{ totalProductsCount }}
+          </span>
+        </button>
+
+        <!-- Pílulas de Cada Categoria / Seção -->
+        <button
+          v-for="sec in allSections"
+          :key="'pill-' + sec.filterKey"
+          type="button"
+          :class="[
+            'btn btn-sm rounded-pill py-1 px-2.5 text-nowrap fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs transition flex-shrink-0',
+            activeFilter === sec.filterKey
+              ? 'btn-dark text-white'
+              : 'btn-white bg-white text-secondary border'
+          ]"
+          style="font-size: 0.75rem;"
+          @click="selectCategoryPill(sec.filterKey)"
+        >
+          <span>{{ getCategoryEmoji(sec.key || sec.slug) }}</span>
+          <span>{{ getSectionPillTitle(sec) }}</span>
+          <span
+            v-if="sec.items && sec.items.length"
+            class="badge rounded-pill ms-0.5"
+            :class="activeFilter === sec.filterKey ? 'bg-secondary text-white' : 'bg-light text-muted border'"
+            style="font-size: 0.65rem;"
+          >
+            {{ sec.items.length }}
+          </span>
         </button>
       </div>
 
@@ -71,7 +100,6 @@
       <span class="badge bg-light text-dark border rounded-pill fw-semibold">{{ totalProductsCount }} opções no cardápio</span>
     </div>
 
-    <!-- 2. CARROSSEL DE BOTÕES / CHIPS DE FILTRO POR CATEGORIA (STICKY & ROLAGEM HORIZONTAL SUAVE) -->
     <!-- 2. MENU DE NAVEGAÇÃO DE CATEGORIAS TIPO LIVRO (STICKY) -->
     <div class="category-book-nav-wrapper mb-3">
       <div class="bg-white rounded-4 shadow-sm border p-2 d-flex align-items-center justify-content-between gap-2">
@@ -131,7 +159,7 @@
           <span class="badge bg-aky-primary text-white rounded-pill px-2 py-0.5">Filtro</span>
           <span class="text-truncate" style="font-size: 0.82rem;">Exibindo: <strong>{{ activeFilterName }}</strong></span>
         </div>
-        <button class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-bold text-nowrap" style="font-size: 0.75rem;" @click="selectFilter('all')">
+        <button class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-bold text-nowrap" style="font-size: 0.75rem;" @click="selectFilter('all', false)">
           <i class="bi bi-arrow-counterclockwise me-1"></i> Ver Todos
         </button>
       </div>
@@ -479,14 +507,6 @@ export default {
       showBackToTop: false,
       touchStartX: 0,
       touchStartY: 0,
-      quickSearchTags: [
-        { label: 'Pastéis', icon: '🥟', query: 'pastel' },
-        { label: 'Pizzas', icon: '🍕', query: 'pizza' },
-        { label: 'Sanduíches', icon: '🍔', query: 'sanduiche' },
-        { label: 'Bebidas', icon: '🥤', query: 'bebida' },
-        { label: 'Promoções', icon: '🔥', query: 'promo' },
-        { label: 'Combos', icon: '🎁', query: 'combo' },
-      ],
     };
   },
   computed: {
@@ -546,7 +566,7 @@ export default {
         sections.push({
           key: 'promotions',
           filterKey: 'promotions',
-          title: '🔥 Promoções Especiais',
+          title: 'Promoções Especiais',
           subtitle: 'Aproveite descontos exclusivos por tempo limitado',
           icon: 'bi-fire',
           iconColorClass: 'text-danger',
@@ -560,7 +580,7 @@ export default {
         sections.push({
           key: 'popular',
           filterKey: 'popular',
-          title: '⭐ Mais Pedidos',
+          title: 'Mais Pedidos',
           subtitle: 'Os favoritos e mais vendidos da AKY Lanches',
           icon: 'bi-star-fill',
           iconColorClass: 'text-warning',
@@ -574,7 +594,7 @@ export default {
         sections.push({
           key: 'combos',
           filterKey: 'combos',
-          title: '🎁 Combos do Dia',
+          title: 'Combos do Dia',
           subtitle: 'Combinações completas com lanche, batata e bebida',
           icon: 'bi-gift-fill',
           iconColorClass: 'text-success',
@@ -655,32 +675,37 @@ export default {
     formatPrice(val) {
       return Number(val || 0).toFixed(2).replace('.', ',');
     },
-    selectFilter(key) {
+    selectFilter(key, shouldScroll = false) {
       this.activeFilter = key;
-      if (key === 'all') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        this.$nextTick(() => {
-          const el = document.getElementById('sec-' + key);
-          if (el) {
-            const yOffset = -115;
-            const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          }
-        });
+      if (shouldScroll) {
+        if (key === 'all') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          this.$nextTick(() => {
+            const el = document.getElementById('sec-' + key);
+            if (el) {
+              const yOffset = -115;
+              const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+              window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+          });
+        }
       }
     },
     selectCategoryFromModal(key) {
       this.showCategoriesModal = false;
-      this.selectFilter(key);
+      this.selectFilter(key, false);
     },
-    applyQuickSearch(query) {
-      if (this.searchTerm.toLowerCase() === query.toLowerCase()) {
-        this.searchTerm = '';
-      } else {
-        this.searchTerm = query;
-        this.activeFilter = 'all';
-      }
+    selectCategoryPill(key) {
+      this.searchTerm = '';
+      this.selectFilter(key, false);
+    },
+    getSectionPillTitle(sec) {
+      if (!sec) return '';
+      if (sec.filterKey === 'promotions') return 'Promoções';
+      if (sec.filterKey === 'popular') return 'Mais Pedidos';
+      if (sec.filterKey === 'combos') return 'Combos';
+      return (sec.title || '').replace(/^[\p{Emoji}\p{Extended_Pictographic}\s]+/u, '').trim();
     },
     scrollToTop() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -690,15 +715,20 @@ export default {
     },
     resetFilters() {
       this.searchTerm = '';
-      this.activeFilter = 'all';
+      this.selectFilter('all', false);
       this.scrollToTop();
     },
     isCustomizable(product) {
       if (!product) return false;
       const name = (product.name || '').toLowerCase();
       const catSlug = (product.category && product.category.slug) ? product.category.slug.toLowerCase() : '';
-      if (name.includes('monte seu pastel') || name.includes('monte seu')) return true;
-      if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+
+      // Pastelão NÃO é pizza, mesmo que o sabor seja pizza!
+      if (catSlug.includes('pastel') || name.includes('pastel') || name.includes('pastelao') || name.includes('pastelão')) {
+        return name.includes('monte seu');
+      }
+
+      if (catSlug.includes('pizza') || name.startsWith('pizza') || name.includes('pizza')) return true;
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer')) return true;
@@ -777,22 +807,22 @@ export default {
       if (this.navigableSections.length === 0) return;
       const currentIdx = this.navigableSections.findIndex(s => s.filterKey === this.activeFilter);
       if (currentIdx > 0) {
-        this.selectFilter(this.navigableSections[currentIdx - 1].filterKey);
+        this.selectFilter(this.navigableSections[currentIdx - 1].filterKey, false);
       } else if (currentIdx === 0) {
-        this.selectFilter('all');
+        this.selectFilter('all', false);
       } else {
-        this.selectFilter(this.navigableSections[this.navigableSections.length - 1].filterKey);
+        this.selectFilter(this.navigableSections[this.navigableSections.length - 1].filterKey, false);
       }
     },
     goToNextCategory() {
       if (this.navigableSections.length === 0) return;
       const currentIdx = this.navigableSections.findIndex(s => s.filterKey === this.activeFilter);
       if (currentIdx === -1) {
-        this.selectFilter(this.navigableSections[0].filterKey);
+        this.selectFilter(this.navigableSections[0].filterKey, false);
       } else if (currentIdx < this.navigableSections.length - 1) {
-        this.selectFilter(this.navigableSections[currentIdx + 1].filterKey);
+        this.selectFilter(this.navigableSections[currentIdx + 1].filterKey, false);
       } else {
-        this.selectFilter('all');
+        this.selectFilter('all', false);
       }
     },
     handleTouchStart(e) {

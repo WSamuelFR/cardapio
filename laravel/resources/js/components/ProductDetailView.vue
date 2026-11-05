@@ -741,8 +741,10 @@ export default {
     isPizza() {
       const name = (this.product.name || '').toLowerCase();
       const catSlug = (this.product.category && this.product.category.slug) ? this.product.category.slug.toLowerCase() : '';
-      if (catSlug.includes('pastel') && !name.includes('pizza')) return false;
-      return catSlug.includes('pizza') || name.startsWith('pizza');
+      if (catSlug.includes('pastel') || name.includes('pastel') || name.includes('pastelão') || name.includes('pastelao')) {
+        return false;
+      }
+      return catSlug.includes('pizza') || name.startsWith('pizza') || name.startsWith('mini pizza');
     },
     hasExtrasOption() {
       if (this.isMonteSeuPastel || this.isPizza) return false;
@@ -850,6 +852,7 @@ export default {
           if (p.id === this.product.id) return false;
           const pName = (p.name || '').toLowerCase();
           const pSlug = (p.category && p.category.slug) ? p.category.slug.toLowerCase() : '';
+          if (pSlug.includes('pastel') || pName.includes('pastel') || pName.includes('pastelao') || pName.includes('pastelão')) return false;
           const isPiz = pSlug.includes('pizza') || pName.startsWith('pizza');
           if (!isPiz) return false;
           if (term) return pName.includes(term);
@@ -1071,7 +1074,8 @@ export default {
       const name = (prod.name || '').toLowerCase();
       const catSlug = (prod.category && prod.category.slug) ? prod.category.slug.toLowerCase() : '';
       if (name.includes('monte seu pastel') || name.includes('monte seu')) return true;
-      if (catSlug.includes('pizza') || name.startsWith('pizza') || (name.includes('pizza') && !catSlug.includes('pastel'))) return true;
+      if (catSlug.includes('pastel') || name.includes('pastel') || name.includes('pastelao') || name.includes('pastelão')) return false;
+      if (catSlug.includes('pizza') || name.startsWith('pizza')) return true;
       if (catSlug.includes('tapioca') || name.includes('tapioca')) return true;
       if (catSlug.includes('cuscuz') || name.includes('cuscuz')) return true;
       if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer')) return true;
