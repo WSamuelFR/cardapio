@@ -26,25 +26,25 @@
       </div>
 
       <!-- Barra de Todas as Categorias no Estilo Pílula (Substitui as sugestões rápidas) -->
-      <div class="category-pills-bar d-flex align-items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 px-1 pb-1">
+      <div class="category-pills-bar d-flex align-items-center gap-2 overflow-x-auto no-scrollbar pt-2 px-1 pb-1">
         <!-- Pílula Todos -->
         <button
           type="button"
           :class="[
-            'btn btn-sm rounded-pill py-1 px-2.5 text-nowrap fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs transition flex-shrink-0',
+            'btn btn-sm rounded-pill py-1.5 py-sm-2 px-3 text-nowrap fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs transition flex-shrink-0',
             activeFilter === 'all'
               ? 'btn-dark text-white'
               : 'btn-white bg-white text-secondary border'
           ]"
-          style="font-size: 0.75rem;"
+          style="font-size: 0.85rem;"
           @click="selectCategoryPill('all')"
         >
-          <span>📋</span>
+          <span style="font-size: 1.05rem;">📋</span>
           <span>Todos</span>
           <span
-            class="badge rounded-pill ms-0.5"
+            class="badge rounded-pill ms-0.5 px-2 py-0.5"
             :class="activeFilter === 'all' ? 'bg-secondary text-white' : 'bg-light text-muted border'"
-            style="font-size: 0.65rem;"
+            style="font-size: 0.72rem;"
           >
             {{ totalProductsCount }}
           </span>
@@ -56,21 +56,21 @@
           :key="'pill-' + sec.filterKey"
           type="button"
           :class="[
-            'btn btn-sm rounded-pill py-1 px-2.5 text-nowrap fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs transition flex-shrink-0',
+            'btn btn-sm rounded-pill py-1.5 py-sm-2 px-3 text-nowrap fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs transition flex-shrink-0',
             activeFilter === sec.filterKey
               ? 'btn-dark text-white'
               : 'btn-white bg-white text-secondary border'
           ]"
-          style="font-size: 0.75rem;"
+          style="font-size: 0.85rem;"
           @click="selectCategoryPill(sec.filterKey)"
         >
-          <span>{{ getCategoryEmoji(sec.key || sec.slug) }}</span>
+          <span style="font-size: 1.05rem;">{{ getCategoryEmoji(sec.key || sec.slug) }}</span>
           <span>{{ getSectionPillTitle(sec) }}</span>
           <span
             v-if="sec.items && sec.items.length"
-            class="badge rounded-pill ms-0.5"
+            class="badge rounded-pill ms-0.5 px-2 py-0.5"
             :class="activeFilter === sec.filterKey ? 'bg-secondary text-white' : 'bg-light text-muted border'"
-            style="font-size: 0.65rem;"
+            style="font-size: 0.72rem;"
           >
             {{ sec.items.length }}
           </span>
@@ -102,7 +102,7 @@
 
     <!-- 2. MENU DE NAVEGAÇÃO DE CATEGORIAS TIPO LIVRO (STICKY) -->
     <div class="category-book-nav-wrapper mb-3">
-      <div class="bg-white rounded-4 shadow-sm border p-2 d-flex align-items-center justify-content-between gap-2">
+      <div class="bg-white rounded-4 shadow-sm border p-2.5 px-3 d-flex align-items-center justify-content-between gap-2">
         
         <!-- Botão Anterior (<) - Apenas Ícone -->
         <button
@@ -112,7 +112,7 @@
           title="Categoria Anterior"
           aria-label="Categoria Anterior"
         >
-          <i class="bi bi-chevron-left fs-6 text-dark fw-bold"></i>
+          <i class="bi bi-chevron-left fs-5 text-dark fw-bold"></i>
         </button>
 
         <!-- Botão Abrir Modal de Categorias (📑) - Apenas Ícone -->
@@ -123,19 +123,19 @@
           title="Ver todas as categorias"
           aria-label="Ver todas as categorias"
         >
-          <i class="bi bi-grid-3x3-gap-fill text-warning fs-6"></i>
+          <i class="bi bi-grid-3x3-gap-fill text-warning fs-5"></i>
         </button>
 
         <!-- Nome da Categoria Atual no Meio -->
-        <div class="flex-grow-1 text-center min-w-0 px-1 cursor-pointer" @click="showCategoriesModal = true" title="Toque para ver todas as categorias">
-          <div class="fw-bold text-dark text-truncate d-flex align-items-center justify-content-center gap-1.5" style="font-size: 0.96rem;">
-            <span class="fs-5">{{ currentCategoryEmoji }}</span>
+        <div class="flex-grow-1 text-center min-w-0 px-2 cursor-pointer" @click="showCategoriesModal = true" title="Toque para ver todas as categorias">
+          <div class="fw-bold text-dark text-truncate d-flex align-items-center justify-content-center gap-2" style="font-size: 1.05rem;">
+            <span class="fs-4">{{ currentCategoryEmoji }}</span>
             <span class="text-truncate">{{ currentCategoryTitle }}</span>
-            <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.70rem;">
+            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
               {{ currentCategoryItemCount }}
             </span>
           </div>
-          <small class="text-muted d-block" style="font-size: 0.68rem; line-height: 1;">
+          <small class="text-muted d-block mt-0.5" style="font-size: 0.70rem; line-height: 1;">
             Toque para escolher ou arraste ⟷
           </small>
         </div>
@@ -148,7 +148,7 @@
           title="Próxima Categoria"
           aria-label="Próxima Categoria"
         >
-          <i class="bi bi-chevron-right fs-6 text-dark fw-bold"></i>
+          <i class="bi bi-chevron-right fs-5 text-dark fw-bold"></i>
         </button>
 
       </div>
@@ -262,11 +262,6 @@
                         </span>
                       </div>
 
-                      <!-- Tag de Opções se for montável -->
-                      <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.70rem;">
-                        <i class="bi bi-sliders me-0.5"></i> Opções
-                      </span>
-
                       <!-- Tag Esgotado se indisponível -->
                       <span v-if="!product.is_available" class="badge bg-secondary rounded-pill d-none d-sm-inline-block" style="font-size: 0.65rem;">
                         Esgotado
@@ -374,10 +369,10 @@
       @click.self="showCategoriesModal = false"
     >
       <div class="modal-dialog modal-dialog-centered modal-categories-dialog">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-content border border-light-subtle shadow-lg rounded-4 overflow-hidden bg-white">
           
           <!-- Header do Modal -->
-          <div class="modal-header border-bottom bg-light px-3 py-2.5 d-flex align-items-center justify-content-between">
+          <div class="modal-header border-bottom bg-white px-3 py-2.5 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2">
               <div class="rounded-circle bg-dark text-warning p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                 <i class="bi bi-grid-3x3-gap-fill fs-6"></i>
@@ -396,7 +391,7 @@
           </div>
 
           <!-- Corpo do Modal com a Lista de Categorias -->
-          <div class="modal-body p-2 px-3" style="max-height: 70vh; overflow-y: auto;">
+          <div class="modal-body p-2 px-3 bg-white" style="max-height: 70vh; overflow-y: auto;">
             <div class="list-group list-group-flush gap-1">
               
               <!-- Item: Ver Todos os Produtos -->
@@ -461,7 +456,7 @@
           </div>
 
           <!-- Footer simples para fechar -->
-          <div class="modal-footer border-top bg-light py-2 px-3">
+          <div class="modal-footer border-top bg-white py-2 px-3">
             <button
               type="button"
               class="btn btn-sm btn-outline-secondary rounded-pill px-4 fw-semibold w-100"
@@ -989,19 +984,19 @@ export default {
   position: sticky;
   top: 58px;
   z-index: 1015;
-  background: rgba(248, 249, 250, 0.96);
-  backdrop-filter: blur(8px);
+  background: #ffffff;
   padding-top: 6px;
   padding-bottom: 6px;
   margin-left: -0.5rem;
   margin-right: -0.5rem;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 .nav-book-btn {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   transition: all 0.2s ease;
 }
 .nav-book-btn:hover {
@@ -1027,14 +1022,13 @@ export default {
   opacity: 0;
 }
 
-/* Modal de Categorias 100% Centralizado no Celular e PC */
+/* Modal de Categorias 100% Sólido e Centralizado no Celular e PC */
 .modal-categories-backdrop {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.72) !important;
   z-index: 1055;
 }
 .modal-categories-wrapper {
@@ -1054,6 +1048,12 @@ export default {
   max-width: 440px;
   margin: 0 auto !important;
   pointer-events: auto;
+}
+.modal-categories-dialog .modal-content {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.35) !important;
+  opacity: 1 !important;
 }
 .hover-bg-gray:hover {
   background-color: #f8fafc !important;

@@ -146,7 +146,7 @@
             :key="'admin-prod-' + product.id"
             class="col-12 col-md-6 col-lg-4"
           >
-            <div :class="['card border-0 border-start border-4 shadow-sm rounded-4 h-100 bg-white overflow-hidden', getProductBorderClass(product), !product.is_available ? 'opacity-75' : '']">
+            <div :class="['card border border-light-subtle shadow-sm rounded-4 h-100 bg-white overflow-hidden', !product.is_available ? 'opacity-75' : '']">
               <div class="card-body p-2 p-sm-3 d-flex flex-column justify-content-between">
                 
                 <!-- Topo: Foto + Detalhes Compactos -->
@@ -336,7 +336,7 @@
           :key="'admin-cat-' + cat.id"
           class="col-12 col-md-6 col-lg-4"
         >
-          <div :class="['card border-0 border-start border-3 shadow-sm rounded-4 h-100 bg-white p-2 p-sm-3 d-flex flex-column justify-content-between', getCategoryBorderClass(cat)]">
+          <div class="card border border-light-subtle shadow-sm rounded-4 h-100 bg-white p-2 p-sm-3 d-flex flex-column justify-content-between">
             <div class="d-flex align-items-center justify-content-between mb-2">
               <div class="d-flex align-items-center gap-2 min-w-0">
                 <div :class="['rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0', getCategoryIconBgClass(cat)]" style="width: 38px; height: 38px;">
@@ -401,7 +401,7 @@
           :key="'admin-combo-' + combo.id"
           class="col-12 col-md-6 col-lg-4"
         >
-          <div :class="['card border-0 border-start border-3 border-success shadow-sm rounded-4 h-100 bg-white overflow-hidden', !combo.is_available ? 'opacity-75' : '']">
+          <div :class="['card border border-light-subtle shadow-sm rounded-4 h-100 bg-white overflow-hidden', !combo.is_available ? 'opacity-75' : '']">
             <div class="card-body p-2 p-sm-3 d-flex flex-column justify-content-between">
               
               <!-- Topo do Card: Foto + Detalhes Compactos -->
@@ -1557,31 +1557,10 @@ export default {
       return product?.is_combo || catSlug.includes('combo') || catName.includes('combo') || prodName.includes('combo');
     },
     getProductBorderClass(product) {
-      if (product.is_promotion) {
-        return 'card-promo-rgb';
-      }
-      if (this.isDrink(product)) {
-        return 'border-warning';
-      }
-      if (this.isCombo(product)) {
-        return 'border-success';
-      }
-      if (this.isBuilder(product)) {
-        return 'border-primary';
-      }
-      return 'border-danger';
+      return '';
     },
     getCategoryBorderClass(cat) {
-      if (this.isDrink(null, cat)) {
-        return 'border-warning';
-      }
-      if (this.isCombo(null, cat)) {
-        return 'border-success';
-      }
-      if (this.isBuilder(null, cat)) {
-        return 'border-primary';
-      }
-      return 'border-danger';
+      return '';
     },
     getCategoryIconBgClass(cat) {
       if (this.isDrink(null, cat)) {

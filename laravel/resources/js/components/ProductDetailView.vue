@@ -602,10 +602,6 @@
                         R$ {{ formatPrice(sug.effective_price || sug.price) }}
                       </span>
                     </div>
-
-                    <span v-if="isCustomizable(sug)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.68rem;">
-                      <i class="bi bi-sliders me-0.5"></i> Opções
-                    </span>
                   </div>
 
                   <!-- Botão Redondo no Canto Inferior Esquerdo -->
