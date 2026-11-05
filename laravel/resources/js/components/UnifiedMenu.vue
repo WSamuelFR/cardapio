@@ -72,124 +72,66 @@
     </div>
 
     <!-- 2. CARROSSEL DE BOTÕES / CHIPS DE FILTRO POR CATEGORIA (STICKY & ROLAGEM HORIZONTAL SUAVE) -->
-    <div class="category-chips-wrapper mb-3">
-      <div class="d-flex gap-2 overflow-x-auto no-scrollbar py-1 px-1">
+    <!-- 2. MENU DE NAVEGAÇÃO DE CATEGORIAS TIPO LIVRO (STICKY) -->
+    <div class="category-book-nav-wrapper mb-3">
+      <div class="bg-white rounded-4 shadow-sm border p-2 d-flex align-items-center justify-content-between gap-2">
         
-        <!-- Botão Modal de Categorias (Fixo no Início dos Chips) -->
+        <!-- Botão Anterior (<) - Apenas Ícone -->
         <button
           type="button"
-          class="btn btn-sm btn-dark rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs"
+          class="btn btn-light rounded-circle border shadow-2xs d-flex align-items-center justify-content-center p-0 flex-shrink-0 nav-book-btn"
+          @click="goToPrevCategory"
+          title="Categoria Anterior"
+          aria-label="Categoria Anterior"
+        >
+          <i class="bi bi-chevron-left fs-6 text-dark fw-bold"></i>
+        </button>
+
+        <!-- Botão Abrir Modal de Categorias (📑) - Apenas Ícone -->
+        <button
+          type="button"
+          class="btn btn-dark rounded-circle border-0 shadow-2xs d-flex align-items-center justify-content-center p-0 flex-shrink-0 nav-book-btn"
           @click="showCategoriesModal = true"
-          title="Abrir menu de categorias"
+          title="Ver todas as categorias"
+          aria-label="Ver todas as categorias"
         >
-          <i class="bi bi-list-ul text-warning"></i>
-          <span>Categorias</span>
+          <i class="bi bi-grid-3x3-gap-fill text-warning fs-6"></i>
         </button>
 
-        <!-- Chip "Todos" -->
-        <button
-          type="button"
-          :class="[
-            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
-            activeFilter === 'all'
-              ? 'btn-aky-primary text-white shadow-sm'
-              : 'btn-white bg-white text-dark border'
-          ]"
-          @click="selectFilter('all')"
-        >
-          <i class="bi bi-grid-fill"></i>
-          <span>Todos</span>
-          <span :class="['badge rounded-2', activeFilter === 'all' ? 'bg-white text-aky-primary' : 'bg-light text-muted']" style="font-size: 0.68rem;">
-            {{ totalProductsCount }}
-          </span>
-        </button>
+        <!-- Nome da Categoria Atual no Meio -->
+        <div class="flex-grow-1 text-center min-w-0 px-1 cursor-pointer" @click="showCategoriesModal = true" title="Toque para ver todas as categorias">
+          <div class="fw-bold text-dark text-truncate d-flex align-items-center justify-content-center gap-1.5" style="font-size: 0.96rem;">
+            <span class="fs-5">{{ currentCategoryEmoji }}</span>
+            <span class="text-truncate">{{ currentCategoryTitle }}</span>
+            <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.70rem;">
+              {{ currentCategoryItemCount }}
+            </span>
+          </div>
+          <small class="text-muted d-block" style="font-size: 0.68rem; line-height: 1;">
+            Toque para escolher ou arraste ⟷
+          </small>
+        </div>
 
-        <!-- Chip Especial: Promoções (se houver) -->
+        <!-- Botão Próximo (>) - Apenas Ícone -->
         <button
-          v-if="promotions && promotions.length > 0"
           type="button"
-          :class="[
-            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
-            activeFilter === 'promotions'
-              ? 'btn-danger text-white shadow-sm'
-              : 'btn-white bg-white text-danger border border-danger-subtle'
-          ]"
-          @click="selectFilter('promotions')"
+          class="btn btn-light rounded-circle border shadow-2xs d-flex align-items-center justify-content-center p-0 flex-shrink-0 nav-book-btn"
+          @click="goToNextCategory"
+          title="Próxima Categoria"
+          aria-label="Próxima Categoria"
         >
-          <i class="bi bi-fire"></i>
-          <span>Promoções</span>
-          <span :class="['badge rounded-2', activeFilter === 'promotions' ? 'bg-white text-danger' : 'bg-danger bg-opacity-10 text-danger']" style="font-size: 0.68rem;">
-            {{ promotions.length }}
-          </span>
-        </button>
-
-        <!-- Chip Especial: Mais Pedidos (se houver) -->
-        <button
-          v-if="popular && popular.length > 0"
-          type="button"
-          :class="[
-            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
-            activeFilter === 'popular'
-              ? 'btn-purple text-white shadow-sm'
-              : 'btn-white bg-white text-dark border'
-          ]"
-          @click="selectFilter('popular')"
-        >
-          <i class="bi bi-star-fill text-warning"></i>
-          <span>Mais Pedidos</span>
-          <span :class="['badge rounded-2', activeFilter === 'popular' ? 'bg-white text-purple' : 'bg-light text-muted']" style="font-size: 0.68rem;">
-            {{ popular.length }}
-          </span>
-        </button>
-
-        <!-- Chip Especial: Combos (se houver) -->
-        <button
-          v-if="combos && combos.length > 0"
-          type="button"
-          :class="[
-            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
-            activeFilter === 'combos'
-              ? 'btn-success text-white shadow-sm'
-              : 'btn-white bg-white text-success border border-success-subtle'
-          ]"
-          @click="selectFilter('combos')"
-        >
-          <i class="bi bi-gift-fill"></i>
-          <span>Combos</span>
-          <span :class="['badge rounded-2', activeFilter === 'combos' ? 'bg-white text-success' : 'bg-success bg-opacity-10 text-success']" style="font-size: 0.68rem;">
-            {{ combos.length }}
-          </span>
-        </button>
-
-        <!-- Chips das Categorias Reais -->
-        <button
-          v-for="cat in availableCategories"
-          :key="'chip-cat-' + cat.id"
-          type="button"
-          :class="[
-            'btn btn-sm rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs',
-            activeFilter === 'cat_' + cat.id
-              ? 'btn-dark text-white shadow-sm'
-              : 'btn-white bg-white text-dark border'
-          ]"
-          @click="selectFilter('cat_' + cat.id)"
-        >
-          <i :class="['bi', getCategoryIcon(cat.slug)]"></i>
-          <span>{{ cat.name }}</span>
-          <span :class="['badge rounded-2', activeFilter === 'cat_' + cat.id ? 'bg-white text-dark' : 'bg-light text-muted']" style="font-size: 0.68rem;">
-            {{ cat.products ? cat.products.length : 0 }}
-          </span>
+          <i class="bi bi-chevron-right fs-6 text-dark fw-bold"></i>
         </button>
 
       </div>
 
-      <!-- Barra de Filtro Ativo com Botão Fácil de "Ver Todos" -->
-      <div v-if="activeFilter !== 'all'" class="d-flex align-items-center justify-content-between bg-white rounded-3 px-3 py-2 mt-2 border shadow-2xs">
+      <!-- Barra de Filtro Ativo com Botão Rápido de "Ver Todos" (se não estiver em 'all') -->
+      <div v-if="activeFilter !== 'all'" class="d-flex align-items-center justify-content-between bg-white rounded-3 px-3 py-1.5 mt-2 border shadow-2xs">
         <div class="small text-dark d-flex align-items-center gap-2">
-          <span class="badge bg-aky-primary text-white rounded-pill px-2 py-1">Filtro</span>
-          <span>Exibindo: <strong>{{ activeFilterName }}</strong></span>
+          <span class="badge bg-aky-primary text-white rounded-pill px-2 py-0.5">Filtro</span>
+          <span class="text-truncate" style="font-size: 0.82rem;">Exibindo: <strong>{{ activeFilterName }}</strong></span>
         </div>
-        <button class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-bold text-nowrap" @click="selectFilter('all')">
+        <button class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-0.5 fw-bold text-nowrap" style="font-size: 0.75rem;" @click="selectFilter('all')">
           <i class="bi bi-arrow-counterclockwise me-1"></i> Ver Todos
         </button>
       </div>
@@ -209,8 +151,13 @@
       </button>
     </div>
 
-    <!-- Lista de Seções -->
-    <div v-else class="sections-container d-flex flex-column gap-4">
+    <!-- Lista de Seções com Suporte a Swipe Lateral (Tipo Livro) -->
+    <div
+      v-else
+      class="sections-container d-flex flex-column gap-4"
+      @touchstart.passive="handleTouchStart"
+      @touchend="handleTouchEnd"
+    >
       
       <section
         v-for="section in filteredSections"
@@ -218,11 +165,11 @@
         :id="'sec-' + section.key"
         class="category-section"
       >
-        <!-- CABEÇALHO DA CATEGORIA COM LINHA DECORATIVA -->
+        <!-- CABEÇALHO DA CATEGORIA COM ÍCONE E EMOJI CORRIGIDO -->
         <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
           <div class="d-flex align-items-center gap-2">
-            <div :class="['rounded-circle p-2 d-flex align-items-center justify-content-center shadow-2xs flex-shrink-0', section.iconBgClass]" style="width: 36px; height: 36px;">
-              <i :class="['bi', section.icon, section.iconColorClass, 'fs-5']"></i>
+            <div class="rounded-circle d-flex align-items-center justify-content-center shadow-2xs flex-shrink-0 bg-light border" style="width: 40px; height: 40px; font-size: 1.25rem;">
+              <span>{{ getCategoryEmoji(section.key || section.slug) }}</span>
             </div>
             <div>
               <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
@@ -255,7 +202,7 @@
             >
               <div class="d-flex p-3 p-sm-3.5 gap-3 h-100 justify-content-between align-items-stretch">
                 
-                <!-- 1. DETALHES À ESQUERDA (NOME, INGREDIENTES, PREÇO E BOTÃO DO CARRINHO - CONFORME DESENHO) -->
+                <!-- 1. DETALHES À ESQUERDA (NOME, PREÇO E BOTÃO DO CARRINHO - SEM DESCRIÇÃO PARA POUPAR ESPAÇO) -->
                 <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between pe-1">
                   <div>
                     <div class="d-flex justify-content-between align-items-start gap-1 mb-1">
@@ -267,11 +214,6 @@
                         Esgotado
                       </span>
                     </div>
-
-                    <!-- Descrição dos Ingredientes (até 3 linhas) -->
-                    <p class="text-muted small mb-2 line-clamp-3" style="font-size: 0.82rem; line-height: 1.35;" :title="product.description">
-                      {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
-                    </p>
                   </div>
 
                   <!-- Linha Inferior com Preço e Botão do Carrinho no Canto Inferior Esquerdo -->
@@ -389,24 +331,21 @@
       </button>
     </transition>
 
-    <!-- 4. MODAL DE CATEGORIAS (PADRÃO ANOTA AI) -->
+    <!-- 4. MODAL DE CATEGORIAS CENTRALIZADO (PADRÃO LIVRO) -->
     <div
       v-if="showCategoriesModal"
-      class="modal-backdrop fade show"
-      style="z-index: 1055;"
+      class="modal-categories-backdrop"
       @click="showCategoriesModal = false"
     ></div>
 
     <div
       v-if="showCategoriesModal"
-      class="modal fade show d-block"
-      tabindex="-1"
+      class="modal-categories-wrapper"
       role="dialog"
       aria-modal="true"
-      style="z-index: 1060;"
       @click.self="showCategoriesModal = false"
     >
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-categories-dialog">
+      <div class="modal-dialog modal-dialog-centered modal-categories-dialog">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
           
           <!-- Header do Modal -->
@@ -429,7 +368,7 @@
           </div>
 
           <!-- Corpo do Modal com a Lista de Categorias -->
-          <div class="modal-body p-2 px-3" style="max-height: 70vh;">
+          <div class="modal-body p-2 px-3" style="max-height: 70vh; overflow-y: auto;">
             <div class="list-group list-group-flush gap-1">
               
               <!-- Item: Ver Todos os Produtos -->
@@ -442,8 +381,8 @@
                 @click="selectCategoryFromModal('all')"
               >
                 <div class="d-flex align-items-center gap-2.5">
-                  <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
-                    <i class="bi bi-grid-fill fs-5"></i>
+                  <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.25rem;">
+                    <span>📋</span>
                   </div>
                   <div>
                     <div class="fw-bold" style="font-size: 0.92rem;">Todos os Produtos</div>
@@ -472,8 +411,8 @@
                 @click="selectCategoryFromModal(section.filterKey)"
               >
                 <div class="d-flex align-items-center gap-2.5">
-                  <div :class="['rounded-circle d-flex align-items-center justify-content-center shadow-2xs flex-shrink-0', section.iconBgClass]" style="width: 36px; height: 36px;">
-                    <i :class="['bi', section.icon, section.iconColorClass, 'fs-5']"></i>
+                  <div class="rounded-circle d-flex align-items-center justify-content-center shadow-2xs flex-shrink-0 bg-light border" style="width: 38px; height: 38px; font-size: 1.25rem;">
+                    <span>{{ getCategoryEmoji(section.key || section.slug) }}</span>
                   </div>
                   <div>
                     <div class="fw-bold" style="font-size: 0.92rem;">{{ section.title }}</div>
@@ -538,6 +477,8 @@ export default {
       activeFilter: 'all', // 'all', 'promotions', 'popular', 'combos', ou 'cat_<id>'
       showCategoriesModal: false,
       showBackToTop: false,
+      touchStartX: 0,
+      touchStartY: 0,
       quickSearchTags: [
         { label: 'Pastéis', icon: '🥟', query: 'pastel' },
         { label: 'Pizzas', icon: '🍕', query: 'pizza' },
@@ -560,6 +501,28 @@ export default {
         return cat ? cat.name : 'Categoria';
       }
       return '';
+    },
+    navigableSections() {
+      return this.allSections || [];
+    },
+    currentCategoryIndex() {
+      if (this.activeFilter === 'all') return -1;
+      return this.navigableSections.findIndex(s => s.filterKey === this.activeFilter);
+    },
+    currentCategoryTitle() {
+      if (this.activeFilter === 'all') return 'Todos os Produtos';
+      const sec = this.navigableSections.find(s => s.filterKey === this.activeFilter);
+      return sec ? sec.title : 'Cardápio';
+    },
+    currentCategoryEmoji() {
+      if (this.activeFilter === 'all') return '📋';
+      const sec = this.navigableSections.find(s => s.filterKey === this.activeFilter);
+      return sec ? this.getCategoryEmoji(sec.key || sec.slug) : '🍽️';
+    },
+    currentCategoryItemCount() {
+      if (this.activeFilter === 'all') return this.totalProductsCount + ' itens';
+      const sec = this.navigableSections.find(s => s.filterKey === this.activeFilter);
+      return sec && sec.items ? sec.items.length + ' itens' : '';
     },
     availableCategories() {
       return (this.categories || []).filter(c => c.is_active !== false && c.products && c.products.length > 0);
@@ -810,14 +773,79 @@ export default {
         iconClass: 'text-danger',
       };
     },
+    goToPrevCategory() {
+      if (this.navigableSections.length === 0) return;
+      const currentIdx = this.navigableSections.findIndex(s => s.filterKey === this.activeFilter);
+      if (currentIdx > 0) {
+        this.selectFilter(this.navigableSections[currentIdx - 1].filterKey);
+      } else if (currentIdx === 0) {
+        this.selectFilter('all');
+      } else {
+        this.selectFilter(this.navigableSections[this.navigableSections.length - 1].filterKey);
+      }
+    },
+    goToNextCategory() {
+      if (this.navigableSections.length === 0) return;
+      const currentIdx = this.navigableSections.findIndex(s => s.filterKey === this.activeFilter);
+      if (currentIdx === -1) {
+        this.selectFilter(this.navigableSections[0].filterKey);
+      } else if (currentIdx < this.navigableSections.length - 1) {
+        this.selectFilter(this.navigableSections[currentIdx + 1].filterKey);
+      } else {
+        this.selectFilter('all');
+      }
+    },
+    handleTouchStart(e) {
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        this.touchStartX = e.changedTouches[0].screenX;
+        this.touchStartY = e.changedTouches[0].screenY;
+      }
+    },
+    handleTouchEnd(e) {
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      const deltaX = e.changedTouches[0].screenX - this.touchStartX;
+      const deltaY = e.changedTouches[0].screenY - this.touchStartY;
+      if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+        if (deltaX > 0) {
+          this.goToPrevCategory();
+        } else {
+          this.goToNextCategory();
+        }
+      }
+    },
+    getCategoryEmoji(slugOrKey) {
+      const s = (slugOrKey || '').toLowerCase();
+      if (s.includes('sanduiche') || s.includes('hamburguer') || s.includes('artesanal') || s.includes('classico') || s.includes('lanche') || s.includes('burger')) return '🍔';
+      if (s.includes('pastel') || s.includes('pasteis')) return '🥟';
+      if (s.includes('pizza') && s.includes('doce')) return '🍫';
+      if (s.includes('pizza')) return '🍕';
+      if (s.includes('tapioca')) return '🫓';
+      if (s.includes('cuscuz')) return '🍲';
+      if (s.includes('petisco') || s.includes('salgado') || s.includes('batata') || s.includes('porcao') || s.includes('porção')) return '🍟';
+      if (s.includes('bebida') || s.includes('refrigerante') || s.includes('refrig') || s.includes('coca')) return '🥤';
+      if (s.includes('suco')) return '🍹';
+      if (s.includes('a-la-carte') || s.includes('prato') || s.includes('alacarte')) return '🍽️';
+      if (s.includes('doce') || s.includes('sobremesa')) return '🍰';
+      if (s.includes('combo')) return '🎁';
+      if (s.includes('promo')) return '🔥';
+      if (s.includes('popular') || s.includes('mais-pedido')) return '⭐';
+      if (s.includes('adicional') || s.includes('adicionais')) return '➕';
+      return '🍽️';
+    },
     getCategoryIcon(slug) {
-      if (!slug) return 'bi-tag-fill';
-      if (slug.includes('pastel') || slug.includes('pasteis')) return 'bi-circle-half';
-      if (slug.includes('pizza')) return 'bi-pie-chart-fill';
-      if (slug.includes('salgado') || slug.includes('petisco')) return 'bi-egg-fried';
-      if (slug.includes('suco') || slug.includes('bebida')) return 'bi-cup-straw';
-      if (slug.includes('doce') || slug.includes('sobremesa')) return 'bi-cake2';
-      if (slug.includes('sanduiche') || slug.includes('artesanal') || slug.includes('classico')) return 'bi-flower1';
+      const s = (slug || '').toLowerCase();
+      if (s.includes('sanduiche') || s.includes('hamburguer') || s.includes('artesanal') || s.includes('classico') || s.includes('lanche') || s.includes('burger')) return 'bi-fork-knife';
+      if (s.includes('pastel') || s.includes('pasteis')) return 'bi-pie-chart-fill';
+      if (s.includes('pizza')) return 'bi-pie-chart-fill';
+      if (s.includes('tapioca') || s.includes('cuscuz')) return 'bi-circle-half';
+      if (s.includes('petisco') || s.includes('salgado') || s.includes('batata')) return 'bi-egg-fried';
+      if (s.includes('bebida') || s.includes('refrigerante') || s.includes('suco')) return 'bi-cup-straw';
+      if (s.includes('a-la-carte') || s.includes('prato')) return 'bi-fork-knife';
+      if (s.includes('doce') || s.includes('sobremesa')) return 'bi-cake2';
+      if (s.includes('combo')) return 'bi-gift-fill';
+      if (s.includes('promo')) return 'bi-fire';
+      if (s.includes('popular') || s.includes('mais-pedido')) return 'bi-star-fill';
+      if (s.includes('adicional')) return 'bi-plus-circle-fill';
       return 'bi-bag-heart-fill';
     },
     getCategoryThemeClasses(slug) {
@@ -926,8 +954,8 @@ export default {
   color: #b45309 !important;
 }
 
-/* Barra Fixa de Categorias (Sticky) */
-.category-chips-wrapper {
+/* Barra Fixa de Categorias Tipo Livro (Sticky) */
+.category-book-nav-wrapper {
   position: sticky;
   top: 58px;
   z-index: 1015;
@@ -935,11 +963,22 @@ export default {
   backdrop-filter: blur(8px);
   padding-top: 6px;
   padding-bottom: 6px;
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.nav-book-btn {
+  width: 38px;
+  height: 38px;
+  transition: all 0.2s ease;
+}
+.nav-book-btn:hover {
+  transform: scale(1.05);
+}
+.nav-book-btn:active {
+  transform: scale(0.95);
 }
 
 /* Botão Voltar ao Topo */
@@ -958,18 +997,36 @@ export default {
   opacity: 0;
 }
 
-/* Modal de Categorias (Anota AI) */
-.hover-bg-gray:hover {
-  background-color: #f8fafc !important;
+/* Modal de Categorias 100% Centralizado no Celular e PC */
+.modal-categories-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1055;
+}
+.modal-categories-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1060;
+  padding: 14px;
+  pointer-events: none;
 }
 .modal-categories-dialog {
-  max-width: 480px;
-  margin: 1.75rem auto;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto !important;
+  pointer-events: auto;
 }
-@media (max-width: 575.98px) {
-  .modal-categories-dialog {
-    margin: 0.5rem;
-  }
+.hover-bg-gray:hover {
+  background-color: #f8fafc !important;
 }
 
 /* Espaçamento elegante entre os cards de produto */

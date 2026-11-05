@@ -567,86 +567,104 @@
           v-for="sug in suggestedItems"
           :key="'sug-' + sug.id"
           class="flex-shrink-0 cursor-pointer"
-          style="width: 340px; min-width: 340px; scroll-snap-align: start;"
+          style="width: 310px; min-width: 310px; scroll-snap-align: start;"
           @click="$emit('select-product', sug)"
         >
           <div
-            :class="['card aky-card h-100 bg-white shadow-sm rounded-4 overflow-hidden cursor-pointer transition', getItemTheme(sug).borderClass, !sug.is_available ? 'opacity-75' : '']"
+            :class="['card aky-card h-100 bg-white border shadow-2xs rounded-4 overflow-hidden cursor-pointer transition', !sug.is_available ? 'opacity-75' : 'hover-lift']"
           >
-            <div class="d-flex p-3 gap-3 h-100">
-              <!-- Foto do Produto Ampliada -->
-              <div class="product-thumb rounded-3 overflow-hidden flex-shrink-0 bg-light d-flex align-items-center justify-content-center border position-relative" style="width: 95px; height: 95px;">
-                <img
-                  v-if="sug.photo_path"
-                  :src="sug.photo_path"
-                  :alt="sug.name"
-                  class="w-100 h-100 object-fit-cover"
-                >
-                <div v-else class="text-center text-muted">
-                  <i :class="[getCategoryIcon(sug), getItemTheme(sug).iconClass, 'fs-2 opacity-75 d-block']"></i>
-                  <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(sug).iconClass]">{{ sug.is_combo ? 'Combo' : (sug.is_promotion ? 'Promo' : 'AKY') }}</span>
-                </div>
-
-                <!-- Badge Temática Flutuante -->
-                <span
-                  v-if="sug.is_promotion"
-                  class="badge bg-danger position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
-                  style="font-size: 0.58rem; padding: 2px 5px;"
-                >
-                  PROMO
-                </span>
-                <span
-                  v-else-if="sug.is_combo"
-                  class="badge bg-success position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
-                  style="font-size: 0.58rem; padding: 2px 5px;"
-                >
-                  COMBO
-                </span>
-              </div>
-
-              <!-- Detalhes do Produto Ampliados -->
-              <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between">
+            <div class="d-flex p-3 gap-2.5 h-100 justify-content-between align-items-stretch">
+              
+              <!-- 1. Detalhes à Esquerda (Sem Descrição para Poupar Espaço) -->
+              <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between pe-1">
                 <div>
                   <div class="d-flex justify-content-between align-items-start gap-1 mb-1">
-                    <h6 class="fw-bold text-dark mb-0 line-clamp-1" :title="sug.name" style="font-size: 0.98rem; letter-spacing: -0.2px;">
+                    <h6 class="fw-bold text-dark mb-0 line-clamp-2" :title="sug.name" style="font-size: 0.98rem; letter-spacing: -0.2px; line-height: 1.25;">
                       {{ sug.name }}
                     </h6>
-                    <span v-if="!sug.is_available" class="badge bg-secondary rounded-pill flex-shrink-0" style="font-size: 0.65rem;">Esgotado</span>
+                    <span v-if="!sug.is_available" class="badge bg-secondary rounded-pill flex-shrink-0" style="font-size: 0.62rem;">Esgotado</span>
                   </div>
-
-                  <p class="text-muted small mb-1 line-clamp-2" style="font-size: 0.78rem; line-height: 1.3;" :title="sug.description">
-                    {{ sug.description || 'Preparo artesanal com muito sabor.' }}
-                  </p>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2 pt-1.5 border-top border-light-subtle">
-                  <div>
-                    <div v-if="sug.is_promotion && sug.promotional_price">
-                      <span class="text-muted small text-decoration-line-through d-block" style="font-size: 0.70rem;">
+                <!-- Preço e Botão no Canto Inferior Esquerdo -->
+                <div class="pt-2 mt-auto">
+                  <div class="d-flex align-items-baseline gap-1.5 mb-2">
+                    <div v-if="sug.is_promotion && sug.promotional_price" class="d-flex align-items-baseline gap-1">
+                      <span class="text-muted small text-decoration-line-through" style="font-size: 0.70rem;">
                         R$ {{ formatPrice(sug.price) }}
                       </span>
-                      <span :class="['fw-bold fs-6', getItemTheme(sug).priceClass]">
+                      <span class="fw-bold fs-5 text-danger">
                         R$ {{ formatPrice(sug.promotional_price) }}
                       </span>
                     </div>
                     <div v-else>
-                      <span :class="['fw-bold fs-6', getItemTheme(sug).priceClass]">
+                      <span class="fw-bold fs-5 text-dark">
                         R$ {{ formatPrice(sug.effective_price || sug.price) }}
                       </span>
                     </div>
+
+                    <span v-if="isCustomizable(sug)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.68rem;">
+                      <i class="bi bi-sliders me-0.5"></i> Opções
+                    </span>
                   </div>
 
-                  <button
-                    :class="['btn rounded-circle p-0 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0', getItemTheme(sug).btnClass]"
-                    style="width: 38px; height: 38px;"
-                    :disabled="!sug.is_available"
-                    :title="isCustomizable(sug) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
-                    @click.stop="handleSuggestedAdd(sug)"
-                  >
-                    <i :class="isCustomizable(sug) ? 'bi-sliders' : 'bi-plus-lg'" class="fs-6"></i>
-                  </button>
+                  <!-- Botão Redondo no Canto Inferior Esquerdo -->
+                  <div @click.stop>
+                    <button
+                      type="button"
+                      :class="[
+                        'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0',
+                        !sug.is_available
+                          ? 'btn-secondary text-white'
+                          : (isCustomizable(sug) ? 'btn-primary text-white' : 'btn-aky-primary text-white')
+                      ]"
+                      style="width: 36px; height: 36px;"
+                      :disabled="!sug.is_available"
+                      :title="isCustomizable(sug) ? 'Personalizar e escolher opções' : 'Adicionar ao pedido'"
+                      @click="handleSuggestedAdd(sug)"
+                    >
+                      <i v-if="!sug.is_available" class="bi bi-slash-circle fs-6"></i>
+                      <i v-else-if="isCustomizable(sug)" class="bi bi-sliders fs-6"></i>
+                      <i v-else class="bi bi-cart-plus-fill fs-5"></i>
+                    </button>
+                  </div>
                 </div>
+              </div>
 
+              <!-- 2. Foto à Direita Limpa Sem Botão -->
+              <div class="flex-shrink-0 d-flex flex-column align-items-end justify-content-center">
+                <div
+                  class="product-thumb rounded-3 overflow-hidden bg-light d-flex align-items-center justify-content-center border position-relative"
+                  style="width: 105px; height: 105px; min-width: 105px;"
+                >
+                  <img
+                    v-if="sug.photo_path"
+                    :src="sug.photo_path"
+                    :alt="sug.name"
+                    class="w-100 h-100 object-fit-cover"
+                  >
+                  <div v-else class="text-center text-muted p-1">
+                    <span class="fs-1 d-block">{{ getCategoryEmoji(sug.category?.slug) }}</span>
+                    <span style="font-size: 0.65rem;" class="fw-semibold text-danger">
+                      {{ sug.is_combo ? 'Combo' : (sug.is_promotion ? 'Promo' : 'AKY') }}
+                    </span>
+                  </div>
+
+                  <span
+                    v-if="sug.is_promotion"
+                    class="badge bg-danger position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
+                    style="font-size: 0.58rem; padding: 2px 5px;"
+                  >
+                    PROMO
+                  </span>
+                  <span
+                    v-else-if="sug.is_combo"
+                    class="badge bg-success position-absolute top-0 start-0 m-1 rounded-pill fw-bold shadow-xs"
+                    style="font-size: 0.58rem; padding: 2px 5px;"
+                  >
+                    COMBO
+                  </span>
+                </div>
               </div>
 
             </div>
@@ -1100,13 +1118,36 @@ export default {
         iconClass: 'text-danger',
       };
     },
+    getCategoryEmoji(slugOrKey) {
+      const s = (slugOrKey || '').toLowerCase();
+      if (s.includes('sanduiche') || s.includes('hamburguer') || s.includes('artesanal') || s.includes('classico') || s.includes('lanche') || s.includes('burger')) return '🍔';
+      if (s.includes('pastel') || s.includes('pasteis')) return '🥟';
+      if (s.includes('pizza') && s.includes('doce')) return '🍫';
+      if (s.includes('pizza')) return '🍕';
+      if (s.includes('tapioca')) return '🫓';
+      if (s.includes('cuscuz')) return '🍲';
+      if (s.includes('petisco') || s.includes('salgado') || s.includes('batata') || s.includes('porcao') || s.includes('porção')) return '🍟';
+      if (s.includes('bebida') || s.includes('refrigerante') || s.includes('refrig') || s.includes('coca')) return '🥤';
+      if (s.includes('suco')) return '🍹';
+      if (s.includes('a-la-carte') || s.includes('prato') || s.includes('alacarte')) return '🍽️';
+      if (s.includes('doce') || s.includes('sobremesa')) return '🍰';
+      if (s.includes('combo')) return '🎁';
+      if (s.includes('promo')) return '🔥';
+      if (s.includes('popular') || s.includes('mais-pedido')) return '⭐';
+      if (s.includes('adicional') || s.includes('adicionais')) return '➕';
+      return '🍽️';
+    },
     getCategoryIcon(prod) {
-      const catSlug = (prod.category && prod.category.slug) ? prod.category.slug.toLowerCase() : '';
+      const catSlug = (prod?.category && prod.category.slug) ? prod.category.slug.toLowerCase() : (typeof prod === 'string' ? prod.toLowerCase() : '');
+      if (catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('classico') || catSlug.includes('lanche') || catSlug.includes('burger')) return 'bi-fork-knife';
+      if (catSlug.includes('pastel') || catSlug.includes('pasteis')) return 'bi-pie-chart-fill';
       if (catSlug.includes('pizza')) return 'bi-pie-chart-fill';
+      if (catSlug.includes('tapioca') || catSlug.includes('cuscuz')) return 'bi-circle-half';
+      if (catSlug.includes('petisco') || catSlug.includes('salgado') || catSlug.includes('batata')) return 'bi-egg-fried';
       if (catSlug.includes('bebida') || catSlug.includes('refrig') || catSlug.includes('suco')) return 'bi-cup-straw';
       if (catSlug.includes('combo')) return 'bi-gift-fill';
-      if (catSlug.includes('monte') || catSlug.includes('tapioca') || catSlug.includes('cuscuz') || catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal')) return 'bi-sliders';
-      return 'bi-tag-fill';
+      if (catSlug.includes('doce') || catSlug.includes('sobremesa')) return 'bi-cake2';
+      return 'bi-bag-heart-fill';
     },
   },
 };
