@@ -822,6 +822,151 @@
 
       </div>
 
+      <!-- 3. BLOCO DE CONFIGURAÇÃO DO MONTE SEU HAMBÚRGUER & SANDUÍCHES -->
+      <div v-if="menuSettings.monte_hamburguer" class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-2">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span class="fs-4">🍔</span>
+              <span>3. Regras e Ingredientes do "Monte Seu Hambúrguer" & Sanduíches</span>
+            </h5>
+            <small class="text-muted">Configure o preço base, regras de adicionais e a lista de ingredientes para turbinar lanches</small>
+          </div>
+        </div>
+
+        <!-- Regra Geral: Permitir Adicionais em Todos os Sanduíches -->
+        <div class="card border rounded-4 p-3 mb-4 bg-light">
+          <div class="form-check form-switch d-flex align-items-center justify-content-between p-0 m-0">
+            <div>
+              <label class="form-check-label fw-bold text-dark fs-6 d-block mb-1 cursor-pointer" for="switchAllSandwichesExtra">
+                <i class="bi bi-shield-check text-success me-1"></i> Permitir adicionar ingredientes extras em TODOS os Sanduíches e Hambúrgueres
+              </label>
+              <small class="text-muted d-block" style="font-size: 0.78rem;">
+                Quando ativado, os clientes poderão personalizar qualquer lanche do cardápio adicionando ingredientes extras da lista abaixo.
+              </small>
+            </div>
+            <input
+              class="form-check-input ms-3 fs-4"
+              type="checkbox"
+              role="switch"
+              id="switchAllSandwichesExtra"
+              v-model="menuSettings.monte_hamburguer.allow_all_sandwiches_extra"
+            >
+          </div>
+        </div>
+
+        <!-- Preço Base do Monte Seu Hambúrguer -->
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-sm-6 col-md-4">
+            <label class="form-label small fw-bold text-muted mb-1">Preço Base do "Monte Seu Hambúrguer"</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted fw-bold">R$</span>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control bg-white fw-bold text-dark"
+                v-model="menuSettings.monte_hamburguer.base_price"
+                placeholder="18,00"
+              >
+            </div>
+            <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Valor inicial ao pedir o hambúrguer customizado</small>
+          </div>
+        </div>
+
+        <!-- Lista Gerenciável de Ingredientes & Adicionais -->
+        <div class="border rounded-4 p-3 bg-white">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <span>🥓 Ingredientes e Adicionais Disponíveis ({{ menuSettings.monte_hamburguer.ingredients ? menuSettings.monte_hamburguer.ingredients.length : 0 }})</span>
+            </h6>
+          </div>
+
+          <!-- Formulário Rápido para Adicionar Novo Ingrediente -->
+          <div class="row g-2 mb-3 bg-light p-2.5 rounded-3 align-items-center">
+            <div class="col-12 col-sm-6 col-md-7">
+              <input
+                type="text"
+                class="form-control form-control-sm bg-white"
+                v-model="newBurgerIngredientName"
+                placeholder="Nome do adicional (ex: Bacon Extra, Ovo, Cheddar Duplo...)"
+                @keyup.enter="addBurgerIngredient"
+              >
+            </div>
+            <div class="col-7 col-sm-3 col-md-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white">R$</span>
+                <input
+                  type="number"
+                  step="0.50"
+                  class="form-control form-control-sm bg-white fw-bold"
+                  v-model="newBurgerIngredientPrice"
+                  placeholder="3,00"
+                  @keyup.enter="addBurgerIngredient"
+                >
+              </div>
+            </div>
+            <div class="col-5 col-sm-3 col-md-2">
+              <button
+                type="button"
+                class="btn btn-dark btn-sm rounded-pill w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                @click="addBurgerIngredient"
+                :disabled="!newBurgerIngredientName.trim()"
+              >
+                <i class="bi bi-plus-lg"></i> Adicionar
+              </button>
+            </div>
+          </div>
+
+          <!-- Grade de Ingredientes Cadastrados -->
+          <div class="row g-2">
+            <div
+              v-for="(ing, idx) in menuSettings.monte_hamburguer.ingredients"
+              :key="'burger-ing-' + idx"
+              class="col-12 col-sm-6 col-md-4"
+            >
+              <div :class="['card p-2.5 rounded-3 border transition d-flex flex-row justify-content-between align-items-center shadow-none', ing.is_available ? 'bg-white' : 'bg-light opacity-50']">
+                <div class="min-w-0 flex-grow-1 pe-2">
+                  <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.85rem;" :title="ing.name">
+                    {{ ing.name }}
+                  </span>
+                  <div class="d-flex align-items-center gap-1 mt-1">
+                    <span class="small text-muted fw-bold" style="font-size: 0.72rem;">R$</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      class="form-control form-control-sm py-0 px-1 fw-bold text-success border-light-subtle"
+                      style="width: 70px; font-size: 0.80rem;"
+                      v-model="ing.price"
+                      placeholder="0,00"
+                    >
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+                  <div class="form-check form-switch m-0 p-0" title="Ativar ou desativar">
+                    <input
+                      class="form-check-input ms-0 cursor-pointer"
+                      type="checkbox"
+                      v-model="ing.is_available"
+                      style="width: 32px; height: 18px;"
+                    >
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-danger border-0"
+                    @click="removeBurgerIngredient(idx)"
+                    title="Remover ingrediente"
+                  >
+                    <i class="bi bi-trash3 fs-6"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- BOTÃO INFERIOR DE SALVAR (RESPONSIVO) -->
       <div class="d-flex justify-content-center justify-content-md-end mb-5">
         <button
@@ -1413,11 +1558,18 @@ export default {
           ingredients_salgados: [],
           ingredients_doces: [],
         },
+        monte_hamburguer: {
+          base_price: 18.00,
+          allow_all_sandwiches_extra: true,
+          ingredients: [],
+        },
       },
       savingSettings: false,
       syncingPizzas: false,
       newSalgadoName: '',
       newDoceName: '',
+      newBurgerIngredientName: '',
+      newBurgerIngredientPrice: 3.00,
 
       // Modais Modernos
       showSyncPizzaModal: false,
@@ -1600,6 +1752,8 @@ export default {
           const chargeFrom = mp.charge_from_ingredient || ((Number(mp.max_free_ingredients) || 4) + 1);
           const maxFree = mp.max_free_ingredients !== undefined ? mp.max_free_ingredients : (chargeFrom - 1);
 
+          const mh = settingsRes.data.monte_hamburguer || {};
+
           this.menuSettings = {
             pizza_sizes: settingsRes.data.pizza_sizes || [],
             pizza_borders: settingsRes.data.pizza_borders || [],
@@ -1612,6 +1766,11 @@ export default {
               allow_extra_ingredients: mp.allow_extra_ingredients !== false,
               ingredients_salgados: mp.ingredients_salgados || [],
               ingredients_doces: mp.ingredients_doces || [],
+            },
+            monte_hamburguer: {
+              base_price: mh.base_price !== undefined ? mh.base_price : 18.00,
+              allow_all_sandwiches_extra: mh.allow_all_sandwiches_extra !== false,
+              ingredients: (mh.ingredients && mh.ingredients.length > 0) ? mh.ingredients : this.getDefaultBurgerIngredients(),
             },
           };
         }
@@ -1761,6 +1920,43 @@ export default {
     },
     removeDoceIngredient(idx) {
       this.menuSettings.monte_pastel.ingredients_doces.splice(idx, 1);
+    },
+    addBurgerIngredient() {
+      if (!this.newBurgerIngredientName.trim()) return;
+      if (!this.menuSettings.monte_hamburguer) {
+        this.menuSettings.monte_hamburguer = { base_price: 18.00, allow_all_sandwiches_extra: true, ingredients: [] };
+      }
+      if (!this.menuSettings.monte_hamburguer.ingredients) {
+        this.menuSettings.monte_hamburguer.ingredients = [];
+      }
+      this.menuSettings.monte_hamburguer.ingredients.push({
+        name: this.newBurgerIngredientName.trim(),
+        price: parseFloat(this.newBurgerIngredientPrice) || 3.00,
+        is_available: true,
+      });
+      this.newBurgerIngredientName = '';
+      this.newBurgerIngredientPrice = 3.00;
+    },
+    removeBurgerIngredient(idx) {
+      if (this.menuSettings.monte_hamburguer && this.menuSettings.monte_hamburguer.ingredients) {
+        this.menuSettings.monte_hamburguer.ingredients.splice(idx, 1);
+      }
+    },
+    getDefaultBurgerIngredients() {
+      return [
+        { name: 'Hambúrguer de Carne Artesanal 150g', price: 8.00, is_available: true },
+        { name: 'Hambúrguer de Carne Tradicional', price: 5.00, is_available: true },
+        { name: 'Bacon Crocante em Fatias', price: 4.00, is_available: true },
+        { name: 'Calabresa Especial Fatiada', price: 4.00, is_available: true },
+        { name: 'Queijo Cheddar Cremoso', price: 3.50, is_available: true },
+        { name: 'Queijo Muçarela Duplo', price: 3.50, is_available: true },
+        { name: 'Queijo Coalho Assado', price: 4.00, is_available: true },
+        { name: 'Ovo Frito na Chapa', price: 2.50, is_available: true },
+        { name: 'Catupiry Original', price: 4.00, is_available: true },
+        { name: 'Cebola Caramelizada', price: 3.00, is_available: true },
+        { name: 'Salada Fresca (Alface e Tomate)', price: 2.00, is_available: true },
+        { name: 'Batata Palha Crocante', price: 2.00, is_available: true },
+      ];
     },
     openProductModal(product = null) {
       this.selectedFile = null;

@@ -348,6 +348,7 @@ class AdminController extends Controller
             'pizza_sizes' => SystemSetting::getSetting('pizza_sizes', []),
             'pizza_borders' => SystemSetting::getSetting('pizza_borders', []),
             'monte_pastel' => SystemSetting::getSetting('monte_pastel', []),
+            'monte_hamburguer' => SystemSetting::getSetting('monte_hamburguer', []),
             'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
         ]);
     }
@@ -360,6 +361,7 @@ class AdminController extends Controller
             'pizza_sizes' => 'nullable|array',
             'pizza_borders' => 'nullable|array',
             'monte_pastel' => 'nullable|array',
+            'monte_hamburguer' => 'nullable|array',
             'store_whatsapp' => 'nullable|string|max:30',
             'sync_pizzas' => 'nullable|boolean',
         ]);
@@ -395,12 +397,22 @@ class AdminController extends Controller
             }
         }
 
+        if (isset($validated['monte_hamburguer'])) {
+            SystemSetting::setSetting('monte_hamburguer', $validated['monte_hamburguer'], 'Regras e Ingredientes do Monte Seu Hambúrguer e Sanduíches');
+
+            if (isset($validated['monte_hamburguer']['base_price'])) {
+                $basePrice = (float) $validated['monte_hamburguer']['base_price'];
+                Product::where('name', 'LIKE', '%Monte Seu Hamb%')->update(['price' => $basePrice]);
+            }
+        }
+
         return response()->json([
             'message' => 'Configurações e valores atualizados com sucesso.',
             'settings' => [
                 'pizza_sizes' => SystemSetting::getSetting('pizza_sizes', []),
                 'pizza_borders' => SystemSetting::getSetting('pizza_borders', []),
                 'monte_pastel' => SystemSetting::getSetting('monte_pastel', []),
+                'monte_hamburguer' => SystemSetting::getSetting('monte_hamburguer', []),
                 'store_whatsapp' => SystemSetting::getSetting('store_whatsapp', '(83) 99999-9999'),
             ],
         ]);

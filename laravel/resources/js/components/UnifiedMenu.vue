@@ -179,20 +179,22 @@
       </button>
     </div>
 
-    <!-- Lista de Seções com Suporte a Swipe Lateral (Tipo Livro) -->
-    <div
-      v-else
-      class="sections-container d-flex flex-column gap-4"
-      @touchstart.passive="handleTouchStart"
-      @touchend="handleTouchEnd"
-    >
-      
-      <section
-        v-for="section in filteredSections"
-        :key="section.key"
-        :id="'sec-' + section.key"
-        class="category-section"
+    <!-- Lista de Seções com Suporte a Swipe Lateral (Tipo Livro) e Transição Fluida -->
+    <transition name="cat-switch" mode="out-in">
+      <div
+        v-if="filteredSections.length > 0"
+        :key="activeFilter"
+        class="sections-container d-flex flex-column gap-4"
+        @touchstart.passive="handleTouchStart"
+        @touchend="handleTouchEnd"
       >
+        
+        <section
+          v-for="section in filteredSections"
+          :key="section.key"
+          :id="'sec-' + section.key"
+          class="category-section"
+        >
         <!-- CABEÇALHO DA CATEGORIA COM ÍCONE E EMOJI CORRIGIDO -->
         <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
           <div class="d-flex align-items-center gap-2">
@@ -337,7 +339,8 @@
 
       </section>
 
-    </div>
+      </div>
+    </transition>
 
     <!-- Botão Flutuante Voltar ao Topo (⬆) -->
     <transition name="fade">
@@ -907,10 +910,6 @@ export default {
 .cursor-pointer {
   cursor: pointer;
 }
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0.35rem 0.95rem rgba(0, 0, 0, 0.08) !important;
-}
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -948,13 +947,42 @@ export default {
   }
 }
 
+/* Cartões de Produto com Resposta Imediata no 1º Toque Mobile */
 .aky-card {
   border: 1px solid #e5e7eb !important;
   background-color: #ffffff;
-  transition: all 0.2s ease-in-out;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
-.aky-card:hover {
-  border-color: #cbd5e1 !important;
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.35rem 0.95rem rgba(0, 0, 0, 0.08) !important;
+  }
+  .aky-card:hover {
+    border-color: #cbd5e1 !important;
+  }
+}
+.aky-card:active {
+  transform: scale(0.985);
+}
+
+/* Animação Suave e Fluida na Troca de Categoria */
+.cat-switch-enter-active {
+  transition: opacity 0.22s cubic-bezier(0.25, 1, 0.5, 1), transform 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.cat-switch-leave-active {
+  transition: opacity 0.12s cubic-bezier(0.5, 0, 0.75, 0), transform 0.12s cubic-bezier(0.5, 0, 0.75, 0);
+}
+.cat-switch-enter-from {
+  opacity: 0;
+  transform: translateY(12px) scale(0.995);
+}
+.cat-switch-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.995);
 }
 
 /* Cores e temas utilitários */
@@ -998,6 +1026,8 @@ export default {
   height: 44px;
   min-width: 44px;
   transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .nav-book-btn:hover {
   transform: scale(1.05);

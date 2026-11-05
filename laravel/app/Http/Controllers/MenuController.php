@@ -138,6 +138,7 @@ class MenuController extends Controller
                 'pizza_sizes' => \App\Models\SystemSetting::getSetting('pizza_sizes', []),
                 'pizza_borders' => \App\Models\SystemSetting::getSetting('pizza_borders', []),
                 'monte_pastel' => \App\Models\SystemSetting::getSetting('monte_pastel', []),
+                'monte_hamburguer' => \App\Models\SystemSetting::getSetting('monte_hamburguer', []),
                 'store_whatsapp' => \App\Models\SystemSetting::getSetting('store_whatsapp', '(83) 99631-7878'),
                 'store_info' => \App\Models\SystemSetting::getSetting('store_info', [
                     'name' => 'AKY LANCHES',

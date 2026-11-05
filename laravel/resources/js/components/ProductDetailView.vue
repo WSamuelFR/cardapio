@@ -734,6 +734,10 @@ export default {
       const name = (this.product.name || '').toLowerCase();
       return name.includes('monte seu pastel');
     },
+    isMonteSeuHamburguer() {
+      const name = (this.product.name || '').toLowerCase();
+      return name.includes('monte seu hamb') || name.includes('monte seu burger');
+    },
     isPizza() {
       const name = (this.product.name || '').toLowerCase();
       const catSlug = (this.product.category && this.product.category.slug) ? this.product.category.slug.toLowerCase() : '';
@@ -746,7 +750,13 @@ export default {
       if (this.isMonteSeuPastel || this.isPizza) return false;
       const catSlug = (this.product.category && this.product.category.slug) ? this.product.category.slug.toLowerCase() : '';
       const name = (this.product.name || '').toLowerCase();
-      return catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || catSlug.includes('tapioca') || catSlug.includes('cuscuz') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer');
+      const isSandwichOrBurger = catSlug.includes('sanduiche') || catSlug.includes('hamburguer') || catSlug.includes('artesanal') || catSlug.includes('lanche') || name.includes('sanduiche') || name.includes('burger') || name.includes('hambúrguer') || this.isMonteSeuHamburguer;
+
+      if (isSandwichOrBurger) {
+        return this.menuSettings?.monte_hamburguer?.allow_all_sandwiches_extra !== false;
+      }
+
+      return catSlug.includes('tapioca') || catSlug.includes('cuscuz');
     },
 
     // Configurações Dinâmicas do Banco de Dados para Monte Seu Pastel
@@ -856,8 +866,16 @@ export default {
         });
     },
 
-    // Adicionais Dinâmicos: Puxa diretamente dos produtos da categoria "Adicionais" cadastrados no banco
+    // Adicionais Dinâmicos: Puxa diretamente das configurações do Monte Seu Hambúrguer / Sanduíches ou categoria Adicionais
     availableExtrasList() {
+      const mh = this.menuSettings && this.menuSettings.monte_hamburguer;
+      if (mh && Array.isArray(mh.ingredients) && mh.ingredients.length > 0) {
+        return mh.ingredients.filter(i => i.is_available !== false).map(i => ({
+          name: i.name,
+          price: parseFloat(i.price) || 0,
+        }));
+      }
+
       const adicionaisProducts = (this.allProducts || []).filter(p => {
         const isAvailable = p.is_available !== false;
         const catSlug = (p.category && p.category.slug) ? p.category.slug.toLowerCase() : '';
@@ -874,15 +892,14 @@ export default {
       }
 
       return [
-        { name: 'Bacon Crocante', price: 5.00 },
-        { name: 'Queijo Coalho Assado', price: 5.00 },
-        { name: 'Queijo Muçarela Extra', price: 5.00 },
-        { name: 'Cheddar Cremoso', price: 4.00 },
+        { name: 'Hambúrguer Artesanal 150g', price: 8.00 },
+        { name: 'Bacon Crocante', price: 4.00 },
+        { name: 'Queijo Cheddar Cremoso', price: 3.50 },
+        { name: 'Queijo Muçarela Extra', price: 3.50 },
+        { name: 'Ovo Frito na Chapa', price: 2.50 },
         { name: 'Catupiry Original', price: 4.00 },
-        { name: 'Ovo Frito na Manteiga', price: 3.00 },
-        { name: 'Carne Tradicional Extra', price: 5.00 },
-        { name: 'Carne Artesanal 100g', price: 8.00 },
-        { name: 'Salada Extra (Alface e Tomate)', price: 3.00 },
+        { name: 'Cebola Caramelizada', price: 3.00 },
+        { name: 'Salada Extra (Alface e Tomate)', price: 2.00 },
       ];
     },
 
@@ -893,6 +910,17 @@ export default {
         const extraCount = Math.max(0, this.selectedPastelIngredients.length - this.pastelMaxFree);
         if (extraCount > 0) {
           base += extraCount * this.pastelExtraPrice;
+        }
+        return base;
+      }
+
+      // 2. Regra para Monte Seu Hambúrguer
+      if (this.isMonteSeuHamburguer) {
+        let base = parseFloat(this.menuSettings?.monte_hamburguer?.base_price || this.product.price) || 18.00;
+        if (this.selectedExtras && this.selectedExtras.length > 0) {
+          this.selectedExtras.forEach(e => {
+            base += parseFloat(e.price || 0);
+          });
         }
         return base;
       }
