@@ -1,40 +1,27 @@
 <template>
   <div class="unified-menu pb-5">
     
-    <!-- 1. BARRA DE BUSCA EM TEMPO REAL COM BOTÃO DE CATEGORIAS (PADRÃO ANOTA AI) -->
+    <!-- 1. BARRA DE BUSCA EM TEMPO REAL -->
     <div class="search-bar-container mb-3">
-      <div class="d-flex align-items-center gap-2">
-        <div class="input-group bg-white rounded-pill shadow-sm border p-1 align-items-center flex-grow-1">
-          <span class="input-group-text bg-transparent border-0 text-aky-primary ps-3 pe-2">
-            <i class="bi bi-search fs-5"></i>
-          </span>
-          <input
-            type="text"
-            class="form-control border-0 shadow-none bg-transparent py-2 text-dark fw-semibold"
-            v-model="searchTerm"
-            placeholder="Buscar lanche, pastel, pizza, bebida..."
-            autocomplete="off"
-          >
-          <button
-            v-if="searchTerm"
-            class="btn btn-link text-muted border-0 text-decoration-none pe-3 py-0"
-            type="button"
-            @click="searchTerm = ''"
-            title="Limpar pesquisa"
-          >
-            <i class="bi bi-x-circle-fill fs-5"></i>
-          </button>
-        </div>
-
-        <!-- Botão Abrir Modal de Categorias (Anota AI) -->
-        <button
-          type="button"
-          class="btn btn-dark rounded-pill px-3 py-2 fw-bold text-nowrap d-inline-flex align-items-center gap-1.5 shadow-sm flex-shrink-0"
-          @click="showCategoriesModal = true"
-          title="Ver todas as categorias"
+      <div class="input-group bg-white rounded-pill shadow-sm border p-1 align-items-center">
+        <span class="input-group-text bg-transparent border-0 text-aky-primary ps-3 pe-2">
+          <i class="bi bi-search fs-5"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control border-0 shadow-none bg-transparent py-2 text-dark fw-semibold"
+          v-model="searchTerm"
+          placeholder="Buscar lanche, pastel, pizza, bebida..."
+          autocomplete="off"
         >
-          <i class="bi bi-grid-3x3-gap-fill text-warning"></i>
-          <span class="d-none d-sm-inline">Categorias</span>
+        <button
+          v-if="searchTerm"
+          class="btn btn-link text-muted border-0 text-decoration-none pe-3 py-0"
+          type="button"
+          @click="searchTerm = ''"
+          title="Limpar pesquisa"
+        >
+          <i class="bi bi-x-circle-fill fs-5"></i>
         </button>
       </div>
 
@@ -251,7 +238,7 @@
           </div>
         </div>
 
-        <!-- LISTA DE PRODUTOS: 1 COLUNA NO CELULAR, 2 COLUNAS NO PC (PADRÃO ANOTA AI) -->
+        <!-- LISTA DE PRODUTOS: 1 COLUNA NO CELULAR, 2 COLUNAS NO PC (CONFORME DESENHO DO USUÁRIO) -->
         <div class="row row-cols-1 row-cols-lg-2 g-3 products-grid">
           
           <div
@@ -261,20 +248,19 @@
           >
             <div
               :class="[
-                'card aky-card h-100 bg-white shadow-sm rounded-4 overflow-hidden cursor-pointer transition',
-                getItemTheme(product, section).borderClass,
+                'card aky-card h-100 bg-white border shadow-2xs rounded-4 overflow-hidden cursor-pointer transition',
                 !product.is_available ? 'opacity-75 bg-light' : 'hover-lift'
               ]"
               @click="onRowClick(product)"
             >
-              <div class="d-flex p-3 gap-3 h-100 justify-content-between align-items-stretch">
+              <div class="d-flex p-3 p-sm-3.5 gap-3 h-100 justify-content-between align-items-stretch">
                 
-                <!-- 1. DETALHES À ESQUERDA (NOME, INGREDIENTES E PREÇO - PADRÃO ANOTA AI) -->
+                <!-- 1. DETALHES À ESQUERDA (NOME, INGREDIENTES, PREÇO E BOTÃO DO CARRINHO - CONFORME DESENHO) -->
                 <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between pe-1">
                   <div>
                     <div class="d-flex justify-content-between align-items-start gap-1 mb-1">
                       <!-- Nome do Produto -->
-                      <h6 class="fw-bold text-dark mb-0 line-clamp-2" :title="product.name" style="font-size: 0.96rem; letter-spacing: -0.2px; line-height: 1.25;">
+                      <h6 class="fw-bold text-dark mb-0 line-clamp-2" :title="product.name" style="font-size: 1.02rem; letter-spacing: -0.2px; line-height: 1.25;">
                         {{ product.name }}
                       </h6>
                       <span v-if="!product.is_available" class="badge bg-secondary rounded-pill flex-shrink-0 d-inline-block d-sm-none" style="font-size: 0.65rem;">
@@ -282,42 +268,67 @@
                       </span>
                     </div>
 
-                    <!-- Descrição dos Ingredientes (até 2 linhas) -->
-                    <p class="text-muted small mb-2 line-clamp-2" style="font-size: 0.78rem; line-height: 1.35;" :title="product.description">
+                    <!-- Descrição dos Ingredientes (até 3 linhas) -->
+                    <p class="text-muted small mb-2 line-clamp-3" style="font-size: 0.82rem; line-height: 1.35;" :title="product.description">
                       {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
                     </p>
                   </div>
 
-                  <!-- Linha de Preço & Tags -->
-                  <div class="d-flex align-items-center gap-1.5 flex-wrap pt-1">
-                    <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1">
-                      <span class="text-muted text-decoration-line-through" style="font-size: 0.72rem;">
-                        R$ {{ formatPrice(product.price) }}
+                  <!-- Linha Inferior com Preço e Botão do Carrinho no Canto Inferior Esquerdo -->
+                  <div class="pt-2 mt-auto">
+                    <!-- Preço & Tags -->
+                    <div class="d-flex align-items-baseline gap-1.5 mb-2">
+                      <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1">
+                        <span class="text-muted text-decoration-line-through" style="font-size: 0.72rem;">
+                          R$ {{ formatPrice(product.price) }}
+                        </span>
+                        <span class="fw-bold fs-5 text-danger">
+                          R$ {{ formatPrice(product.promotional_price) }}
+                        </span>
+                      </div>
+                      <div v-else>
+                        <span class="fw-bold fs-5 text-dark">
+                          R$ {{ formatPrice(product.effective_price || product.price) }}
+                        </span>
+                      </div>
+
+                      <!-- Tag de Opções se for montável -->
+                      <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.70rem;">
+                        <i class="bi bi-sliders me-0.5"></i> Opções
                       </span>
-                      <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
-                        R$ {{ formatPrice(product.promotional_price) }}
-                      </span>
-                    </div>
-                    <div v-else>
-                      <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
-                        R$ {{ formatPrice(product.effective_price || product.price) }}
+
+                      <!-- Tag Esgotado se indisponível -->
+                      <span v-if="!product.is_available" class="badge bg-secondary rounded-pill d-none d-sm-inline-block" style="font-size: 0.65rem;">
+                        Esgotado
                       </span>
                     </div>
 
-                    <!-- Tag de Opções / Montável -->
-                    <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.68rem;">
-                      <i class="bi bi-sliders me-0.5"></i> Opções
-                    </span>
-
-                    <!-- Tag Esgotado se indisponível -->
-                    <span v-if="!product.is_available" class="badge bg-secondary rounded-pill d-none d-sm-inline-block" style="font-size: 0.65rem;">
-                      Esgotado
-                    </span>
+                    <!-- Botão do Carrinho (No Canto Inferior Esquerdo Conforme o Desenho) -->
+                    <div @click.stop>
+                      <button
+                        type="button"
+                        :class="[
+                          'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0',
+                          !product.is_available
+                            ? 'btn-secondary text-white'
+                            : (isCustomizable(product) ? 'btn-primary text-white' : 'btn-aky-primary text-white')
+                        ]"
+                        style="width: 38px; height: 38px;"
+                        :disabled="!product.is_available"
+                        :title="!product.is_available ? 'Produto esgotado' : (isCustomizable(product) ? 'Personalizar opções' : 'Adicionar ao carrinho')"
+                        :aria-label="isCustomizable(product) ? 'Montar item' : 'Adicionar ao carrinho'"
+                        @click="handleQuickAdd(product)"
+                      >
+                        <i v-if="!product.is_available" class="bi bi-slash-circle fs-6"></i>
+                        <i v-else-if="isCustomizable(product)" class="bi bi-sliders fs-6"></i>
+                        <i v-else class="bi bi-cart-plus-fill fs-5"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <!-- 2. MINIATURA DA FOTO À DIREITA COM BOTÃO DE AÇÃO TOUCH-FRIENDLY (PADRÃO ANOTA AI) -->
-                <div class="flex-shrink-0 d-flex flex-column align-items-end justify-content-center position-relative">
+                <!-- 2. MINIATURA DA FOTO À DIREITA (AMPLIADA E 100% LIMPA SEM BOTÃO) -->
+                <div class="flex-shrink-0 d-flex flex-column align-items-end justify-content-center">
                   <div
                     class="product-thumb rounded-3 overflow-hidden bg-light d-flex align-items-center justify-content-center border position-relative"
                   >
@@ -328,39 +339,28 @@
                       class="w-100 h-100 object-fit-cover"
                       loading="lazy"
                     >
-                    <div v-else class="text-center text-muted p-1">
-                      <i :class="['bi', getCategoryIcon(product.category?.slug), getItemTheme(product, section).iconClass, 'fs-2 opacity-75 d-block']"></i>
-                      <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(product, section).iconClass]">
+                    <div v-else class="text-center text-muted p-2">
+                      <i :class="['bi', getCategoryIcon(product.category?.slug), 'text-danger fs-1 opacity-75 d-block']"></i>
+                      <span style="font-size: 0.70rem;" class="fw-semibold text-danger">
                         {{ product.is_combo ? 'Combo' : (product.is_promotion ? 'Promo' : 'AKY') }}
                       </span>
                     </div>
 
-                    <!-- Badge Temática Flutuante sobre a Foto -->
+                    <!-- Badge Promocional / Combo Discreta no Topo da Foto se houver -->
                     <span
-                      v-if="getItemTheme(product, section).badgeText"
-                      :class="['badge position-absolute top-0 start-0 m-1 px-1.5 py-0.5 rounded-pill shadow-sm fw-bold', getItemTheme(product, section).badgeClass]"
-                      style="font-size: 0.60rem; z-index: 2;"
+                      v-if="product.is_promotion"
+                      class="badge bg-danger text-white position-absolute top-0 start-0 m-1.5 px-2 py-0.5 rounded-pill shadow-sm fw-bold"
+                      style="font-size: 0.62rem;"
                     >
-                      {{ getItemTheme(product, section).badgeText }}
+                      PROMO
                     </span>
-
-                    <!-- Botão de Ação Redondo Flutuante no Canto Inferior Direito da Foto (Anota AI) -->
-                    <button
-                      type="button"
-                      :class="[
-                        'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0 position-absolute bottom-0 end-0 m-1',
-                        getItemTheme(product, section).btnClass
-                      ]"
-                      style="width: 32px; height: 32px; z-index: 3;"
-                      :disabled="!product.is_available"
-                      :title="!product.is_available ? 'Produto esgotado' : (isCustomizable(product) ? 'Personalizar opções' : 'Adicionar ao carrinho')"
-                      :aria-label="isCustomizable(product) ? 'Montar item' : 'Adicionar ao carrinho'"
-                      @click.stop="handleQuickAdd(product)"
+                    <span
+                      v-else-if="product.is_combo"
+                      class="badge bg-success text-white position-absolute top-0 start-0 m-1.5 px-2 py-0.5 rounded-pill shadow-sm fw-bold"
+                      style="font-size: 0.62rem;"
                     >
-                      <i v-if="!product.is_available" class="bi bi-slash-circle fs-6"></i>
-                      <i v-else-if="isCustomizable(product)" class="bi bi-sliders fs-6"></i>
-                      <i v-else class="bi bi-plus-lg fs-6"></i>
-                    </button>
+                      COMBO
+                    </span>
                   </div>
                 </div>
 
@@ -881,18 +881,27 @@ export default {
   scrollbar-width: none;
 }
 
-/* Dimensões ampliadas da miniatura do produto */
+/* Dimensões ampliadas da miniatura do produto (Cards Maiores conforme Desenho) */
 .product-thumb {
-  width: 88px;
-  height: 88px;
-  min-width: 88px;
+  width: 115px;
+  height: 115px;
+  min-width: 115px;
 }
 @media (min-width: 576px) {
   .product-thumb {
-    width: 96px;
-    height: 96px;
-    min-width: 96px;
+    width: 135px;
+    height: 135px;
+    min-width: 135px;
   }
+}
+
+.aky-card {
+  border: 1px solid #e5e7eb !important;
+  background-color: #ffffff;
+  transition: all 0.2s ease-in-out;
+}
+.aky-card:hover {
+  border-color: #cbd5e1 !important;
 }
 
 /* Cores e temas utilitários */
@@ -968,42 +977,5 @@ export default {
   row-gap: 0.85rem !important;
 }
 
-/* Bordas coloridas completas dos cards conforme a regra do sistema */
-.card-theme-promo {
-  border: 1.5px solid #ff007f !important;
-  border-left: 5px solid #ff007f !important;
-  animation: rgbBorderFull 4s linear infinite !important;
-}
-@keyframes rgbBorderFull {
-  0% { border-color: #ff0055; border-left-color: #ff0055; box-shadow: 0 4px 14px rgba(255, 0, 85, 0.15); }
-  33% { border-color: #ffaa00; border-left-color: #ffaa00; box-shadow: 0 4px 14px rgba(255, 170, 0, 0.15); }
-  66% { border-color: #00e5ff; border-left-color: #00e5ff; box-shadow: 0 4px 14px rgba(0, 229, 255, 0.15); }
-  100% { border-color: #ff0055; border-left-color: #ff0055; box-shadow: 0 4px 14px rgba(255, 0, 85, 0.15); }
-}
-
-.card-theme-combo {
-  border: 1.5px solid #198754 !important;
-  border-left: 5px solid #198754 !important;
-}
-
-.card-theme-popular {
-  border: 1.5px solid #7c3aed !important;
-  border-left: 5px solid #7c3aed !important;
-}
-
-.card-theme-drink {
-  border: 1.5px solid #f59e0b !important;
-  border-left: 5px solid #f59e0b !important;
-}
-
-.card-theme-custom {
-  border: 1.5px solid #0d6efd !important;
-  border-left: 5px solid #0d6efd !important;
-}
-
-.card-theme-default {
-  border: 1.5px solid #dc3545 !important;
-  border-left: 5px solid #dc3545 !important;
-}
 </style>
 
