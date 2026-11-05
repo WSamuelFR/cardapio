@@ -1,27 +1,40 @@
 <template>
   <div class="unified-menu pb-5">
     
-    <!-- 1. BARRA DE BUSCA EM TEMPO REAL E ATALHOS RÁPIDOS DE 1 TOQUE -->
+    <!-- 1. BARRA DE BUSCA EM TEMPO REAL COM BOTÃO DE CATEGORIAS (PADRÃO ANOTA AI) -->
     <div class="search-bar-container mb-3">
-      <div class="input-group bg-white rounded-pill shadow-sm border p-1 align-items-center">
-        <span class="input-group-text bg-transparent border-0 text-aky-primary ps-3 pe-2">
-          <i class="bi bi-search fs-5"></i>
-        </span>
-        <input
-          type="text"
-          class="form-control border-0 shadow-none bg-transparent py-2 text-dark fw-semibold"
-          v-model="searchTerm"
-          placeholder="Buscar lanche, pastel, pizza, bebida..."
-          autocomplete="off"
-        >
+      <div class="d-flex align-items-center gap-2">
+        <div class="input-group bg-white rounded-pill shadow-sm border p-1 align-items-center flex-grow-1">
+          <span class="input-group-text bg-transparent border-0 text-aky-primary ps-3 pe-2">
+            <i class="bi bi-search fs-5"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-0 shadow-none bg-transparent py-2 text-dark fw-semibold"
+            v-model="searchTerm"
+            placeholder="Buscar lanche, pastel, pizza, bebida..."
+            autocomplete="off"
+          >
+          <button
+            v-if="searchTerm"
+            class="btn btn-link text-muted border-0 text-decoration-none pe-3 py-0"
+            type="button"
+            @click="searchTerm = ''"
+            title="Limpar pesquisa"
+          >
+            <i class="bi bi-x-circle-fill fs-5"></i>
+          </button>
+        </div>
+
+        <!-- Botão Abrir Modal de Categorias (Anota AI) -->
         <button
-          v-if="searchTerm"
-          class="btn btn-link text-muted border-0 text-decoration-none pe-3 py-0"
           type="button"
-          @click="searchTerm = ''"
-          title="Limpar pesquisa"
+          class="btn btn-dark rounded-pill px-3 py-2 fw-bold text-nowrap d-inline-flex align-items-center gap-1.5 shadow-sm flex-shrink-0"
+          @click="showCategoriesModal = true"
+          title="Ver todas as categorias"
         >
-          <i class="bi bi-x-circle-fill fs-5"></i>
+          <i class="bi bi-grid-3x3-gap-fill text-warning"></i>
+          <span class="d-none d-sm-inline">Categorias</span>
         </button>
       </div>
 
@@ -75,6 +88,17 @@
     <div class="category-chips-wrapper mb-3">
       <div class="d-flex gap-2 overflow-x-auto no-scrollbar py-1 px-1">
         
+        <!-- Botão Modal de Categorias (Fixo no Início dos Chips) -->
+        <button
+          type="button"
+          class="btn btn-sm btn-dark rounded-3 px-3 py-2 fw-bold text-nowrap transition d-inline-flex align-items-center gap-1.5 flex-shrink-0 shadow-2xs"
+          @click="showCategoriesModal = true"
+          title="Abrir menu de categorias"
+        >
+          <i class="bi bi-list-ul text-warning"></i>
+          <span>Categorias</span>
+        </button>
+
         <!-- Chip "Todos" -->
         <button
           type="button"
@@ -227,7 +251,7 @@
           </div>
         </div>
 
-        <!-- LISTA DE PRODUTOS: 1 COLUNA NO CELULAR, 2 COLUNAS NO PC -->
+        <!-- LISTA DE PRODUTOS: 1 COLUNA NO CELULAR, 2 COLUNAS NO PC (PADRÃO ANOTA AI) -->
         <div class="row row-cols-1 row-cols-lg-2 g-3 products-grid">
           
           <div
@@ -243,100 +267,101 @@
               ]"
               @click="onRowClick(product)"
             >
-              <div class="d-flex p-3 gap-3 h-100">
+              <div class="d-flex p-3 gap-3 h-100 justify-content-between align-items-stretch">
                 
-                <!-- Miniatura da Foto no estilo da área de sugestões (85x85px) -->
-                <div
-                  class="product-thumb rounded-3 overflow-hidden flex-shrink-0 bg-light d-flex align-items-center justify-content-center border position-relative"
-                  style="width: 85px; height: 85px;"
-                >
-                  <img
-                    v-if="product.photo_path"
-                    :src="product.photo_path"
-                    :alt="product.name"
-                    class="w-100 h-100 object-fit-cover"
-                    loading="lazy"
-                  >
-                  <div v-else class="text-center text-muted">
-                    <i :class="['bi', getCategoryIcon(product.category?.slug), getItemTheme(product, section).iconClass, 'fs-2 opacity-75 d-block']"></i>
-                    <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(product, section).iconClass]">
-                      {{ product.is_combo ? 'Combo' : (product.is_promotion ? 'Promo' : 'AKY') }}
-                    </span>
-                  </div>
-
-                  <!-- Badge Temática Flutuante sobre a Foto -->
-                  <span
-                    v-if="getItemTheme(product, section).badgeText"
-                    :class="['badge position-absolute top-0 start-0 m-1.5 px-2 py-0.5 rounded-pill shadow-sm fw-bold', getItemTheme(product, section).badgeClass]"
-                    style="font-size: 0.62rem;"
-                  >
-                    {{ getItemTheme(product, section).badgeText }}
-                  </span>
-                </div>
-
-                <!-- Detalhes do Produto (Nome, Descrição e Linha Inferior com Preço e Botão) -->
-                <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between">
+                <!-- 1. DETALHES À ESQUERDA (NOME, INGREDIENTES E PREÇO - PADRÃO ANOTA AI) -->
+                <div class="flex-grow-1 min-w-0 d-flex flex-column justify-content-between pe-1">
                   <div>
                     <div class="d-flex justify-content-between align-items-start gap-1 mb-1">
-                      <h6 class="fw-bold text-dark mb-0 line-clamp-1" :title="product.name" style="font-size: 0.96rem; letter-spacing: -0.2px;">
+                      <!-- Nome do Produto -->
+                      <h6 class="fw-bold text-dark mb-0 line-clamp-2" :title="product.name" style="font-size: 0.96rem; letter-spacing: -0.2px; line-height: 1.25;">
                         {{ product.name }}
                       </h6>
-                      <span v-if="!product.is_available" class="badge bg-secondary rounded-pill flex-shrink-0" style="font-size: 0.65rem;">
+                      <span v-if="!product.is_available" class="badge bg-secondary rounded-pill flex-shrink-0 d-inline-block d-sm-none" style="font-size: 0.65rem;">
                         Esgotado
                       </span>
                     </div>
 
-                    <!-- Descrição em 2 linhas com ellipsis -->
-                    <p class="text-muted small mb-1 line-clamp-2" style="font-size: 0.78rem; line-height: 1.3;" :title="product.description">
+                    <!-- Descrição dos Ingredientes (até 2 linhas) -->
+                    <p class="text-muted small mb-2 line-clamp-2" style="font-size: 0.78rem; line-height: 1.35;" :title="product.description">
                       {{ product.description || 'Preparo artesanal com os melhores ingredientes da casa.' }}
                     </p>
                   </div>
 
-                  <!-- Linha Inferior: Preço à Esquerda e Botão de Ação Redondo à Direita -->
-                  <div class="d-flex align-items-center justify-content-between pt-1.5 mt-2 border-top border-light-subtle flex-wrap flex-sm-nowrap">
-                    <!-- Área de Preço -->
-                    <div class="d-flex align-items-baseline gap-1.5">
-                      <div v-if="product.is_promotion && product.promotional_price">
-                        <span class="text-muted text-decoration-line-through d-block" style="font-size: 0.70rem;">
-                          R$ {{ formatPrice(product.price) }}
-                        </span>
-                        <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
-                          R$ {{ formatPrice(product.promotional_price) }}
-                        </span>
-                      </div>
-                      <div v-else>
-                        <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
-                          R$ {{ formatPrice(product.effective_price || product.price) }}
-                        </span>
-                      </div>
-
-                      <!-- Tag discreta se for montador / opções -->
-                      <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold ms-1" style="font-size: 0.68rem;">
-                        <i class="bi bi-sliders me-0.5"></i> Opções
+                  <!-- Linha de Preço & Tags -->
+                  <div class="d-flex align-items-center gap-1.5 flex-wrap pt-1">
+                    <div v-if="product.is_promotion && product.promotional_price" class="d-flex align-items-baseline gap-1">
+                      <span class="text-muted text-decoration-line-through" style="font-size: 0.72rem;">
+                        R$ {{ formatPrice(product.price) }}
+                      </span>
+                      <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
+                        R$ {{ formatPrice(product.promotional_price) }}
+                      </span>
+                    </div>
+                    <div v-else>
+                      <span :class="['fw-bold fs-6', getItemTheme(product, section).priceClass]">
+                        R$ {{ formatPrice(product.effective_price || product.price) }}
                       </span>
                     </div>
 
-                    <!-- Botão de Ação Redondo Estilo Sugestões (36x36px) -->
-                    <div class="flex-shrink-0" @click.stop>
-                      <button
-                        type="button"
-                        :class="[
-                          'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0 flex-shrink-0',
-                          getItemTheme(product, section).btnClass
-                        ]"
-                        style="width: 36px; height: 36px;"
-                        :disabled="!product.is_available"
-                        :title="!product.is_available ? 'Produto esgotado' : (isCustomizable(product) ? 'Personalizar ingredientes e opções' : 'Adicionar ao carrinho')"
-                        :aria-label="isCustomizable(product) ? 'Montar item' : 'Adicionar ao carrinho'"
-                        @click="handleQuickAdd(product)"
-                      >
-                        <i v-if="!product.is_available" class="bi bi-slash-circle fs-6"></i>
-                        <i v-else-if="isCustomizable(product)" class="bi bi-sliders fs-6"></i>
-                        <i v-else class="bi bi-plus-lg fs-6"></i>
-                      </button>
-                    </div>
-                  </div>
+                    <!-- Tag de Opções / Montável -->
+                    <span v-if="isCustomizable(product)" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small fw-semibold" style="font-size: 0.68rem;">
+                      <i class="bi bi-sliders me-0.5"></i> Opções
+                    </span>
 
+                    <!-- Tag Esgotado se indisponível -->
+                    <span v-if="!product.is_available" class="badge bg-secondary rounded-pill d-none d-sm-inline-block" style="font-size: 0.65rem;">
+                      Esgotado
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 2. MINIATURA DA FOTO À DIREITA COM BOTÃO DE AÇÃO TOUCH-FRIENDLY (PADRÃO ANOTA AI) -->
+                <div class="flex-shrink-0 d-flex flex-column align-items-end justify-content-center position-relative">
+                  <div
+                    class="product-thumb rounded-3 overflow-hidden bg-light d-flex align-items-center justify-content-center border position-relative"
+                  >
+                    <img
+                      v-if="product.photo_path"
+                      :src="product.photo_path"
+                      :alt="product.name"
+                      class="w-100 h-100 object-fit-cover"
+                      loading="lazy"
+                    >
+                    <div v-else class="text-center text-muted p-1">
+                      <i :class="['bi', getCategoryIcon(product.category?.slug), getItemTheme(product, section).iconClass, 'fs-2 opacity-75 d-block']"></i>
+                      <span style="font-size: 0.65rem;" :class="['fw-semibold', getItemTheme(product, section).iconClass]">
+                        {{ product.is_combo ? 'Combo' : (product.is_promotion ? 'Promo' : 'AKY') }}
+                      </span>
+                    </div>
+
+                    <!-- Badge Temática Flutuante sobre a Foto -->
+                    <span
+                      v-if="getItemTheme(product, section).badgeText"
+                      :class="['badge position-absolute top-0 start-0 m-1 px-1.5 py-0.5 rounded-pill shadow-sm fw-bold', getItemTheme(product, section).badgeClass]"
+                      style="font-size: 0.60rem; z-index: 2;"
+                    >
+                      {{ getItemTheme(product, section).badgeText }}
+                    </span>
+
+                    <!-- Botão de Ação Redondo Flutuante no Canto Inferior Direito da Foto (Anota AI) -->
+                    <button
+                      type="button"
+                      :class="[
+                        'btn rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm transition p-0 position-absolute bottom-0 end-0 m-1',
+                        getItemTheme(product, section).btnClass
+                      ]"
+                      style="width: 32px; height: 32px; z-index: 3;"
+                      :disabled="!product.is_available"
+                      :title="!product.is_available ? 'Produto esgotado' : (isCustomizable(product) ? 'Personalizar opções' : 'Adicionar ao carrinho')"
+                      :aria-label="isCustomizable(product) ? 'Montar item' : 'Adicionar ao carrinho'"
+                      @click.stop="handleQuickAdd(product)"
+                    >
+                      <i v-if="!product.is_available" class="bi bi-slash-circle fs-6"></i>
+                      <i v-else-if="isCustomizable(product)" class="bi bi-sliders fs-6"></i>
+                      <i v-else class="bi bi-plus-lg fs-6"></i>
+                    </button>
+                  </div>
                 </div>
 
               </div>
@@ -363,6 +388,125 @@
         <i class="bi bi-arrow-up fs-5"></i>
       </button>
     </transition>
+
+    <!-- 4. MODAL DE CATEGORIAS (PADRÃO ANOTA AI) -->
+    <div
+      v-if="showCategoriesModal"
+      class="modal-backdrop fade show"
+      style="z-index: 1055;"
+      @click="showCategoriesModal = false"
+    ></div>
+
+    <div
+      v-if="showCategoriesModal"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      style="z-index: 1060;"
+      @click.self="showCategoriesModal = false"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-categories-dialog">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          
+          <!-- Header do Modal -->
+          <div class="modal-header border-bottom bg-light px-3 py-2.5 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-dark text-warning p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                <i class="bi bi-grid-3x3-gap-fill fs-6"></i>
+              </div>
+              <div>
+                <h6 class="modal-title fw-bold text-dark mb-0">Categorias do Cardápio</h6>
+                <small class="text-muted" style="font-size: 0.72rem;">Toque para ir direto aos itens</small>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn-close shadow-none"
+              aria-label="Fechar"
+              @click="showCategoriesModal = false"
+            ></button>
+          </div>
+
+          <!-- Corpo do Modal com a Lista de Categorias -->
+          <div class="modal-body p-2 px-3" style="max-height: 70vh;">
+            <div class="list-group list-group-flush gap-1">
+              
+              <!-- Item: Ver Todos os Produtos -->
+              <button
+                type="button"
+                :class="[
+                  'list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2.5 rounded-3 border-0 transition hover-bg-gray',
+                  activeFilter === 'all' ? 'bg-danger bg-opacity-10 text-danger fw-bold' : 'text-dark'
+                ]"
+                @click="selectCategoryFromModal('all')"
+              >
+                <div class="d-flex align-items-center gap-2.5">
+                  <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+                    <i class="bi bi-grid-fill fs-5"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold" style="font-size: 0.92rem;">Todos os Produtos</div>
+                    <small class="text-muted" style="font-size: 0.70rem;">Cardápio completo</small>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-light text-muted border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                    {{ totalProductsCount }} itens
+                  </span>
+                  <i class="bi bi-chevron-right text-muted small"></i>
+                </div>
+              </button>
+
+              <hr class="my-1 border-light-subtle">
+
+              <!-- Linhas de cada Categoria -->
+              <button
+                v-for="section in allSections"
+                :key="'modal-sec-' + section.key"
+                type="button"
+                :class="[
+                  'list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2.5 rounded-3 border-0 transition hover-bg-gray',
+                  activeFilter === section.filterKey ? 'bg-danger bg-opacity-10 text-danger fw-bold' : 'text-dark'
+                ]"
+                @click="selectCategoryFromModal(section.filterKey)"
+              >
+                <div class="d-flex align-items-center gap-2.5">
+                  <div :class="['rounded-circle d-flex align-items-center justify-content-center shadow-2xs flex-shrink-0', section.iconBgClass]" style="width: 36px; height: 36px;">
+                    <i :class="['bi', section.icon, section.iconColorClass, 'fs-5']"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold" style="font-size: 0.92rem;">{{ section.title }}</div>
+                    <small v-if="section.subtitle" class="text-muted d-block line-clamp-1" style="font-size: 0.70rem;">
+                      {{ section.subtitle }}
+                    </small>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-light text-muted border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                    {{ section.items ? section.items.length : 0 }} itens
+                  </span>
+                  <i class="bi bi-chevron-right text-muted small"></i>
+                </div>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Footer simples para fechar -->
+          <div class="modal-footer border-top bg-light py-2 px-3">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary rounded-pill px-4 fw-semibold w-100"
+              @click="showCategoriesModal = false"
+            >
+              Fechar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -392,6 +536,7 @@ export default {
     return {
       searchTerm: '',
       activeFilter: 'all', // 'all', 'promotions', 'popular', 'combos', ou 'cat_<id>'
+      showCategoriesModal: false,
       showBackToTop: false,
       quickSearchTags: [
         { label: 'Pastéis', icon: '🥟', query: 'pastel' },
@@ -561,6 +706,10 @@ export default {
           }
         });
       }
+    },
+    selectCategoryFromModal(key) {
+      this.showCategoriesModal = false;
+      this.selectFilter(key);
     },
     applyQuickSearch(query) {
       if (this.searchTerm.toLowerCase() === query.toLowerCase()) {
@@ -798,6 +947,20 @@ export default {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* Modal de Categorias (Anota AI) */
+.hover-bg-gray:hover {
+  background-color: #f8fafc !important;
+}
+.modal-categories-dialog {
+  max-width: 480px;
+  margin: 1.75rem auto;
+}
+@media (max-width: 575.98px) {
+  .modal-categories-dialog {
+    margin: 0.5rem;
+  }
 }
 
 /* Espaçamento elegante entre os cards de produto */
